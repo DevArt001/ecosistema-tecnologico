@@ -1,0 +1,1 @@
+echo 'cd ~/ecosistema-tecnologico && source venv/bin/activate' >> ~/.bashrc
