@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react"
 import { vehiculosAPI } from "../services/api"
+import FormVehiculo from "../components/FormVehiculo"
 
 export default function Vehiculos() {
   const [vehiculos, setVehiculos] = useState([])
   const [loading, setLoading]     = useState(true)
   const [buscar, setBuscar]       = useState("")
+  const [showForm, setShowForm]   = useState(false)
 
-  useEffect(() => {
+  useEffect(() => { cargarVehiculos() }, [])
+
+  const cargarVehiculos = () => {
+    setLoading(true)
     vehiculosAPI.listar().then(res => {
       setVehiculos(res.data.results || res.data)
       setLoading(false)
     })
-  }, [])
+  }
 
   const filtrados = vehiculos.filter(v =>
     v.placa?.toLowerCase().includes(buscar.toLowerCase()) ||
@@ -26,17 +31,25 @@ export default function Vehiculos() {
 
   return (
     <div>
+      {showForm && (
+        <FormVehiculo
+          onGuardado={() => { setShowForm(false); cargarVehiculos() }}
+          onCancelar={() => setShowForm(false)}
+        />
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between",
         alignItems: "flex-start", marginBottom: "2rem" }}>
         <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Vehículos
-          </h1>
+          <h1 style={{ fontSize: "24px", fontWeight: "700",
+            color: "var(--text)", marginBottom: "4px" }}>Vehículos</h1>
           <p style={{ color: "var(--text3)", fontSize: "13px" }}>
             {vehiculos.length} vehículos registrados
           </p>
         </div>
-        <button className="btn btn-primary">+ Nuevo vehículo</button>
+        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+          + Nuevo vehículo
+        </button>
       </div>
 
       <div className="card">
@@ -45,7 +58,9 @@ export default function Vehiculos() {
             placeholder="Buscar por placa o marca..." style={{ width: "280px" }} />
         </div>
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
+            Cargando...
+          </div>
         ) : (
           <table>
             <thead>

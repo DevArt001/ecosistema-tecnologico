@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react"
 import { clientesAPI } from "../services/api"
+import FormCliente from "../components/FormCliente"
 
 export default function Clientes() {
-  const [clientes, setClientes] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [buscar, setBuscar]     = useState("")
+  const [clientes, setClientes]   = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [buscar, setBuscar]       = useState("")
+  const [showForm, setShowForm]   = useState(false)
 
   useEffect(() => { cargarClientes() }, [])
 
   const cargarClientes = () => {
+    setLoading(true)
     clientesAPI.listar().then(res => {
       setClientes(res.data.results || res.data)
       setLoading(false)
@@ -29,6 +32,13 @@ export default function Clientes() {
 
   return (
     <div>
+      {showForm && (
+        <FormCliente
+          onGuardado={() => { setShowForm(false); cargarClientes() }}
+          onCancelar={() => setShowForm(false)}
+        />
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between",
         alignItems: "flex-start", marginBottom: "2rem" }}>
         <div>
@@ -39,19 +49,17 @@ export default function Clientes() {
             {clientes.length} clientes registrados
           </p>
         </div>
-        <button className="btn btn-primary">+ Nuevo cliente</button>
+        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+          + Nuevo cliente
+        </button>
       </div>
 
       <div className="card">
         <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
-          <input
-            value={buscar}
-            onChange={e => setBuscar(e.target.value)}
+          <input value={buscar} onChange={e => setBuscar(e.target.value)}
             placeholder="Buscar por nombre o documento..."
-            style={{ width: "280px" }}
-          />
+            style={{ width: "280px" }} />
         </div>
-
         {loading ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
             Cargando...
@@ -60,12 +68,8 @@ export default function Clientes() {
           <table>
             <thead>
               <tr>
-                <th>Nombre</th>
-                <th>Documento</th>
-                <th>Teléfono</th>
-                <th>Ciudad</th>
-                <th>Tipo</th>
-                <th>Puntos</th>
+                <th>Nombre</th><th>Documento</th><th>Teléfono</th>
+                <th>Ciudad</th><th>Tipo</th><th>Puntos</th>
               </tr>
             </thead>
             <tbody>
@@ -79,9 +83,7 @@ export default function Clientes() {
                     <span className="badge" style={{
                       background: tipoBadge[c.tipo]?.bg || "#1F2937",
                       color: tipoBadge[c.tipo]?.color || "#9CA3AF"
-                    }}>
-                      {c.tipo}
-                    </span>
+                    }}>{c.tipo}</span>
                   </td>
                   <td style={{ color: "var(--green)" }}>{c.puntos} pts</td>
                 </tr>

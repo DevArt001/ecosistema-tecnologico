@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react"
 import { ordenesAPI } from "../services/api"
+import FormOrden from "../components/FormOrden"
 
 export default function Ordenes() {
-  const [ordenes, setOrdenes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [ordenes, setOrdenes]     = useState([])
+  const [loading, setLoading]     = useState(true)
   const [filtroEstado, setFiltro] = useState("todos")
+  const [showForm, setShowForm]   = useState(false)
 
-  useEffect(() => {
+  useEffect(() => { cargarOrdenes() }, [])
+
+  const cargarOrdenes = () => {
+    setLoading(true)
     ordenesAPI.listar().then(res => {
       setOrdenes(res.data.results || res.data)
       setLoading(false)
     })
-  }, [])
+  }
 
   const estados = ["todos","recibido","diagnostico","en_proceso","finalizado","entregado"]
 
@@ -36,29 +41,35 @@ export default function Ordenes() {
 
   return (
     <div>
+      {showForm && (
+        <FormOrden
+          onGuardado={() => { setShowForm(false); cargarOrdenes() }}
+          onCancelar={() => setShowForm(false)}
+        />
+      )}
+
       <div style={{ display: "flex", justifyContent: "space-between",
         alignItems: "flex-start", marginBottom: "2rem" }}>
         <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Órdenes de Trabajo
-          </h1>
+          <h1 style={{ fontSize: "24px", fontWeight: "700",
+            color: "var(--text)", marginBottom: "4px" }}>Órdenes de Trabajo</h1>
           <p style={{ color: "var(--text3)", fontSize: "13px" }}>
             {ordenes.length} órdenes en el sistema
           </p>
         </div>
-        <button className="btn btn-primary">+ Nueva orden</button>
+        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+          + Nueva orden
+        </button>
       </div>
 
-      {/* Filtros */}
       <div style={{ display: "flex", gap: "6px", marginBottom: "1.5rem", flexWrap: "wrap" }}>
         {estados.map(e => (
-          <button key={e} onClick={() => setFiltro(e)}
-            style={{
-              padding: "6px 14px", borderRadius: "20px", border: "none",
-              fontSize: "12px", fontWeight: "500",
-              background: filtroEstado === e ? "var(--green)" : "var(--bg3)",
-              color: filtroEstado === e ? "white" : "var(--text3)",
-            }}>
+          <button key={e} onClick={() => setFiltro(e)} style={{
+            padding: "6px 14px", borderRadius: "20px", border: "none",
+            fontSize: "12px", fontWeight: "500",
+            background: filtroEstado === e ? "var(--green)" : "var(--bg3)",
+            color: filtroEstado === e ? "white" : "var(--text3)",
+          }}>
             {e === "todos" ? "Todos" : e.replace("_", " ")}
           </button>
         ))}
@@ -66,7 +77,9 @@ export default function Ordenes() {
 
       <div className="card">
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
+            Cargando...
+          </div>
         ) : (
           <table>
             <thead>
@@ -92,8 +105,8 @@ export default function Ordenes() {
                     }}>{o.estado.replace("_", " ")}</span>
                   </td>
                   <td>
-                    <span style={{ color: prioridadColor[o.prioridad], fontWeight: "600",
-                      fontSize: "12px" }}>
+                    <span style={{ color: prioridadColor[o.prioridad],
+                      fontWeight: "600", fontSize: "12px" }}>
                       ● {o.prioridad}
                     </span>
                   </td>
