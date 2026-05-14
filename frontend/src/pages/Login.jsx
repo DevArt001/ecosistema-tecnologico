@@ -14,7 +14,7 @@ export default function Login({ onLogin }) {
     setLoading(true)
     setError("")
     try {
-      const res = await axios.post("http://192.168.0.8:8000/api/auth/login/", form)
+      const res = await axios.post("/api/auth/login/", form)
       localStorage.setItem("access",  res.data.access)
       localStorage.setItem("refresh", res.data.refresh)
       localStorage.setItem("username", form.username)
