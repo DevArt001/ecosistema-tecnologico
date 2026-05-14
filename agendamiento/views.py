@@ -77,7 +77,8 @@ def disponibilidad_mes(request):
     for c in citas_mes:
         key = str(c['fecha'])
         if key not in ocupacion: ocupacion[key] = {}
-        ocupacion[key][str(c['hora'])] = c['total']
+        hora_str = str(c['hora']) if isinstance(c['hora'], datetime.time) else c['hora']
+        ocupacion[key][hora_str] = c['total']
     return Response({'mes':mes,'anio':anio,'max_citas_hora':max_citas,'bloqueados':list(bloqueados),'ocupacion':ocupacion,'config':ConfigTallerSerializer(config).data if config else None,'dias_especiales':DiaEspecialSerializer(dias_especiales,many=True).data})
 
 @api_view(['GET'])

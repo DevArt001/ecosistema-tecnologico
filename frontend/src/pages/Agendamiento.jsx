@@ -178,10 +178,10 @@ export default function Agendamiento() {
                 <span style={{ color: "#F59E0B", marginLeft: "8px" }}>{c.fecha} {c.hora?.slice(0,5)}</span>
               </div>
               <div style={{ display: "flex", gap: "6px" }}>
-                <button onClick={() => cambiarEstadoCita(c.id, "confirmada")}
-                  style={{ background: "#065F46", border: "1px solid #10B981", color: "#10B981",
+                <button onClick={() => cambiarEstadoCita(c.id, "completada")}
+                  style={{ background: "#1E3A5F", border: "1px solid #3B82F6", color: "#3B82F6",
                     borderRadius: "6px", padding: "4px 10px", fontSize: "11px", cursor: "pointer" }}>
-                  ✓ Aprobar
+                  ✓ Completada
                 </button>
                 <button onClick={() => cambiarEstadoCita(c.id, "cancelada")}
                   style={{ background: "#3B0A0A", border: "1px solid #EF4444", color: "#EF4444",
@@ -311,8 +311,8 @@ export default function Agendamiento() {
                       </select>
                     </div>
 
-                    {/* Botón convertir en orden */}
-                    {c.estado === "confirmada" && !c.orden && (
+                    {/* Botón convertir en orden — SOLO si está COMPLETADA */}
+                    {c.estado === "completada" && !c.orden && (
                       <button
                         onClick={() => handleConvertirOrden(c.id)}
                         disabled={convirtiendo === c.id}
@@ -389,7 +389,7 @@ export default function Agendamiento() {
                       </select>
                     </td>
                     <td>
-                      {c.estado === "confirmada" && !c.orden ? (
+                      {c.estado === "completada" && !c.orden ? (
                         <button onClick={() => handleConvertirOrden(c.id)}
                           disabled={convirtiendo === c.id}
                           style={{ background: "#065F46", border: "1px solid #10B981",
