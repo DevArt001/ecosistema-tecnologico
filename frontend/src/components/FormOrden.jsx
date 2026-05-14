@@ -1,19 +1,26 @@
 import { useState, useEffect } from "react"
 import { ordenesAPI, clientesAPI, vehiculosAPI } from "../services/api"
 
-export default function FormOrden({ onGuardado, onCancelar }) {
-  const [form, setForm] = useState({
+export default function FormOrden({ onGuardado, onCancelar, ordenEditar = null }) {
+  const [form, setForm] = useState(ordenEditar || {
     cliente: "", vehiculo: "", descripcion: "",
-    prioridad: "normal", tecnico: "",
-    costo_estimado: "0"
+    prioridad: "normal", tecnico: "", costo_estimado: "0"
   })
   const [clientes, setClientes]   = useState([])
   const [vehiculos, setVehiculos] = useState([])
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState("")
 
+  const esEdicion = !!ordenEditar
+
   useEffect(() => {
     clientesAPI.listar().then(res => setClientes(res.data.results || res.data))
+    if (ordenEditar?.cliente) {
+      vehiculosAPI.listar().then(res => {
+        const todos = res.data.results || res.data
+        setVehiculos(todos.filter(v => String(v.cliente) === String(ordenEditar.cliente)))
+      })
+    }
   }, [])
 
   const handleChange = e => {
@@ -36,48 +43,48 @@ export default function FormOrden({ onGuardado, onCancelar }) {
     setLoading(true)
     setError("")
     try {
-      await ordenesAPI.crear(form)
+      if (esEdicion) {
+        await ordenesAPI.editar(form.id, form)
+      } else {
+        await ordenesAPI.crear(form)
+      }
       onGuardado()
     } catch (err) {
-      setError("Error al crear la orden")
+      setError("Error al guardar la orden")
       setLoading(false)
     }
   }
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 1000, padding: "1rem"
-    }}>
-      <div style={{
-        background: "var(--bg2)", borderRadius: "var(--radius-lg)",
+      zIndex: 1000, padding: "1rem" }}>
+      <div style={{ background: "var(--bg2)", borderRadius: "var(--radius-lg)",
         border: "1px solid var(--border)", width: "100%", maxWidth: "540px",
-        maxHeight: "90vh", overflowY: "auto"
-      }}>
+        maxHeight: "90vh", overflowY: "auto" }}>
+
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--border)",
           display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontWeight: "600", color: "var(--text)" }}>Nueva orden de trabajo</div>
+            <div style={{ fontWeight: "600", color: "var(--text)" }}>
+              {esEdicion ? "Editar orden" : "Nueva orden de trabajo"}
+            </div>
             <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>
-              El código se genera automáticamente
+              {esEdicion ? `Editando: ${ordenEditar.codigo}` : "El código se genera automáticamente"}
             </div>
           </div>
           <button onClick={onCancelar} style={{
-            background: "none", border: "none", color: "var(--text3)", fontSize: "20px"
-          }}>×</button>
+            background: "none", border: "none", color: "var(--text3)",
+            fontSize: "20px", cursor: "pointer" }}>×</button>
         </div>
 
         <div style={{ padding: "1.5rem" }}>
           {error && (
             <div style={{ background: "#3B0A0A", border: "1px solid var(--red)",
               borderRadius: "8px", padding: "10px 14px", marginBottom: "1rem",
-              fontSize: "13px", color: "var(--red)" }}>
-              {error}
-            </div>
+              fontSize: "13px", color: "var(--red)" }}>{error}</div>
           )}
 
-          {/* Cliente */}
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
               color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
@@ -91,7 +98,6 @@ export default function FormOrden({ onGuardado, onCancelar }) {
             </select>
           </div>
 
-          {/* Vehículo */}
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
               color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
@@ -103,14 +109,11 @@ export default function FormOrden({ onGuardado, onCancelar }) {
                 {form.cliente ? "Seleccionar vehículo..." : "Primero selecciona un cliente"}
               </option>
               {vehiculos.map(v => (
-                <option key={v.id} value={v.id}>
-                  {v.placa} — {v.marca} {v.linea}
-                </option>
+                <option key={v.id} value={v.id}>{v.placa} — {v.marca} {v.linea}</option>
               ))}
             </select>
           </div>
 
-          {/* Descripción */}
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
               color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
@@ -121,8 +124,27 @@ export default function FormOrden({ onGuardado, onCancelar }) {
               style={{ width: "100%", resize: "vertical" }} />
           </div>
 
+          {/* En edición mostrar también estado y costo final */}
+          {esEdicion && (
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
+                color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
+                letterSpacing: ".04em" }}>Estado</label>
+              <select name="estado" value={form.estado}
+                onChange={handleChange} style={{ width: "100%" }}>
+                <option value="recibido">Recibido</option>
+                <option value="diagnostico">Diagnóstico</option>
+                <option value="aprobado">Aprobado</option>
+                <option value="en_proceso">En proceso</option>
+                <option value="esperando_repuestos">Esperando repuestos</option>
+                <option value="en_pruebas">En pruebas</option>
+                <option value="finalizado">Finalizado</option>
+                <option value="entregado">Entregado</option>
+              </select>
+            </div>
+          )}
+
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 1rem" }}>
-            {/* Prioridad */}
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
                 color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
@@ -136,7 +158,6 @@ export default function FormOrden({ onGuardado, onCancelar }) {
               </select>
             </div>
 
-            {/* Técnico */}
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
                 color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
@@ -146,7 +167,6 @@ export default function FormOrden({ onGuardado, onCancelar }) {
                 placeholder="Nombre del técnico" />
             </div>
 
-            {/* Costo estimado */}
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
                 color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
@@ -155,6 +175,17 @@ export default function FormOrden({ onGuardado, onCancelar }) {
                 value={form.costo_estimado}
                 onChange={handleChange} style={{ width: "100%" }} />
             </div>
+
+            {esEdicion && (
+              <div style={{ marginBottom: "1rem" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
+                  color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
+                  letterSpacing: ".04em" }}>Costo final</label>
+                <input name="costo_final" type="number"
+                  value={form.costo_final || "0"}
+                  onChange={handleChange} style={{ width: "100%" }} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -162,7 +193,7 @@ export default function FormOrden({ onGuardado, onCancelar }) {
           display: "flex", justifyContent: "flex-end", gap: "8px" }}>
           <button className="btn btn-secondary" onClick={onCancelar}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Creando..." : "Crear orden"}
+            {loading ? "Guardando..." : esEdicion ? "Guardar cambios" : "Crear orden"}
           </button>
         </div>
       </div>

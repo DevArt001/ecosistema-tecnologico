@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react"
 import { vehiculosAPI, clientesAPI } from "../services/api"
 
-export default function FormVehiculo({ onGuardado, onCancelar }) {
-  const [form, setForm] = useState({
+export default function FormVehiculo({ onGuardado, onCancelar, vehiculoEditar = null }) {
+  const [form, setForm] = useState(vehiculoEditar || {
     cliente: "", placa: "", marca: "", linea: "",
     modelo: "", cilindraje: "", color: "", kilometraje: "0",
     tipo: "moto", estado: "activo"
@@ -11,10 +11,10 @@ export default function FormVehiculo({ onGuardado, onCancelar }) {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState("")
 
+  const esEdicion = !!vehiculoEditar
+
   useEffect(() => {
-    clientesAPI.listar().then(res => {
-      setClientes(res.data.results || res.data)
-    })
+    clientesAPI.listar().then(res => setClientes(res.data.results || res.data))
   }, [])
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value })
@@ -27,7 +27,11 @@ export default function FormVehiculo({ onGuardado, onCancelar }) {
     setLoading(true)
     setError("")
     try {
-      await vehiculosAPI.crear(form)
+      if (esEdicion) {
+        await vehiculosAPI.editar(form.id, form)
+      } else {
+        await vehiculosAPI.crear(form)
+      }
       onGuardado()
     } catch (err) {
       setError(err.response?.data?.placa?.[0] || "Error al guardar el vehículo")
@@ -39,15 +43,10 @@ export default function FormVehiculo({ onGuardado, onCancelar }) {
     <div style={{ marginBottom: "1rem" }}>
       <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
         color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
-        letterSpacing: ".04em" }}>
-        {label}
-      </label>
+        letterSpacing: ".04em" }}>{label}</label>
       {opciones ? (
-        <select name={name} value={form[name]} onChange={handleChange}
-          style={{ width: "100%" }}>
-          {opciones.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
+        <select name={name} value={form[name]} onChange={handleChange} style={{ width: "100%" }}>
+          {opciones.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       ) : (
         <input name={name} type={type} value={form[name]}
@@ -57,45 +56,39 @@ export default function FormVehiculo({ onGuardado, onCancelar }) {
   )
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 1000, padding: "1rem"
-    }}>
-      <div style={{
-        background: "var(--bg2)", borderRadius: "var(--radius-lg)",
+      zIndex: 1000, padding: "1rem" }}>
+      <div style={{ background: "var(--bg2)", borderRadius: "var(--radius-lg)",
         border: "1px solid var(--border)", width: "100%", maxWidth: "540px",
-        maxHeight: "90vh", overflowY: "auto"
-      }}>
+        maxHeight: "90vh", overflowY: "auto" }}>
+
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--border)",
           display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontWeight: "600", color: "var(--text)" }}>Nuevo vehículo</div>
+            <div style={{ fontWeight: "600", color: "var(--text)" }}>
+              {esEdicion ? "Editar vehículo" : "Nuevo vehículo"}
+            </div>
             <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>
-              Registra el vehículo del cliente
+              {esEdicion ? `Editando: ${vehiculoEditar.placa}` : "Registra el vehículo del cliente"}
             </div>
           </div>
           <button onClick={onCancelar} style={{
-            background: "none", border: "none", color: "var(--text3)", fontSize: "20px"
-          }}>×</button>
+            background: "none", border: "none", color: "var(--text3)",
+            fontSize: "20px", cursor: "pointer" }}>×</button>
         </div>
 
         <div style={{ padding: "1.5rem" }}>
           {error && (
             <div style={{ background: "#3B0A0A", border: "1px solid var(--red)",
               borderRadius: "8px", padding: "10px 14px", marginBottom: "1rem",
-              fontSize: "13px", color: "var(--red)" }}>
-              {error}
-            </div>
+              fontSize: "13px", color: "var(--red)" }}>{error}</div>
           )}
 
-          {/* Cliente */}
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ display: "block", fontSize: "12px", fontWeight: "500",
               color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase",
-              letterSpacing: ".04em" }}>
-              Cliente *
-            </label>
+              letterSpacing: ".04em" }}>Cliente *</label>
             <select name="cliente" value={form.cliente}
               onChange={handleChange} style={{ width: "100%" }}>
               <option value="">Seleccionar cliente...</option>
@@ -125,7 +118,7 @@ export default function FormVehiculo({ onGuardado, onCancelar }) {
           display: "flex", justifyContent: "flex-end", gap: "8px" }}>
           <button className="btn btn-secondary" onClick={onCancelar}>Cancelar</button>
           <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Guardando..." : "Guardar vehículo"}
+            {loading ? "Guardando..." : esEdicion ? "Guardar cambios" : "Guardar vehículo"}
           </button>
         </div>
       </div>
