@@ -10,13 +10,14 @@ import Inventario from "./pages/Inventario"
 import Facturas from "./pages/Facturas"
 import Login from "./pages/Login"
 import Agendar from "./pages/Agendar"
+import Public from "./pages/Public"
 import Agendamiento from "./pages/Agendamiento"
 import "./index.css"
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("access"))
 
-  const handleLogin  = (t) => setToken(t)
+  const handleLogin = (t) => setToken(t)
   const handleLogout = () => {
     localStorage.removeItem("access")
     localStorage.removeItem("refresh")
@@ -26,7 +27,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Ruta pública — sin auth */}
+        {/* Rutas públicas — sin auth */}
+        <Route path="/public" element={<Public />} />
         <Route path="/agendar" element={<Agendar />} />
 
         {/* Rutas privadas */}
