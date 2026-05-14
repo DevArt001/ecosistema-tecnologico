@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'servicios',
     'inventario',
     'contabilidad',
+    'agendamiento',
     
 
 ]

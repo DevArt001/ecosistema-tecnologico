@@ -1,6 +1,6 @@
-import { StrictMode, useState, useEffect } from "react"
+import { StrictMode, useState } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Layout from "./components/Layout"
 import Dashboard from "./pages/Dashboard"
 import Clientes from "./pages/Clientes"
@@ -9,34 +9,42 @@ import Ordenes from "./pages/Ordenes"
 import Inventario from "./pages/Inventario"
 import Facturas from "./pages/Facturas"
 import Login from "./pages/Login"
+import Agendar from "./pages/Agendar"
+import Agendamiento from "./pages/Agendamiento"
 import "./index.css"
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("access"))
 
-  const handleLogin = (accessToken) => {
-    setToken(accessToken)
-  }
-
+  const handleLogin  = (t) => setToken(t)
   const handleLogout = () => {
     localStorage.removeItem("access")
     localStorage.removeItem("refresh")
     setToken(null)
   }
 
-  if (!token) return <Login onLogin={handleLogin} />
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout onLogout={handleLogout} />}>
-          <Route index element={<Dashboard />} />
-          <Route path="clientes"    element={<Clientes />} />
-          <Route path="vehiculos"   element={<Vehiculos />} />
-          <Route path="ordenes"     element={<Ordenes />} />
-          <Route path="inventario"  element={<Inventario />} />
-          <Route path="facturas"    element={<Facturas />} />
-        </Route>
+        {/* Ruta pública — sin auth */}
+        <Route path="/agendar" element={<Agendar />} />
+
+        {/* Rutas privadas */}
+        <Route path="*" element={
+          !token ? <Login onLogin={handleLogin} /> : (
+            <Routes>
+              <Route path="/" element={<Layout onLogout={handleLogout} />}>
+                <Route index element={<Dashboard />} />
+                <Route path="clientes"     element={<Clientes />} />
+                <Route path="vehiculos"    element={<Vehiculos />} />
+                <Route path="ordenes"      element={<Ordenes />} />
+                <Route path="inventario"   element={<Inventario />} />
+                <Route path="facturas"     element={<Facturas />} />
+                <Route path="agendamiento" element={<Agendamiento />} />
+              </Route>
+            </Routes>
+          )
+        } />
       </Routes>
     </BrowserRouter>
   )

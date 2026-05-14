@@ -53,3 +53,25 @@ export const facturasAPI = {
 }
 
 export default API
+
+export const agendamientoAPI = {
+  // Panel interno
+  listarCitas:      (params) => API.get("/agendamiento/citas/", { params }),
+  obtenerCita:      (id)     => API.get(`/agendamiento/citas/${id}/`),
+  editarCita:       (id, data) => API.patch(`/agendamiento/citas/${id}/`, data),
+  eliminarCita:     (id)     => API.delete(`/agendamiento/citas/${id}/`),
+  convertirOrden:   (id)     => API.post(`/agendamiento/citas/${id}/convertir-orden/`),
+  listarConfig:     ()       => API.get("/agendamiento/config-taller/"),
+  listarFestivos:   ()       => API.get("/agendamiento/dias-especiales/"),
+  crearFestivo:     (data)   => API.post("/agendamiento/dias-especiales/", data),
+  eliminarFestivo:  (id)     => API.delete(`/agendamiento/dias-especiales/${id}/`),
+
+  // Publico
+  buscarCliente:       (documento) => API.post("/agendamiento/publico/buscar-cliente/", { documento }),
+  registrarCliente:    (data)      => API.post("/agendamiento/publico/registrar-cliente/", data),
+  registrarVehiculo:   (data)      => API.post("/agendamiento/publico/registrar-vehiculo/", data),
+  disponibilidadMes:   (mes, anio) => API.get("/agendamiento/publico/disponibilidad/", { params: { mes, anio } }),
+  horasDisponibles:    (fecha)     => API.get("/agendamiento/publico/horas-disponibles/", { params: { fecha } }),
+  crearCita:           (data)      => API.post("/agendamiento/publico/crear-cita/", data),
+  citaEspecial:        (data)      => API.post("/agendamiento/publico/cita-especial/", data),
+}

@@ -7,6 +7,7 @@ const menu = [
   { path: "/ordenes",    label: "Órdenes",     color: "#F59E0B" },
   { path: "/inventario", label: "Inventario",  color: "#EF4444" },
   { path: "/facturas",   label: "Facturación", color: "#10B981" },
+  { path: "/agendamiento", label: "Agendamiento", color: "#3B82F6" },
 ]
 
 export default function Sidebar({ onLogout, onClose }) {
