@@ -16,10 +16,6 @@ urlpatterns = [
     path('publico/horas-disponibles/',  views.horas_disponibles,         name='horas-disponibles'),
     path('publico/crear-cita/',         views.crear_cita_publica,        name='crear-cita'),
     path('publico/cita-especial/',      views.solicitar_cita_especial,   name='cita-especial'),
-]
-
-from django.urls import path
-from . import views as v
-urlpatterns += [
-    path('citas/<int:cita_id>/convertir-orden/', v.convertir_en_orden, name='convertir-orden'),
+    path('ordenes/<int:orden_id>/generar-link/', views.generar_link_temporal, name='generar-link'),
+    path('portal/<str:token>/', views.acceder_portal_cliente, name='acceder-portal'),
 ]

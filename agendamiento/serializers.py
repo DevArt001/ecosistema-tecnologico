@@ -46,3 +46,20 @@ class VehiculoPublicoSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Vehiculo
         fields = ['id','placa','marca','linea','modelo','tipo','cliente']
+
+class LinkTemporalSerializer(serializers.ModelSerializer):
+    orden_codigo = serializers.CharField(source='orden.codigo', read_only=True)
+    cliente_nombre = serializers.CharField(source='orden.cliente.nombre', read_only=True)
+    dias_restantes = serializers.SerializerMethodField()
+    vigente = serializers.SerializerMethodField()
+    
+    class Meta:
+        from .models_portal import LinkTemporal
+        model = LinkTemporal
+        fields = ['token', 'orden_codigo', 'cliente_nombre', 'fecha_expiracion', 'dias_restantes', 'vigente']
+    
+    def get_dias_restantes(self, obj):
+        return obj.dias_restantes()
+    
+    def get_vigente(self, obj):
+        return obj.esta_vigente()

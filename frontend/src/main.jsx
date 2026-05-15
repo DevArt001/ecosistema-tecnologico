@@ -12,6 +12,7 @@ import Login from "./pages/Login"
 import Agendar from "./pages/Agendar"
 import Public from "./pages/Public"
 import Agendamiento from "./pages/Agendamiento"
+import Portal from "./pages/Portal"
 import "./index.css"
 
 function App() {
@@ -29,6 +30,8 @@ function App() {
       <Routes>
         {/* Rutas públicas — sin auth */}
         <Route path="/public" element={<Public />} />
+        <Route path="/portal/:token" element={<Portal />} />
+        <Route path="/portal/:token" element={<Portal />} />
         <Route path="/agendar" element={<Agendar />} />
 
         {/* Rutas privadas */}

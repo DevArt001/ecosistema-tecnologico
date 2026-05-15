@@ -70,3 +70,4 @@ class Cita(models.Model):
 
     def __str__(self):
         return f"{self.fecha} {self.hora} - {self.cliente.nombre} - {self.vehiculo.placa}"
+from .models_portal import LinkTemporal

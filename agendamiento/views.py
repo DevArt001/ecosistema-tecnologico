@@ -159,3 +159,88 @@ def convertir_en_orden(request, cita_id):
         'orden_id': orden.id,
         'orden_codigo': orden.codigo,
     }, status=201)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generar_link_temporal(request, orden_id):
+    try:
+        orden = OrdenTrabajo.objects.get(pk=orden_id)
+    except OrdenTrabajo.DoesNotExist:
+        return Response({'error': 'Orden no encontrada'}, status=404)
+    
+    from .models import LinkTemporal
+    link = LinkTemporal.crear_link(orden, dias=15)
+    
+    # TODO: Enviar a WhatsApp
+    url_portal = f'https://tu-dominio.com/portal/{link.token}'
+    
+    return Response({
+        'mensaje': 'Link generado exitosamente',
+        'token': link.token,
+        'url': url_portal,
+        'caduca_en': link.fecha_expiracion,
+        'dias': link.dias_restantes(),
+    }, status=201)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def acceder_portal_cliente(request, token):
+    from .models import LinkTemporal
+    try:
+        link = LinkTemporal.objects.get(token=token)
+    except LinkTemporal.DoesNotExist:
+        return Response({'error': 'Link inválido o expirado'}, status=404)
+    
+    if not link.esta_vigente():
+        return Response({'error': 'Este link ha expirado'}, status=401)
+    
+    orden = link.orden
+    return Response({
+        'cliente': ClientePublicoSerializer(orden.cliente).data,
+        'vehiculo': VehiculoPublicoSerializer(orden.vehiculo).data,
+        'orden': CitaSerializer(orden).data if hasattr(orden, 'cita_origen') else {},
+        'dias_restantes': link.dias_restantes(),
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generar_link_temporal(request, orden_id):
+    from .models_portal import LinkTemporal
+    from servicios.models import OrdenTrabajo
+    try:
+        orden = OrdenTrabajo.objects.get(pk=orden_id)
+    except OrdenTrabajo.DoesNotExist:
+        return Response({'error': 'Orden no encontrada'}, status=404)
+    
+    link = LinkTemporal.crear_link(orden, dias=15)
+    
+    return Response({
+        'mensaje': 'Link generado exitosamente',
+        'token': link.token,
+        'url': f'/portal/{link.token}',
+        'caduca_en': link.fecha_expiracion,
+        'dias': link.dias_restantes(),
+    }, status=201)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def acceder_portal_cliente(request, token):
+    from .models_portal import LinkTemporal
+    try:
+        link = LinkTemporal.objects.get(token=token)
+    except LinkTemporal.DoesNotExist:
+        return Response({'error': 'Link inválido o expirado'}, status=404)
+    
+    if not link.esta_vigente():
+        return Response({'error': 'Este link ha expirado'}, status=401)
+    
+    orden = link.orden
+    from servicios.serializers import OrdenTrabajoSerializer
+    
+    return Response({
+        'cliente': ClientePublicoSerializer(orden.cliente).data,
+        'vehiculo': VehiculoPublicoSerializer(orden.vehiculo).data,
+        'orden': OrdenTrabajoSerializer(orden).data,
+        'dias_restantes': link.dias_restantes(),
+        'token': token,
+    })

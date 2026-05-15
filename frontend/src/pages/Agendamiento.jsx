@@ -70,24 +70,12 @@ export default function Agendamiento() {
         const r = await agendamientoAPI.listarCitas({ fecha: diaSelec })
         setCitasDia(r.data.results || r.data)
       }
-      setTimeout(() => {
-        navigate("/ordenes")
-      }, 1500)
+      setTimeout(() => navigate("/ordenes"), 1500)
     } catch (e) {
-      const msg = e.response?.data?.error || "Error al convertir en orden"
-      if (e.response?.data?.orden_id) {
-        setMensajeExito(`⚠️ Ya existe una orden para esta cita`)
-      } else {
-        setMensajeExito(`❌ ${msg}`)
-      }
+      setMensajeExito(`❌ ${e.response?.data?.error || "Error"}`)
     }
     setConvirtiendo(null)
     setTimeout(() => setMensajeExito(""), 3000)
-  }
-
-  const eliminarFestivo = async (id) => {
-    await agendamientoAPI.eliminarFestivo(id)
-    cargar()
   }
 
   const crearFestivo = async () => {
@@ -123,12 +111,11 @@ export default function Agendamiento() {
 
   return (
     <div>
-      {/* Mensaje éxito/error */}
       {mensajeExito && (
         <div style={{
           position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
-          background: mensajeExito.startsWith("✅") ? "#065F46" : mensajeExito.startsWith("⚠️") ? "#451A03" : "#3B0A0A",
-          border: `1px solid ${mensajeExito.startsWith("✅") ? "#10B981" : mensajeExito.startsWith("⚠️") ? "#F59E0B" : "#EF4444"}`,
+          background: mensajeExito.startsWith("✅") ? "#065F46" : "#3B0A0A",
+          border: `1px solid ${mensajeExito.startsWith("✅") ? "#10B981" : "#EF4444"}`,
           color: "white", borderRadius: "8px", padding: "12px 20px", fontSize: "13px", fontWeight: "500"
         }}>{mensajeExito}</div>
       )}
@@ -162,7 +149,6 @@ export default function Agendamiento() {
         </div>
       </div>
 
-      {/* Citas especiales pendientes */}
       {citasEspecialesPendientes.length > 0 && (
         <div style={{ background: "#451A03", border: "1px solid #F59E0B", borderRadius: "12px",
           padding: "1rem 1.25rem", marginBottom: "1.5rem" }}>
@@ -194,7 +180,6 @@ export default function Agendamiento() {
         </div>
       )}
 
-      {/* Vista Calendario */}
       {vista === "calendario" && (
         <div style={{ display: "grid", gridTemplateColumns: diaSelec ? "1fr 340px" : "1fr", gap: "1.5rem" }}>
           <div className="card" style={{ padding: "1.5rem" }}>
@@ -242,27 +227,12 @@ export default function Agendamiento() {
                         </span>
                       </div>
                     )}
-                    {d.especiales.length > 0 && (
-                      <div style={{ marginTop: "2px" }}>
-                        <span style={{ background: "#F59E0B", color: "#0D1117", borderRadius: "10px",
-                          padding: "1px 6px", fontSize: "10px", fontWeight: "600" }}>
-                          ⚡{d.especiales.length}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 )
               })}
             </div>
-
-            <div style={{ marginTop: "1rem", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "11px", color: "var(--text3)" }}>🟢 Citas normales</span>
-              <span style={{ fontSize: "11px", color: "var(--text3)" }}>⚡ Citas especiales</span>
-              <span style={{ fontSize: "11px", color: "#4B5563" }}>⬛ No laboral / Festivo</span>
-            </div>
           </div>
 
-          {/* Panel detalle del día */}
           {diaSelec && (
             <div className="card" style={{ padding: "1.25rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
@@ -280,24 +250,14 @@ export default function Agendamiento() {
                       <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "13px" }}>
                         {c.hora?.slice(0,5)} — {c.cliente_nombre}
                       </span>
-                      {c.tipo === "especial" && (
-                        <span style={{ fontSize: "10px", color: "#F59E0B" }}>⚡</span>
-                      )}
                     </div>
-                    <div style={{ color: "var(--text3)", fontSize: "11px", marginBottom: "6px" }}>
+                    <div style={{ color: "var(--text3)", fontSize: "11px", marginBottom: "8px" }}>
                       {c.vehiculo_placa} · {c.vehiculo_marca}
                     </div>
-                    {c.descripcion && (
-                      <div style={{ color: "#9CA3AF", fontSize: "11px", marginBottom: "8px", fontStyle: "italic" }}>
-                        "{c.descripcion}"
-                      </div>
-                    )}
-
-                    {/* Estado + cambio */}
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                       <span className="badge" style={{
-                        background: estadoBadge[c.estado]?.bg || "#1F2937",
-                        color: estadoBadge[c.estado]?.color || "#9CA3AF",
+                        background: estadoBadge[c.estado]?.bg,
+                        color: estadoBadge[c.estado]?.color,
                         fontSize: "10px"
                       }}>{c.estado}</span>
                       <select value={c.estado} onChange={e => cambiarEstadoCita(c.id, e.target.value)}
@@ -311,7 +271,6 @@ export default function Agendamiento() {
                       </select>
                     </div>
 
-                    {/* Botón convertir en orden — SOLO si está COMPLETADA */}
                     {c.estado === "completada" && !c.orden && (
                       <button
                         onClick={() => handleConvertirOrden(c.id)}
@@ -326,10 +285,6 @@ export default function Agendamiento() {
                           fontSize: "12px",
                           fontWeight: "600",
                           cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
                         }}>
                         {convirtiendo === c.id ? "Creando orden..." : "🔧 Convertir en Orden de Trabajo"}
                       </button>
@@ -350,7 +305,6 @@ export default function Agendamiento() {
         </div>
       )}
 
-      {/* Vista Lista */}
       {vista === "lista" && (
         <div className="card">
           {loading ? (
@@ -377,8 +331,8 @@ export default function Agendamiento() {
                     </td>
                     <td>
                       <select value={c.estado} onChange={e => cambiarEstadoCita(c.id, e.target.value)}
-                        style={{ background: estadoBadge[c.estado]?.bg || "#1F2937",
-                          color: estadoBadge[c.estado]?.color || "#9CA3AF",
+                        style={{ background: estadoBadge[c.estado]?.bg,
+                          color: estadoBadge[c.estado]?.color,
                           border: "none", borderRadius: "12px", padding: "3px 8px",
                           fontSize: "11px", cursor: "pointer" }}>
                         <option value="pendiente">Pendiente</option>
@@ -411,7 +365,6 @@ export default function Agendamiento() {
         </div>
       )}
 
-      {/* Modal festivo */}
       {showFestivo && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
@@ -426,7 +379,6 @@ export default function Agendamiento() {
               style={{ width: "100%", marginBottom: "0.75rem" }}>
               <option value="festivo">Festivo nacional</option>
               <option value="bloqueado">Día bloqueado</option>
-              <option value="especial">Horario especial</option>
             </select>
             <input placeholder="Descripción" value={formFestivo.descripcion}
               onChange={e => setFormFestivo({...formFestivo, descripcion: e.target.value})}
