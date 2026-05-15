@@ -1,212 +1,117 @@
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.utils import timezone
-import datetime
-from django.db.models import Count
 from .models import Cita, ConfigTaller, DiaEspecial
-from .serializers import CitaSerializer, ConfigTallerSerializer, DiaEspecialSerializer, ClientePublicoSerializer, VehiculoPublicoSerializer
+from .serializers import CitaSerializer, ConfigTallerSerializer, DiaEspecialSerializer
 from clientes.models import Cliente, Vehiculo
 
 class CitaViewSet(viewsets.ModelViewSet):
-    queryset           = Cita.objects.all()
-    serializer_class   = CitaSerializer
-    permission_classes = [IsAuthenticated]
-    def get_queryset(self):
-        qs   = Cita.objects.all()
-        fecha = self.request.query_params.get('fecha')
-        mes   = self.request.query_params.get('mes')
-        anio  = self.request.query_params.get('anio')
-        if fecha: qs = qs.filter(fecha=fecha)
-        if mes and anio: qs = qs.filter(fecha__month=mes, fecha__year=anio)
-        return qs
+    queryset = Cita.objects.all()
+    serializer_class = CitaSerializer
 
 class ConfigTallerViewSet(viewsets.ModelViewSet):
-    queryset           = ConfigTaller.objects.all()
-    serializer_class   = ConfigTallerSerializer
-    permission_classes = [IsAuthenticated]
+    queryset = ConfigTaller.objects.all()
+    serializer_class = ConfigTallerSerializer
 
 class DiaEspecialViewSet(viewsets.ModelViewSet):
-    queryset           = DiaEspecial.objects.all()
-    serializer_class   = DiaEspecialSerializer
-    permission_classes = [IsAuthenticated]
+    queryset = DiaEspecial.objects.all()
+    serializer_class = DiaEspecialSerializer
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def buscar_cliente(request):
-    documento = request.data.get('documento','').strip()
-    if not documento:
-        return Response({'error':'Ingresa tu numero de documento'}, status=400)
+    documento = request.data.get('documento')
     try:
-        cliente   = Cliente.objects.get(documento=documento)
-        vehiculos = Vehiculo.objects.filter(cliente=cliente)
-        return Response({'existe':True,'cliente':ClientePublicoSerializer(cliente).data,'vehiculos':VehiculoPublicoSerializer(vehiculos,many=True).data})
+        cliente = Cliente.objects.get(documento=documento)
+        return Response({'id': cliente.id, 'nombre': cliente.nombre, 'telefono': cliente.telefono})
     except Cliente.DoesNotExist:
-        return Response({'existe':False})
+        return Response({'error': 'Cliente no encontrado'}, status=404)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def registrar_cliente_publico(request):
-    s = ClientePublicoSerializer(data=request.data)
-    if s.is_valid():
-        c = s.save()
-        return Response({'cliente':ClientePublicoSerializer(c).data}, status=201)
-    return Response(s.errors, status=400)
+    cliente = Cliente.objects.create(
+        nombre=request.data.get('nombre'),
+        documento=request.data.get('documento'),
+        telefono=request.data.get('telefono'),
+        correo=request.data.get('correo', ''),
+    )
+    return Response({'id': cliente.id, 'nombre': cliente.nombre}, status=201)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def registrar_vehiculo_publico(request):
-    s = VehiculoPublicoSerializer(data=request.data)
-    if s.is_valid():
-        v = s.save()
-        return Response({'vehiculo':VehiculoPublicoSerializer(v).data}, status=201)
-    return Response(s.errors, status=400)
+    cliente_id = request.data.get('cliente_id')
+    vehiculo = Vehiculo.objects.create(
+        cliente_id=cliente_id,
+        placa=request.data.get('placa'),
+        marca=request.data.get('marca'),
+        linea=request.data.get('linea'),
+        modelo=request.data.get('modelo'),
+        tipo=request.data.get('tipo', 'auto'),
+    )
+    return Response({'id': vehiculo.id, 'placa': vehiculo.placa}, status=201)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def disponibilidad_mes(request):
-    mes  = int(request.query_params.get('mes',  timezone.now().month))
-    anio = int(request.query_params.get('anio', timezone.now().year))
-    config    = ConfigTaller.objects.first()
-    max_citas = config.max_citas_hora if config else 4
-    dias_especiales = DiaEspecial.objects.filter(fecha__month=mes, fecha__year=anio)
-    bloqueados = set(str(d.fecha) for d in dias_especiales if d.tipo in ['festivo','bloqueado'])
-    citas_mes  = Cita.objects.filter(fecha__month=mes,fecha__year=anio,estado__in=['pendiente','confirmada']).values('fecha','hora').annotate(total=Count('id'))
-    ocupacion  = {}
-    for c in citas_mes:
-        key = str(c['fecha'])
-        if key not in ocupacion: ocupacion[key] = {}
-        hora_str = str(c['hora']) if isinstance(c['hora'], datetime.time) else c['hora']
-        ocupacion[key][hora_str] = c['total']
-    return Response({'mes':mes,'anio':anio,'max_citas_hora':max_citas,'bloqueados':list(bloqueados),'ocupacion':ocupacion,'config':ConfigTallerSerializer(config).data if config else None,'dias_especiales':DiaEspecialSerializer(dias_especiales,many=True).data})
+    mes = request.query_params.get('mes')
+    anio = request.query_params.get('anio')
+    config = ConfigTaller.objects.first()
+    
+    diasEspeciales = DiaEspecial.objects.filter(fecha__month=mes, fecha__year=anio)
+    return Response({
+        'dias_especiales': DiaEspecialSerializer(diasEspeciales, many=True).data,
+        'config': ConfigTallerSerializer(config).data if config else {}
+    })
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def horas_disponibles(request):
-    fecha_str = request.query_params.get('fecha')
-    if not fecha_str: return Response({'error':'Fecha requerida'}, status=400)
-    fecha  = datetime.date.fromisoformat(fecha_str)
+    fecha = request.query_params.get('fecha')
     config = ConfigTaller.objects.first()
-    es_sabado = fecha.weekday() == 5
-    if es_sabado and config:
-        apertura = config.sabado_apertura
-        cierre   = config.sabado_cierre
-    elif config:
-        apertura = config.hora_apertura
-        cierre   = config.hora_cierre
-    else:
-        apertura = datetime.time(8,0)
-        cierre   = datetime.time(18,0)
-    max_citas = config.max_citas_hora if config else 4
-    horas = []
-    h = datetime.datetime.combine(fecha, apertura)
-    fin = datetime.datetime.combine(fecha, cierre)
-    while h < fin:
-        ht = h.time()
-        ocupadas = Cita.objects.filter(fecha=fecha,hora=ht,estado__in=['pendiente','confirmada']).count()
-        horas.append({'hora':ht.strftime('%H:%M'),'disponibles':max_citas-ocupadas,'ocupadas':ocupadas})
-        h += datetime.timedelta(hours=1)
-    return Response({'fecha':fecha_str,'horas':horas})
+    
+    citas = Cita.objects.filter(fecha=fecha, estado__in=['pendiente', 'confirmada'])
+    ocupadas = citas.count()
+    disponibles = (config.max_citas_hora if config else 4) - ocupadas
+    
+    return Response({'disponibles': max(0, disponibles), 'ocupadas': ocupadas})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def crear_cita_publica(request):
-    s = CitaSerializer(data=request.data)
-    if s.is_valid():
-        cita = s.save()
-        return Response({'mensaje':'Cita agendada exitosamente!','cita':CitaSerializer(cita).data}, status=201)
-    return Response(s.errors, status=400)
+    cita = Cita.objects.create(
+        cliente_id=request.data.get('cliente_id'),
+        vehiculo_id=request.data.get('vehiculo_id'),
+        fecha=request.data.get('fecha'),
+        hora=request.data.get('hora'),
+        tipo='normal',
+        estado='pendiente',
+        descripcion=request.data.get('descripcion', ''),
+    )
+    return Response(CitaSerializer(cita).data, status=201)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def solicitar_cita_especial(request):
-    data = request.data.copy()
-    data['tipo']   = 'especial'
-    data['estado'] = 'pendiente'
-    s = CitaSerializer(data=data)
-    if s.is_valid():
-        cita = s.save()
-        return Response({'mensaje':'Solicitud enviada. El taller la revisara y te confirmara.','cita':CitaSerializer(cita).data}, status=201)
-    return Response(s.errors, status=400)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def convertir_en_orden(request, cita_id):
-    try:
-        cita = Cita.objects.get(pk=cita_id)
-    except Cita.DoesNotExist:
-        return Response({'error': 'Cita no encontrada'}, status=404)
-
-    if cita.orden:
-        return Response({'error': 'Esta cita ya tiene una orden generada', 'orden_id': cita.orden.id}, status=400)
-
-    from servicios.models import OrdenTrabajo
-    orden = OrdenTrabajo.objects.create(
-        cliente=cita.cliente,
-        vehiculo=cita.vehiculo,
-        descripcion=cita.descripcion or 'Orden generada desde cita agendada',
-        tecnico=cita.tecnico,
-        estado='recibido',
-        prioridad='normal',
+    cita = Cita.objects.create(
+        cliente_id=request.data.get('cliente_id'),
+        vehiculo_id=request.data.get('vehiculo_id'),
+        fecha=request.data.get('fecha'),
+        hora=request.data.get('hora'),
+        tipo='especial',
+        estado='pendiente',
+        descripcion=request.data.get('descripcion', ''),
     )
-    cita.orden  = orden
-    cita.estado = 'completada'
-    cita.save()
-
-    return Response({
-        'mensaje': 'Orden de trabajo creada exitosamente',
-        'orden_id': orden.id,
-        'orden_codigo': orden.codigo,
-    }, status=201)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def generar_link_temporal(request, orden_id):
-    try:
-        orden = OrdenTrabajo.objects.get(pk=orden_id)
-    except OrdenTrabajo.DoesNotExist:
-        return Response({'error': 'Orden no encontrada'}, status=404)
-    
-    from .models import LinkTemporal
-    link = LinkTemporal.crear_link(orden, dias=15)
-    
-    # TODO: Enviar a WhatsApp
-    url_portal = f'https://tu-dominio.com/portal/{link.token}'
-    
-    return Response({
-        'mensaje': 'Link generado exitosamente',
-        'token': link.token,
-        'url': url_portal,
-        'caduca_en': link.fecha_expiracion,
-        'dias': link.dias_restantes(),
-    }, status=201)
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def acceder_portal_cliente(request, token):
-    from .models import LinkTemporal
-    try:
-        link = LinkTemporal.objects.get(token=token)
-    except LinkTemporal.DoesNotExist:
-        return Response({'error': 'Link inválido o expirado'}, status=404)
-    
-    if not link.esta_vigente():
-        return Response({'error': 'Este link ha expirado'}, status=401)
-    
-    orden = link.orden
-    return Response({
-        'cliente': ClientePublicoSerializer(orden.cliente).data,
-        'vehiculo': VehiculoPublicoSerializer(orden.vehiculo).data,
-        'orden': CitaSerializer(orden).data if hasattr(orden, 'cita_origen') else {},
-        'dias_restantes': link.dias_restantes(),
-    })
+    return Response(CitaSerializer(cita).data, status=201)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def generar_link_temporal(request, orden_id):
     from .models_portal import LinkTemporal
     from servicios.models import OrdenTrabajo
+    
     try:
         orden = OrdenTrabajo.objects.get(pk=orden_id)
     except OrdenTrabajo.DoesNotExist:
@@ -217,7 +122,7 @@ def generar_link_temporal(request, orden_id):
     return Response({
         'mensaje': 'Link generado exitosamente',
         'token': link.token,
-        'url': f'/portal/{link.token}',
+        'url': '/portal/' + link.token,
         'caduca_en': link.fecha_expiracion,
         'dias': link.dias_restantes(),
     }, status=201)
@@ -226,6 +131,8 @@ def generar_link_temporal(request, orden_id):
 @permission_classes([AllowAny])
 def acceder_portal_cliente(request, token):
     from .models_portal import LinkTemporal
+    from servicios.serializers import OrdenTrabajoConDetallesSerializer
+    
     try:
         link = LinkTemporal.objects.get(token=token)
     except LinkTemporal.DoesNotExist:
@@ -235,12 +142,11 @@ def acceder_portal_cliente(request, token):
         return Response({'error': 'Este link ha expirado'}, status=401)
     
     orden = link.orden
-    from servicios.serializers import OrdenTrabajoSerializer
+    datos = OrdenTrabajoConDetallesSerializer(orden).data
     
     return Response({
-        'cliente': ClientePublicoSerializer(orden.cliente).data,
-        'vehiculo': VehiculoPublicoSerializer(orden.vehiculo).data,
-        'orden': OrdenTrabajoSerializer(orden).data,
+        'cliente': datos.get('cliente'),
+        'vehiculo': datos.get('vehiculo'),
+        'orden': datos,
         'dias_restantes': link.dias_restantes(),
-        'token': token,
     })

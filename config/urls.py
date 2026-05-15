@@ -22,6 +22,7 @@ router.register(r'gastos',       GastoViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/servicios/', include('servicios.urls')),
     path('api/agendamiento/', include('agendamiento.urls')),
     path('api/auth/login/',   CustomTokenObtainPairView.as_view(),  name='token_obtain_pair'),
     path('api/auth/refresh/', TokenRefreshView.as_view(),           name='token_refresh'),

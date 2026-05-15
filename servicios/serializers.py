@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import OrdenTrabajo, FotoProcesoOrden, PasoProcesoOrden
+from clientes.models import Cliente, Vehiculo
 
 class FotoProcesoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,8 +25,29 @@ class OrdenTrabajoConDetallesSerializer(serializers.ModelSerializer):
     fotos = FotoProcesoSerializer(source='fotos_proceso', many=True, read_only=True)
     cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
     vehiculo_placa = serializers.CharField(source='vehiculo.placa', read_only=True)
+    cliente = serializers.SerializerMethodField()
+    vehiculo = serializers.SerializerMethodField()
     
     class Meta:
         model = OrdenTrabajo
         fields = ['id', 'codigo', 'cliente', 'cliente_nombre', 'vehiculo', 'vehiculo_placa',
                   'estado', 'descripcion', 'trabajo_realizado', 'costo_final', 'fecha_ingreso', 'pasos', 'fotos']
+    
+    def get_cliente(self, obj):
+        return {
+            'id': obj.cliente.id,
+            'nombre': obj.cliente.nombre,
+            'documento': obj.cliente.documento,
+            'telefono': obj.cliente.telefono,
+            'correo': obj.cliente.correo,
+        }
+    
+    def get_vehiculo(self, obj):
+        return {
+            'id': obj.vehiculo.id,
+            'placa': obj.vehiculo.placa,
+            'marca': obj.vehiculo.marca,
+            'linea': obj.vehiculo.linea,
+            'modelo': obj.vehiculo.modelo,
+            'tipo': obj.vehiculo.tipo,
+        }

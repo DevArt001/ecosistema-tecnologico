@@ -18,6 +18,23 @@ class OrdenTrabajoViewSet(viewsets.ModelViewSet):
     search_fields    = ['codigo', 'cliente__nombre', 'vehiculo__placa']
     ordering_fields  = ['fecha_ingreso', 'estado', 'prioridad']
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def obtener_orden_con_proceso(request, orden_id):
+    try:
+        orden = OrdenTrabajo.objects.get(pk=orden_id)
+    except OrdenTrabajo.DoesNotExist:
+        return Response({'error': 'Orden no encontrada'}, status=404)
+    
+    pasos = orden.pasos_proceso.all()
+    fotos = orden.fotos_proceso.all()
+    
+    return Response({
+        'orden': OrdenTrabajoSerializer(orden).data,
+        'pasos': PasoProcesoSerializer(pasos, many=True).data,
+        'fotos': FotoProcesoSerializer(fotos, many=True).data,
+    })
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def agregar_paso_proceso(request, orden_id):
@@ -29,7 +46,7 @@ def agregar_paso_proceso(request, orden_id):
     data = request.data
     paso = PasoProcesoOrden.objects.create(
         orden=orden,
-        numero=data.get('numero'),
+        numero=data.get('numero', orden.pasos_proceso.count() + 1),
         titulo=data.get('titulo'),
         descripcion=data.get('descripcion'),
         estado=data.get('estado', 'pendiente'),
@@ -53,13 +70,3 @@ def agregar_foto_proceso(request, orden_id):
     )
     
     return Response(FotoProcesoSerializer(foto).data, status=201)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def obtener_orden_detalles(request, orden_id):
-    try:
-        orden = OrdenTrabajo.objects.get(pk=orden_id)
-    except OrdenTrabajo.DoesNotExist:
-        return Response({'error': 'Orden no encontrada'}, status=404)
-    
-    return Response(OrdenTrabajoConDetallesSerializer(orden).data)
