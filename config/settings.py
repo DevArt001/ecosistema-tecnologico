@@ -91,7 +91,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'taller_db'),
         'USER': os.environ.get('DB_USER', 'taller_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'taller2026'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'cabra2413..'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }

@@ -24,7 +24,11 @@ services:
     depends_on:
       - taller_db
     environment:
-      DATABASE_URL: postgresql://taller:taller123@taller_db:5432/taller
+      DB_NAME: taller
+      DB_USER: taller
+      DB_PASSWORD: taller123
+      DB_HOST: taller_db
+      DB_PORT: 5432
     networks:
       - taller_net
 
