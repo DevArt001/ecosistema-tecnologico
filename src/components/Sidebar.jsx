@@ -12,7 +12,7 @@ const menu = [
 
 const enlaces = [
   { url: "https://app.armracing.com/public", label: "Pagina Publica", icon: "🌐" },
-  { url: "https://app.armracing.com/agendamiento-publico", label: "Agendamiento", icon: "📅" },
+  { url: "https://app.armracing.com/agendar", label: "Agendamiento", icon: "📅" },
 ]
 
 export default function Sidebar({ onLogout, onClose }) {

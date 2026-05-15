@@ -44,9 +44,12 @@ services:
       BACKEND_HOST: taller_backend
     networks:
       - taller_net
+    volumes:
+      - node_modules_cache:/app/node_modules
 
 volumes:
   postgres_data:
+  node_modules_cache:
 
 networks:
   taller_net:
