@@ -3,10 +3,11 @@ import { clientesAPI } from "../services/api"
 import FormCliente from "../components/FormCliente"
 
 export default function Clientes() {
-  const [clientes, setClientes]         = useState([])
-  const [loading, setLoading]           = useState(true)
-  const [buscar, setBuscar]             = useState("")
-  const [showForm, setShowForm]         = useState(false)
+  const [clientes, setClientes]           = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [error, setError]                 = useState(null)
+  const [buscar, setBuscar]               = useState("")
+  const [showForm, setShowForm]           = useState(false)
   const [clienteEditar, setClienteEditar] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
 
@@ -14,10 +15,11 @@ export default function Clientes() {
 
   const cargarClientes = () => {
     setLoading(true)
-    clientesAPI.listar().then(res => {
-      setClientes(res.data.results || res.data)
-      setLoading(false)
-    })
+    setError(null)
+    clientesAPI.listar()
+      .then(res => setClientes(res.data.results || res.data))
+      .catch(err => setError(err.mensaje || "Error al cargar clientes"))
+      .finally(() => setLoading(false))
   }
 
   const handleEditar = (cliente) => {
@@ -26,9 +28,13 @@ export default function Clientes() {
   }
 
   const handleEliminar = async (id) => {
-    await clientesAPI.eliminar(id)
-    setConfirmDelete(null)
-    cargarClientes()
+    try {
+      await clientesAPI.eliminar(id)
+      setConfirmDelete(null)
+      cargarClientes()
+    } catch (err) {
+      alert(err.mensaje || "Error al eliminar cliente")
+    }
   }
 
   const filtrados = clientes.filter(c =>
@@ -61,7 +67,8 @@ export default function Clientes() {
               ¿Eliminar cliente?
             </div>
             <div style={{ color: "var(--text3)", fontSize: "13px", marginBottom: "1.5rem" }}>
-              Esta acción no se puede deshacer. Se eliminará <strong style={{ color: "var(--text)" }}>{confirmDelete.nombre}</strong> permanentemente.
+              Esta acción no se puede deshacer. Se eliminará{" "}
+              <strong style={{ color: "var(--text)" }}>{confirmDelete.nombre}</strong> permanentemente.
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
               <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>
@@ -102,6 +109,22 @@ export default function Clientes() {
         </button>
       </div>
 
+      {error && (
+        <div style={{
+          background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
+          padding: "12px 16px", marginBottom: "1rem",
+          color: "#FCA5A5", fontSize: "13px",
+          display: "flex", justifyContent: "space-between", alignItems: "center"
+        }}>
+          {error}
+          <button onClick={cargarClientes}
+            style={{ background: "none", border: "none", color: "#FCA5A5",
+              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
       <div className="card">
         <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
           <input value={buscar} onChange={e => setBuscar(e.target.value)}
@@ -110,6 +133,10 @@ export default function Clientes() {
         </div>
         {loading ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
+        ) : filtrados.length === 0 ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
+            {buscar ? "No se encontraron clientes con ese criterio" : "No hay clientes registrados aún"}
+          </div>
         ) : (
           <table>
             <thead>
@@ -122,7 +149,7 @@ export default function Clientes() {
               {filtrados.map(c => (
                 <tr key={c.id}>
                   <td style={{ color: "var(--text)", fontWeight: "500" }}>{c.nombre}</td>
-                  <td style={{ fontFamily: "DM Mono, monospace", fontSize: "12px" }}>{c.documento}</td>
+                  <td style={{ fontFamily: "monospace", fontSize: "12px" }}>{c.documento}</td>
                   <td>{c.telefono}</td>
                   <td>{c.ciudad || "—"}</td>
                   <td>
@@ -134,20 +161,16 @@ export default function Clientes() {
                   <td style={{ color: "var(--green)" }}>{c.puntos} pts</td>
                   <td>
                     <div style={{ display: "flex", gap: "6px" }}>
-                      <button
-                        onClick={() => handleEditar(c)}
-                        style={{
-                          background: "#1E3A5F", border: "1px solid #3B82F6",
-                          color: "#3B82F6", borderRadius: "6px",
-                          padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                        }}>✏️</button>
-                      <button
-                        onClick={() => setConfirmDelete(c)}
-                        style={{
-                          background: "#3B0A0A", border: "1px solid #EF4444",
-                          color: "#EF4444", borderRadius: "6px",
-                          padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                        }}>🗑️</button>
+                      <button onClick={() => handleEditar(c)} style={{
+                        background: "#1E3A5F", border: "1px solid #3B82F6",
+                        color: "#3B82F6", borderRadius: "6px",
+                        padding: "4px 10px", fontSize: "12px", cursor: "pointer"
+                      }}>✏️</button>
+                      <button onClick={() => setConfirmDelete(c)} style={{
+                        background: "#3B0A0A", border: "1px solid #EF4444",
+                        color: "#EF4444", borderRadius: "6px",
+                        padding: "4px 10px", fontSize: "12px", cursor: "pointer"
+                      }}>🗑️</button>
                     </div>
                   </td>
                 </tr>

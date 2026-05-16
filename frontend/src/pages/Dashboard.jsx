@@ -23,10 +23,8 @@ function StatCard({ titulo, valor, color, icono, sub }) {
           {icono}
         </div>
       </div>
-      <div style={{ marginTop: "16px", height: "3px", borderRadius: "2px",
-        background: "var(--border2)" }}>
-        <div style={{ height: "100%", borderRadius: "2px",
-          background: color, width: "60%" }} />
+      <div style={{ marginTop: "16px", height: "3px", borderRadius: "2px", background: "var(--border2)" }}>
+        <div style={{ height: "100%", borderRadius: "2px", background: color, width: "60%" }} />
       </div>
     </div>
   )
@@ -43,7 +41,7 @@ function OrdenRow({ orden }) {
   const s = estadoColor[orden.estado] || estadoColor.recibido
   return (
     <tr>
-      <td style={{ color: "var(--text)", fontWeight: "500", fontFamily: "DM Mono, monospace",
+      <td style={{ color: "var(--text)", fontWeight: "500", fontFamily: "monospace",
         fontSize: "12px" }}>{orden.codigo}</td>
       <td>{orden.cliente_nombre || "—"}</td>
       <td>{orden.vehiculo_placa || "—"}</td>
@@ -60,11 +58,16 @@ function OrdenRow({ orden }) {
 }
 
 export default function Dashboard() {
-  const [stats, setStats]   = useState({ clientes: 0, ordenes: 0, productos: 0, facturas: 0 })
+  const [stats, setStats]     = useState({ clientes: 0, ordenes: 0, productos: 0, facturas: 0 })
   const [ordenes, setOrdenes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
 
-  useEffect(() => {
+  useEffect(() => { cargar() }, [])
+
+  const cargar = () => {
+    setLoading(true)
+    setError(null)
     Promise.all([
       clientesAPI.listar(),
       ordenesAPI.listar(),
@@ -79,24 +82,40 @@ export default function Dashboard() {
         facturas:  (f.data.results || f.data).length,
       })
       setOrdenes(ords.slice(0, 5))
-      setLoading(false)
-    })
-  }, [])
+    }).catch(err => {
+      setError(err.mensaje || "Error al cargar el dashboard")
+    }).finally(() => setLoading(false))
+  }
 
   return (
     <div>
-      {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
           Dashboard
         </h1>
         <p style={{ color: "var(--text3)", fontSize: "13px" }}>
-          {new Date().toLocaleDateString("es-CO", { weekday: "long", year: "numeric",
-            month: "long", day: "numeric" })}
+          {new Date().toLocaleDateString("es-CO", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric"
+          })}
         </p>
       </div>
 
-      {/* Stats */}
+      {error && (
+        <div style={{
+          background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
+          padding: "12px 16px", marginBottom: "1.5rem",
+          color: "#FCA5A5", fontSize: "13px",
+          display: "flex", justifyContent: "space-between", alignItems: "center"
+        }}>
+          {error}
+          <button onClick={cargar}
+            style={{ background: "none", border: "none", color: "#FCA5A5",
+              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "2rem" }}>
         <StatCard titulo="Clientes"  valor={stats.clientes}  color="#10B981" icono="👥" sub="Total registrados" />
         <StatCard titulo="Órdenes"   valor={stats.ordenes}   color="#8B5CF6" icono="🔧" sub="En el sistema" />
@@ -104,21 +123,18 @@ export default function Dashboard() {
         <StatCard titulo="Facturas"  valor={stats.facturas}  color="#3B82F6" icono="💰" sub="Emitidas" />
       </div>
 
-      {/* Órdenes recientes */}
       <div className="card">
         <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--border)",
           display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
             <div style={{ fontWeight: "600", color: "var(--text)" }}>Órdenes recientes</div>
             <div style={{ fontSize: "12px", color: "var(--text3)", marginTop: "2px" }}>
-              Últimas órdenes de trabajo
+              Últimas 5 órdenes de trabajo
             </div>
           </div>
         </div>
         {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
-            Cargando...
-          </div>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
         ) : ordenes.length === 0 ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
             No hay órdenes todavía
@@ -127,11 +143,7 @@ export default function Dashboard() {
           <table>
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Cliente</th>
-                <th>Placa</th>
-                <th>Estado</th>
-                <th>Costo</th>
+                <th>Código</th><th>Cliente</th><th>Placa</th><th>Estado</th><th>Costo</th>
               </tr>
             </thead>
             <tbody>
