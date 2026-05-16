@@ -1,22 +1,22 @@
 import axios from "axios"
 
-// Detecta si es localhost/IP o Cloudflare
-const getBackendURL = () => {
+const getBaseURL = () => {
+  const protocol = window.location.protocol
   const hostname = window.location.hostname
+  const port = window.location.port
   
-  // Si es localhost o 192.168.x.x, apunta al backend local
+  // Si es URL local (192.168 o localhost), apunta al backend local puerto 8000
   if (hostname === 'localhost' || hostname.startsWith('192.')) {
-    return 'http://192.168.0.8:8000'
+    return `${protocol}//192.168.0.8:8000/api`
   }
   
-  // Si es Cloudflare o dominio externo, usa mismo host
-  return window.location.origin
+  // Si es Cloudflare o cualquier otro dominio, usa protocolo actual
+  const currentPort = port ? `:${port}` : ''
+  return `${protocol}//${hostname}${currentPort}/api`
 }
 
-const BACKEND_URL = getBackendURL()
-
 const API = axios.create({
-  baseURL: 'http://192.168.0.8:8000',
+  baseURL: getBaseURL(),
   headers: { "Content-Type": "application/json" }
 })
 

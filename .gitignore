@@ -1,6 +1,22 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
 venv/
 *.sqlite3
 .env
+
+# Node
+frontend/node_modules/
+node_modules/
+
+# Media uploads (no van en git)
+ordenes/
+media/
+
+# Build
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
