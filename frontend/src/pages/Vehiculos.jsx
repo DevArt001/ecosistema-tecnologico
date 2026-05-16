@@ -3,28 +3,35 @@ import { vehiculosAPI } from "../services/api"
 import FormVehiculo from "../components/FormVehiculo"
 
 export default function Vehiculos() {
-  const [vehiculos, setVehiculos]         = useState([])
-  const [loading, setLoading]             = useState(true)
-  const [buscar, setBuscar]               = useState("")
-  const [showForm, setShowForm]           = useState(false)
+  const [vehiculos, setVehiculos]           = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [error, setError]                   = useState(null)
+  const [buscar, setBuscar]                 = useState("")
+  const [showForm, setShowForm]             = useState(false)
   const [vehiculoEditar, setVehiculoEditar] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [confirmDelete, setConfirmDelete]   = useState(null)
 
   useEffect(() => { cargarVehiculos() }, [])
 
   const cargarVehiculos = () => {
     setLoading(true)
-    vehiculosAPI.listar().then(res => {
-      setVehiculos(res.data.results || res.data)
-      setLoading(false)
-    })
+    setError(null)
+    vehiculosAPI.listar()
+      .then(res => setVehiculos(res.data.results || res.data))
+      .catch(err => setError(err.mensaje || "Error al cargar vehículos"))
+      .finally(() => setLoading(false))
   }
 
   const handleEditar = (v) => { setVehiculoEditar(v); setShowForm(true) }
+
   const handleEliminar = async (id) => {
-    await vehiculosAPI.eliminar(id)
-    setConfirmDelete(null)
-    cargarVehiculos()
+    try {
+      await vehiculosAPI.eliminar(id)
+      setConfirmDelete(null)
+      cargarVehiculos()
+    } catch (err) {
+      alert(err.mensaje || "Error al eliminar vehículo")
+    }
   }
 
   const filtrados = vehiculos.filter(v =>
@@ -74,13 +81,28 @@ export default function Vehiculos() {
       <div style={{ display: "flex", justifyContent: "space-between",
         alignItems: "flex-start", marginBottom: "2rem" }}>
         <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>Vehículos</h1>
+          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
+            Vehículos
+          </h1>
           <p style={{ color: "var(--text3)", fontSize: "13px" }}>{vehiculos.length} vehículos registrados</p>
         </div>
         <button className="btn btn-primary" onClick={() => { setVehiculoEditar(null); setShowForm(true) }}>
           + Nuevo vehículo
         </button>
       </div>
+
+      {error && (
+        <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
+          padding: "12px 16px", marginBottom: "1rem", color: "#FCA5A5", fontSize: "13px",
+          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {error}
+          <button onClick={cargarVehiculos}
+            style={{ background: "none", border: "none", color: "#FCA5A5",
+              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
+            Reintentar
+          </button>
+        </div>
+      )}
 
       <div className="card">
         <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
@@ -89,6 +111,10 @@ export default function Vehiculos() {
         </div>
         {loading ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
+        ) : filtrados.length === 0 ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
+            {buscar ? "No se encontraron vehículos con ese criterio" : "No hay vehículos registrados aún"}
+          </div>
         ) : (
           <table>
             <thead>
@@ -100,7 +126,7 @@ export default function Vehiculos() {
             <tbody>
               {filtrados.map(v => (
                 <tr key={v.id}>
-                  <td style={{ color: "var(--text)", fontWeight: "600", fontFamily: "DM Mono, monospace" }}>{v.placa}</td>
+                  <td style={{ color: "var(--text)", fontWeight: "600", fontFamily: "monospace" }}>{v.placa}</td>
                   <td style={{ color: "var(--text)" }}>{v.marca}</td>
                   <td>{v.linea}</td>
                   <td>{v.modelo}</td>

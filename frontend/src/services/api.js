@@ -93,6 +93,7 @@ export const facturasAPI = {
 }
 
 export const agendamientoAPI = {
+  convertirOrden:     (citaId) => API.post(`/agendamiento/citas/${citaId}/convertir-orden/`),
   listarCitas:     (params)   => API.get("/agendamiento/citas/", { params }),
   obtenerCita:     (id)       => API.get(`/agendamiento/citas/${id}/`),
   editarCita:      (id, data) => API.patch(`/agendamiento/citas/${id}/`, data),
