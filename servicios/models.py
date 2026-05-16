@@ -33,6 +33,14 @@ class OrdenTrabajo(models.Model):
     tecnico = models.CharField(max_length=100, blank=True)
     notas_internas = models.TextField(blank=True)
     
+    def save(self, *args, **kwargs):
+        if not self.codigo:
+            import datetime
+            fecha = datetime.datetime.now().strftime('%Y%m%d')
+            ultimo = OrdenTrabajo.objects.filter(codigo__startswith=f'ORD-{fecha}').count()
+            self.codigo = f'ORD-{fecha}-{ultimo+1:04d}'
+        super().save(*args, **kwargs)
+
     class Meta:
         verbose_name = 'Orden de Trabajo'
         ordering = ['-fecha_ingreso']

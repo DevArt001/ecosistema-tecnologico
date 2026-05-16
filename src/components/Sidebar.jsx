@@ -7,7 +7,8 @@ const menu = [
   { path: "/ordenes",      label: "Ordenes",      color: "#F59E0B" },
   { path: "/inventario",   label: "Inventario",   color: "#EF4444" },
   { path: "/facturas",     label: "Facturacion",  color: "#10B981" },
-  { path: "/agendamiento", label: "Agendamiento", color: "#3B82F6" },
+  { path: "/agendamiento", label: "Agendamiento", color: "#3B82F6" },  
+  { path: '/cotizaciones', label: 'Cotizaciones', color: '#F59E0B' },
 ]
 
 const enlaces = [

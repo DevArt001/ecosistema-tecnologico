@@ -82,3 +82,86 @@ class Gasto(models.Model):
     class Meta:
         verbose_name_plural = 'Gastos'
         ordering = ['-fecha']
+
+class Cotizacion(models.Model):
+    ESTADO_CHOICES = [
+        ('borrador', 'Borrador'),
+        ('enviada', 'Enviada'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+
+    numero          = models.CharField(max_length=20, unique=True, blank=True)
+    orden           = models.ForeignKey(OrdenTrabajo, on_delete=models.CASCADE, related_name='cotizaciones')
+    cliente         = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cotizaciones')
+    estado          = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='borrador')
+    subtotal        = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    descuento       = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    iva             = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total           = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    vigencia_dias   = models.IntegerField(default=15)
+    notas           = models.TextField(blank=True)
+    fecha_emision   = models.DateTimeField(auto_now_add=True)
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.numero:
+            import datetime
+            fecha = datetime.datetime.now().strftime('%Y%m')
+            ultimo = Cotizacion.objects.filter(numero__startswith=f'COT-{fecha}').count()
+            self.numero = f'COT-{fecha}-{ultimo+1:04d}'
+        super().save(*args, **kwargs)
+
+    def calcular_totales(self):
+        lineas = self.lineas.all()
+        self.subtotal = sum(l.subtotal for l in lineas)
+        self.iva = round(self.subtotal * 0.19, 2)
+        self.total = self.subtotal + self.iva - self.descuento
+        self.save()
+
+    def convertir_a_factura(self):
+        import datetime
+        factura = Factura.objects.create(
+            cliente=self.cliente,
+            orden=self.orden,
+            subtotal=self.subtotal,
+            descuento=self.descuento,
+            total=self.total,
+        )
+        self.estado = 'aprobada'
+        self.fecha_aprobacion = datetime.datetime.now()
+        self.save()
+        return factura
+
+    def __str__(self):
+        return f"{self.numero} - {self.cliente.nombre} - ${self.total}"
+
+    class Meta:
+        verbose_name_plural = 'Cotizaciones'
+        ordering = ['-fecha_emision']
+
+
+class LineaCotizacion(models.Model):
+    TIPO_CHOICES = [
+        ('servicio', 'Servicio / Mano de obra'),
+        ('repuesto', 'Repuesto'),
+    ]
+
+    cotizacion  = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, related_name='lineas')
+    tipo        = models.CharField(max_length=10, choices=TIPO_CHOICES, default='servicio')
+    descripcion = models.CharField(max_length=255)
+    cantidad    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+    precio_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    subtotal    = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def save(self, *args, **kwargs):
+        self.subtotal = self.cantidad * self.precio_unit
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.descripcion} x{self.cantidad} = ${self.subtotal}"
+
+    class Meta:
+        verbose_name_plural = 'Lineas de Cotizacion'
+
+

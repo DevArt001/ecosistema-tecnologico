@@ -6,7 +6,7 @@ from config.views import CustomTokenObtainPairView
 from clientes.views import ClienteViewSet, VehiculoViewSet
 from servicios.views import OrdenTrabajoViewSet
 from inventario.views import CategoriaViewSet, ProveedorViewSet, ProductoViewSet, MovimientoViewSet
-from contabilidad.views import FacturaViewSet, GastoViewSet
+from contabilidad.views import FacturaViewSet, GastoViewSet, CotizacionViewSet
 
 router = DefaultRouter()
 router.register(r'clientes',     ClienteViewSet)
@@ -18,6 +18,7 @@ router.register(r'productos',    ProductoViewSet)
 router.register(r'movimientos',  MovimientoViewSet)
 router.register(r'facturas',     FacturaViewSet)
 router.register(r'gastos',       GastoViewSet)
+router.register(r'cotizaciones', CotizacionViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
