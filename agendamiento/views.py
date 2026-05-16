@@ -150,3 +150,36 @@ def acceder_portal_cliente(request, token):
         'orden': datos,
         'dias_restantes': link.dias_restantes(),
     })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def convertir_orden(request, cita_id):
+    from servicios.models import OrdenTrabajo
+
+    try:
+        cita = Cita.objects.get(pk=cita_id)
+    except Cita.DoesNotExist:
+        return Response({'error': 'Cita no encontrada'}, status=404)
+
+    if cita.estado != 'completada':
+        return Response({'error': 'Solo se pueden convertir citas completadas'}, status=400)
+
+    if cita.orden_id:
+        return Response({'error': 'Esta cita ya tiene una orden asociada'}, status=400)
+
+    orden = OrdenTrabajo.objects.create(
+        cliente=cita.cliente,
+        vehiculo=cita.vehiculo,
+        estado='recibido',
+        prioridad='normal',
+        descripcion=cita.descripcion or '',
+    )
+
+    cita.orden = orden
+    cita.save()
+
+    return Response({
+        'mensaje': 'Orden creada exitosamente',
+        'orden_id': orden.id,
+        'orden_codigo': orden.codigo,
+    }, status=201)

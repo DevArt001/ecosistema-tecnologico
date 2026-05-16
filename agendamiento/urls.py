@@ -18,4 +18,5 @@ urlpatterns = [
     path('publico/cita-especial/',      views.solicitar_cita_especial,   name='cita-especial'),
     path('ordenes/<int:orden_id>/generar-link/', views.generar_link_temporal, name='generar-link'),
     path('portal/<str:token>/', views.acceder_portal_cliente, name='acceder-portal'),
+    path('citas/<int:cita_id>/convertir-orden/', views.convertir_orden, name='convertir-orden'),
 ]
