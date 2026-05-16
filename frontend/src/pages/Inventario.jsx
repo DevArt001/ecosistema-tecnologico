@@ -3,28 +3,35 @@ import { productosAPI } from "../services/api"
 import FormProducto from "../components/FormProducto"
 
 export default function Inventario() {
-  const [productos, setProductos]         = useState([])
-  const [loading, setLoading]             = useState(true)
-  const [buscar, setBuscar]               = useState("")
-  const [showForm, setShowForm]           = useState(false)
+  const [productos, setProductos]           = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [error, setError]                   = useState(null)
+  const [buscar, setBuscar]                 = useState("")
+  const [showForm, setShowForm]             = useState(false)
   const [productoEditar, setProductoEditar] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [confirmDelete, setConfirmDelete]   = useState(null)
 
   useEffect(() => { cargarProductos() }, [])
 
   const cargarProductos = () => {
     setLoading(true)
-    productosAPI.listar().then(res => {
-      setProductos(res.data.results || res.data)
-      setLoading(false)
-    })
+    setError(null)
+    productosAPI.listar()
+      .then(res => setProductos(res.data.results || res.data))
+      .catch(err => setError(err.mensaje || "Error al cargar productos"))
+      .finally(() => setLoading(false))
   }
 
   const handleEditar = (p) => { setProductoEditar(p); setShowForm(true) }
+
   const handleEliminar = async (id) => {
-    await productosAPI.eliminar(id)
-    setConfirmDelete(null)
-    cargarProductos()
+    try {
+      await productosAPI.eliminar(id)
+      setConfirmDelete(null)
+      cargarProductos()
+    } catch (err) {
+      alert(err.mensaje || "Error al eliminar producto")
+    }
   }
 
   const filtrados = productos.filter(p =>
@@ -84,6 +91,19 @@ export default function Inventario() {
         </button>
       </div>
 
+      {error && (
+        <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
+          padding: "12px 16px", marginBottom: "1rem", color: "#FCA5A5", fontSize: "13px",
+          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {error}
+          <button onClick={cargarProductos}
+            style={{ background: "none", border: "none", color: "#FCA5A5",
+              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
       <div className="card">
         <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
           <input value={buscar} onChange={e => setBuscar(e.target.value)}
@@ -92,7 +112,9 @@ export default function Inventario() {
         {loading ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
         ) : filtrados.length === 0 ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>No hay productos todavía</div>
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
+            {buscar ? "No se encontraron productos con ese criterio" : "No hay productos registrados aún"}
+          </div>
         ) : (
           <table>
             <thead>
@@ -104,7 +126,7 @@ export default function Inventario() {
             <tbody>
               {filtrados.map(p => (
                 <tr key={p.id}>
-                  <td style={{ fontFamily: "DM Mono, monospace", fontSize: "12px", color: "var(--text)" }}>{p.sku}</td>
+                  <td style={{ fontFamily: "monospace", fontSize: "12px", color: "var(--text)" }}>{p.sku}</td>
                   <td style={{ color: "var(--text)", fontWeight: "500" }}>{p.nombre}</td>
                   <td style={{ color: "var(--text)", fontWeight: "600" }}>{p.stock_actual}</td>
                   <td>{p.stock_minimo}</td>

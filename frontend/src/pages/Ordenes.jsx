@@ -93,12 +93,10 @@ export default function Ordenes() {
       const ordenRes = await ordenesAPI.obtener(ordenId)
       setOrden(ordenRes.data)
       
-      const res = await procesosAPI.obtenerProceso(ordenId); setOrden(res.data.orden); setPasos(res.data.pasos); setFotos(res.data.fotos); setShowEditorProceso(ordenId); return
-      setPasos(pasosRes.data)
-      
-      const fotosRes = await procesosAPI.obtenerFotos(ordenId)
-      setFotos(fotosRes.data)
-      
+      const res = await procesosAPI.obtenerProceso(ordenId)
+      setOrden(res.data.orden)
+      setPasos(res.data.pasos)
+      setFotos(res.data.fotos)
       setShowEditorProceso(ordenId)
     } catch (e) {
       setMensajeExito("❌ Error cargando orden")

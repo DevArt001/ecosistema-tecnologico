@@ -5,6 +5,7 @@ import FormFactura from "../components/FormFactura"
 export default function Facturas() {
   const [facturas, setFacturas]           = useState([])
   const [loading, setLoading]             = useState(true)
+  const [error, setError]                 = useState(null)
   const [showForm, setShowForm]           = useState(false)
   const [facturaEditar, setFacturaEditar] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -13,17 +14,23 @@ export default function Facturas() {
 
   const cargarFacturas = () => {
     setLoading(true)
-    facturasAPI.listar().then(res => {
-      setFacturas(res.data.results || res.data)
-      setLoading(false)
-    })
+    setError(null)
+    facturasAPI.listar()
+      .then(res => setFacturas(res.data.results || res.data))
+      .catch(err => setError(err.mensaje || "Error al cargar facturas"))
+      .finally(() => setLoading(false))
   }
 
   const handleEditar = (f) => { setFacturaEditar(f); setShowForm(true) }
+
   const handleEliminar = async (id) => {
-    await facturasAPI.eliminar(id)
-    setConfirmDelete(null)
-    cargarFacturas()
+    try {
+      await facturasAPI.eliminar(id)
+      setConfirmDelete(null)
+      cargarFacturas()
+    } catch (err) {
+      alert(err.mensaje || "Error al eliminar factura")
+    }
   }
 
   const estadoBadge = {
@@ -32,7 +39,9 @@ export default function Facturas() {
     anulada:   { bg: "#3B0A0A", color: "#EF4444" },
   }
 
-  const total = facturas.filter(f => f.estado === "pagada").reduce((sum, f) => sum + Number(f.total), 0)
+  const total = facturas
+    .filter(f => f.estado === "pagada")
+    .reduce((sum, f) => sum + Number(f.total), 0)
 
   return (
     <div>
@@ -85,6 +94,19 @@ export default function Facturas() {
         </button>
       </div>
 
+      {error && (
+        <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
+          padding: "12px 16px", marginBottom: "1rem", color: "#FCA5A5", fontSize: "13px",
+          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {error}
+          <button onClick={cargarFacturas}
+            style={{ background: "none", border: "none", color: "#FCA5A5",
+              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
       <div className="card">
         {loading ? (
           <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
@@ -101,7 +123,7 @@ export default function Facturas() {
             <tbody>
               {facturas.map(f => (
                 <tr key={f.id}>
-                  <td style={{ fontFamily: "DM Mono, monospace", fontSize: "12px",
+                  <td style={{ fontFamily: "monospace", fontSize: "12px",
                     color: "var(--text)", fontWeight: "500" }}>{f.numero}</td>
                   <td style={{ color: "var(--text)" }}>{f.cliente_nombre || "—"}</td>
                   <td>${Number(f.subtotal).toLocaleString()}</td>
