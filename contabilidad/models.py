@@ -37,14 +37,19 @@ class Factura(models.Model):
     fecha_emision   = models.DateTimeField(auto_now_add=True)
     fecha_pago      = models.DateTimeField(null=True, blank=True)
 
+    aplica_iva      = models.BooleanField(default=False)
     observaciones   = models.TextField(blank=True)
 
     def calcular_totales(self):
+        from decimal import Decimal
         lineas = self.lineas.all()
         if lineas.exists():
-            from decimal import Decimal
             self.subtotal = sum(l.subtotal for l in lineas)
-            self.total = self.subtotal - self.descuento
+        if self.aplica_iva:
+            self.iva = round(self.subtotal - (self.subtotal / Decimal('1.19')), 2)
+        else:
+            self.iva = Decimal('0')
+        self.total = self.subtotal - self.descuento
         self.save()
 
     def save(self, *args, **kwargs):
@@ -108,6 +113,7 @@ class Cotizacion(models.Model):
     iva             = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total           = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     vigencia_dias   = models.IntegerField(default=15)
+    aplica_iva      = models.BooleanField(default=False)
     notas           = models.TextField(blank=True)
     fecha_emision   = models.DateTimeField(auto_now_add=True)
     fecha_aprobacion = models.DateTimeField(null=True, blank=True)
@@ -121,10 +127,15 @@ class Cotizacion(models.Model):
         super().save(*args, **kwargs)
 
     def calcular_totales(self):
+        from decimal import Decimal
         lineas = self.lineas.all()
         self.subtotal = sum(l.subtotal for l in lineas)
-        self.iva = round(self.subtotal * 19 / 100, 2)
-        self.total = self.subtotal + self.iva - self.descuento
+        if self.aplica_iva:
+            # IVA incluido: base = total / 1.19
+            self.iva = round(self.subtotal - (self.subtotal / Decimal('1.19')), 2)
+        else:
+            self.iva = Decimal('0')
+        self.total = self.subtotal - self.descuento
         self.save()
 
     def convertir_a_factura(self):

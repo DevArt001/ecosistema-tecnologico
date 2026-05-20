@@ -4,7 +4,7 @@ import { facturasAPI, clientesAPI, ordenesAPI } from "../services/api"
 export default function FormFactura({ onGuardado, onCancelar, facturaEditar = null }) {
   const [form, setForm] = useState({
     cliente: "", orden: "", descuento: "0",
-    metodo_pago: "efectivo", estado: "pendiente", notas: "",
+    metodo_pago: "efectivo", estado: "pendiente", notas: "", aplica_iva: false,
     ...(facturaEditar || {})
   })
   const [clientes, setClientes]   = useState([])
@@ -186,6 +186,17 @@ export default function FormFactura({ onGuardado, onCancelar, facturaEditar = nu
                 <textarea name="notas" value={form.notas || ""}
                   onChange={handleChange} rows={2}
                   style={{ width: "100%", resize: "vertical" }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px",
+                padding: "10px 12px", background: "var(--bg1)", borderRadius: "8px",
+                border: "1px solid var(--border)" }}>
+                <input type="checkbox" id="aplica_iva_fac" checked={form.aplica_iva || false}
+                  onChange={e => setForm({...form, aplica_iva: e.target.checked})}
+                  style={{ width: "16px", height: "16px", cursor: "pointer" }} />
+                <label htmlFor="aplica_iva_fac" style={{ fontSize: "13px",
+                  color: "var(--text)", cursor: "pointer", fontWeight: "500" }}>
+                  Aplicar IVA (19% incluido en el precio)
+                </label>
               </div>
             </>
           )}

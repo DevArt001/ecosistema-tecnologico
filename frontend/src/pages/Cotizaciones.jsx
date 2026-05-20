@@ -251,13 +251,25 @@ export default function Cotizaciones() {
                   style={{ width: "100%" }} />
               </div>
             </div>
-            <div style={{ marginBottom: "1.5rem" }}>
+            <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
                 color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
                 Notas
               </label>
               <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
                 style={{ width: "100%", minHeight: "80px" }} />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px",
+              marginBottom: "1.5rem", padding: "10px 12px",
+              background: "var(--bg1)", borderRadius: "8px",
+              border: "1px solid var(--border)" }}>
+              <input type="checkbox" id="aplica_iva" checked={form.aplica_iva}
+                onChange={e => setForm({...form, aplica_iva: e.target.checked})}
+                style={{ width: "16px", height: "16px", cursor: "pointer" }} />
+              <label htmlFor="aplica_iva" style={{ fontSize: "13px",
+                color: "var(--text)", cursor: "pointer", fontWeight: "500" }}>
+                Aplicar IVA (19% incluido en el precio)
+              </label>
             </div>
             <div style={{ display: "flex", gap: "8px" }}>
               <button className="btn btn-primary" onClick={crearCotizacion}

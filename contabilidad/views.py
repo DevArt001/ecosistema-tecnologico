@@ -1,10 +1,13 @@
 from rest_framework import viewsets, filters, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.http import HttpResponse
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth
+from datetime import datetime
 from .models import Factura, Gasto, Cotizacion, LineaCotizacion, LineaFactura
 from .serializers import FacturaSerializer, GastoSerializer, CotizacionSerializer, LineaCotizacionSerializer, LineaFacturaSerializer
-import io
 
 class FacturaViewSet(viewsets.ModelViewSet):
     queryset = Factura.objects.all()
@@ -83,134 +86,177 @@ class CotizacionViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'inline; filename="cotizacion_{cotizacion.numero}.html"'
         return response
 
+
 def generar_html_cotizacion(cot):
     lineas_html = ""
     for l in cot.lineas.all():
-        tipo_badge = "🔧" if l.tipo == "servicio" else "🔩"
+        icono = "🔧" if l.tipo == "servicio" else "🔩"
         lineas_html += f"""
         <tr>
-            <td>{tipo_badge} {l.descripcion}</td>
-            <td style="text-align:center">{l.tipo.capitalize()}</td>
-            <td style="text-align:center">{l.cantidad}</td>
-            <td style="text-align:right">${float(l.precio_unit):,.0f}</td>
-            <td style="text-align:right"><strong>${float(l.subtotal):,.0f}</strong></td>
+            <td><span class="tipo-badge {l.tipo}">{icono} {l.tipo.capitalize()}</span></td>
+            <td class="desc">{l.descripcion}</td>
+            <td class="center">{l.cantidad}</td>
+            <td class="right">${float(l.precio_unit):,.0f}</td>
+            <td class="right bold green">${float(l.subtotal):,.0f}</td>
         </tr>"""
 
-    v = cot.orden.vehiculo
-    vehiculo_info = f"{v.marca} {v.modelo} - {v.placa}" if v else "N/A"
+    v = cot.orden.vehiculo if cot.orden else None
+    vehiculo_info = f"{v.marca} {v.modelo} ({v.modelo}) — {v.placa}" if v else "N/A"
+    km_info = f"{v.kilometraje:,} km" if v and hasattr(v, 'kilometraje') and v.kilometraje else "N/A"
+
+    iva_row = ""
+    if cot.aplica_iva and float(cot.iva) > 0:
+        base = float(cot.subtotal) / 1.19
+        iva_row = f"""
+        <tr class="subtotal-row">
+            <td>Base gravable</td>
+            <td class="right">${base:,.0f}</td>
+        </tr>
+        <tr class="subtotal-row">
+            <td>IVA incluido (19%)</td>
+            <td class="right">${float(cot.iva):,.0f}</td>
+        </tr>"""
+
+    descuento_row = ""
+    if float(cot.descuento) > 0:
+        descuento_row = f'<tr class="subtotal-row"><td>Descuento</td><td class="right red">-${float(cot.descuento):,.0f}</td></tr>'
 
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cotización {cot.numero}</title>
 <style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; }}
-  .page {{ max-width: 800px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }}
-  .header {{ background: linear-gradient(135deg, #0D1117, #1a2a1a); color: white; padding: 40px; display: flex; justify-content: space-between; align-items: center; }}
-  .logo-area h1 {{ font-size: 28px; font-weight: 800; color: #10B981; }}
-  .logo-area p {{ font-size: 12px; color: #9CA3AF; margin-top: 4px; }}
-  .cotizacion-num {{ text-align: right; }}
-  .cotizacion-num .num {{ font-size: 24px; font-weight: 700; color: #10B981; }}
-  .cotizacion-num .fecha {{ font-size: 12px; color: #9CA3AF; margin-top: 4px; }}
-  .badge {{ display: inline-block; background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 8px; }}
-  .info-section {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0; }}
-  .info-box {{ padding: 24px 32px; border-bottom: 1px solid #eee; }}
-  .info-box:nth-child(odd) {{ border-right: 1px solid #eee; }}
-  .info-box h3 {{ font-size: 11px; font-weight: 600; color: #10B981; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }}
-  .info-box p {{ font-size: 13px; color: #555; margin-bottom: 4px; }}
-  .info-box strong {{ color: #111; }}
-  table {{ width: 100%; border-collapse: collapse; }}
-  .table-header {{ background: #0D1117; color: white; }}
-  .table-header th {{ padding: 12px 16px; font-size: 12px; font-weight: 600; text-align: left; }}
-  .table-header th:not(:first-child) {{ text-align: center; }}
-  .table-header th:last-child {{ text-align: right; }}
-  tbody tr:nth-child(even) {{ background: #f9f9f9; }}
-  tbody td {{ padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #eee; }}
-  .totales {{ padding: 24px 32px; display: flex; justify-content: flex-end; }}
-  .totales-box {{ width: 280px; }}
-  .totales-row {{ display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #eee; }}
-  .totales-row.total {{ font-size: 18px; font-weight: 700; color: #10B981; border-bottom: none; padding-top: 12px; }}
-  .footer {{ background: #0D1117; color: #9CA3AF; padding: 24px 32px; display: flex; justify-content: space-between; font-size: 12px; }}
-  .footer strong {{ color: #10B981; }}
-  .vigencia {{ padding: 16px 32px; background: #FFF8E1; border-left: 4px solid #F59E0B; margin: 0 32px 24px; border-radius: 0 8px 8px 0; font-size: 13px; color: #92400E; }}
-  .print-btn {{ display: block; text-align: center; padding: 12px; background: #10B981; color: white; font-size: 14px; font-weight: 600; cursor: pointer; border: none; width: 100%; }}
-  @media print {{ .print-btn {{ display: none; }} body {{ background: white; }} .page {{ box-shadow: none; margin: 0; }} }}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{font-family:'Inter',sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact}}
+  .page{{max-width:820px;margin:24px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}}
+  .header{{background:linear-gradient(135deg,#0a0f1e 0%,#0d2137 50%,#0a1628 100%);padding:36px 40px;display:flex;justify-content:space-between;align-items:flex-start}}
+  .brand h1{{font-size:26px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
+  .brand p{{font-size:11.5px;color:#64748b;margin-top:3px}}
+  .brand .contact{{margin-top:12px;display:flex;flex-direction:column;gap:3px}}
+  .brand .contact span{{font-size:11px;color:#94a3b8}}
+  .doc-info{{text-align:right}}
+  .doc-num{{font-size:26px;font-weight:800;color:#10B981;font-family:monospace}}
+  .doc-date{{font-size:12px;color:#64748b;margin-top:4px}}
+  .badge{{display:inline-block;background:#10B981;color:white;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-top:10px;text-transform:uppercase}}
+  .info-grid{{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f1f5f9}}
+  .info-box{{padding:24px 32px}}
+  .info-box:first-child{{border-right:1px solid #f1f5f9}}
+  .info-box h3{{font-size:10px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}}
+  .info-box .name{{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px}}
+  .info-box p{{font-size:12.5px;color:#64748b;margin-bottom:3px}}
+  .info-box .highlight{{color:#1a1a2e;font-weight:600}}
+  table{{width:100%;border-collapse:collapse}}
+  .table-head{{background:#0a0f1e}}
+  .table-head th{{padding:11px 16px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;text-transform:uppercase;letter-spacing:.06em}}
+  .table-head th.right{{text-align:right}}
+  .table-head th.center{{text-align:center}}
+  tbody tr{{border-bottom:1px solid #f8fafc;transition:background .2s}}
+  tbody tr:nth-child(even){{background:#fafbff}}
+  tbody td{{padding:11px 16px;font-size:13px;color:#374151}}
+  td.center{{text-align:center}}
+  td.right{{text-align:right}}
+  td.bold{{font-weight:700}}
+  td.green{{color:#059669}}
+  td.red{{color:#dc2626}}
+  td.desc{{font-weight:500;color:#1a1a2e}}
+  .tipo-badge{{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}}
+  .tipo-badge.servicio{{background:#dcfce7;color:#166534}}
+  .tipo-badge.repuesto{{background:#dbeafe;color:#1e40af}}
+  .totales-section{{display:flex;justify-content:flex-end;padding:20px 32px 0}}
+  .totales-table{{width:260px;border-collapse:collapse}}
+  .subtotal-row td{{padding:7px 0;font-size:13px;color:#64748b;border-bottom:1px solid #f1f5f9}}
+  .subtotal-row td.right{{text-align:right}}
+  .total-row td{{padding:14px 0 4px;font-size:20px;font-weight:800;color:#10B981}}
+  .total-row td.right{{text-align:right}}
+  .vigencia{{margin:20px 32px;padding:14px 18px;background:linear-gradient(135deg,#fefce8,#fef9c3);border-left:4px solid #eab308;border-radius:0 8px 8px 0;font-size:12.5px;color:#854d0e}}
+  .footer{{background:#0a0f1e;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:20px}}
+  .footer-left{{color:#64748b;font-size:11.5px;line-height:1.6}}
+  .footer-left strong{{color:#10B981}}
+  .footer-right{{text-align:right;color:#64748b;font-size:11.5px}}
+  .footer-right .firma-line{{border-top:1px solid #334155;padding-top:6px;margin-top:24px;color:#94a3b8}}
+  .print-btn{{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.03em}}
+  .print-btn:hover{{background:linear-gradient(135deg,#059669,#047857)}}
+  @media print{{.print-btn{{display:none}}body{{background:white}}.page{{box-shadow:none;margin:0;border-radius:0}}}}
 </style>
 </head>
 <body>
 <div class="page">
   <div class="header">
-    <div class="logo-area">
+    <div class="brand">
       <h1>🔧 ARM Racing Performance</h1>
       <p>Potencia, confianza y calidad en cada servicio</p>
-      <p style="margin-top:8px">📍 Carrera 54b #50-09 sur, Venecia, Bogotá</p>
-      <p>📞 323 233 8894 | ✉️ armracingpeformance@gmail.com</p>
+      <div class="contact">
+        <span>📍 Carrera 54b #50-09 sur, Venecia, Bogotá</span>
+        <span>📞 323 233 8894 &nbsp;|&nbsp; ✉️ armracingpeformance@gmail.com</span>
+        <span>📸 @arm_racing.performance</span>
+      </div>
     </div>
-    <div class="cotizacion-num">
-      <div class="num">{cot.numero}</div>
-      <div class="fecha">{cot.fecha_emision.strftime('%d/%m/%Y')}</div>
-      <div class="badge">COTIZACIÓN</div>
+    <div class="doc-info">
+      <div class="doc-num">{cot.numero}</div>
+      <div class="doc-date">{cot.fecha_emision.strftime('%d de %B de %Y')}</div>
+      <div class="badge">Cotización</div>
     </div>
   </div>
 
-  <div class="info-section">
+  <div class="info-grid">
     <div class="info-box">
       <h3>Cliente</h3>
-      <p><strong>{cot.cliente.nombre}</strong></p>
-      <p>📞 {cot.cliente.telefono or 'N/A'}</p>
+      <div class="name">{cot.cliente.nombre}</div>
+      <p>📞 <span class="highlight">{cot.cliente.telefono or 'N/A'}</span></p>
       <p>✉️ {cot.cliente.correo or 'N/A'}</p>
-      <p>🪪 CC/NIT: {cot.cliente.documento or 'N/A'}</p>
+      <p>🪪 CC/NIT: <span class="highlight">{cot.cliente.documento or 'N/A'}</span></p>
     </div>
     <div class="info-box">
-      <h3>Vehículo</h3>
-      <p><strong>{vehiculo_info}</strong></p>
-      <p>Orden: <strong>{cot.orden.codigo}</strong></p>
-      <p>Kilometraje: {v.kilometraje if v and hasattr(v, 'kilometraje') else 'N/A'} km</p>
+      <h3>Vehículo & Orden</h3>
+      <div class="name">{vehiculo_info}</div>
+      <p>📋 Orden: <span class="highlight">{cot.orden.codigo if cot.orden else 'N/A'}</span></p>
+      <p>🛣️ Kilometraje: <span class="highlight">{km_info}</span></p>
+      <p>📅 Vigencia: <span class="highlight">{cot.vigencia_dias} días</span></p>
     </div>
   </div>
 
   <table>
-    <thead class="table-header">
+    <thead class="table-head">
       <tr>
+        <th>Tipo</th>
         <th>Descripción</th>
-        <th style="text-align:center">Tipo</th>
-        <th style="text-align:center">Cantidad</th>
-        <th style="text-align:right">Precio Unit.</th>
-        <th style="text-align:right">Subtotal</th>
+        <th class="center">Cant.</th>
+        <th class="right">Precio Unit.</th>
+        <th class="right">Subtotal</th>
       </tr>
     </thead>
     <tbody>
-      {lineas_html}
+      {lineas_html if lineas_html else '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">Sin ítems</td></tr>'}
     </tbody>
   </table>
 
-  <div class="totales">
-    <div class="totales-box">
-      <div class="totales-row"><span>Subtotal</span><span>${float(cot.subtotal):,.0f}</span></div>
-      <div class="totales-row"><span>IVA (19%)</span><span>${float(cot.iva):,.0f}</span></div>
-      <div class="totales-row"><span>Descuento</span><span>-${float(cot.descuento):,.0f}</span></div>
-      <div class="totales-row total"><span>TOTAL</span><span>${float(cot.total):,.0f}</span></div>
-    </div>
+  <div class="totales-section">
+    <table class="totales-table">
+      {iva_row}
+      {descuento_row}
+      <tr class="total-row">
+        <td>TOTAL</td>
+        <td class="right">${float(cot.total):,.0f}</td>
+      </tr>
+    </table>
   </div>
 
   <div class="vigencia">
-    ⏰ Esta cotización tiene una vigencia de <strong>{cot.vigencia_dias} días</strong> a partir de la fecha de emisión.
-    {f'<br>📝 {cot.notas}' if cot.notas else ''}
+    ⏰ Esta cotización tiene una vigencia de <strong>{cot.vigencia_dias} días</strong> a partir del {cot.fecha_emision.strftime('%d/%m/%Y')}.
+    {f'<br>📝 <em>{cot.notas}</em>' if cot.notas else ''}
   </div>
 
   <div class="footer">
-    <div>
+    <div class="footer-left">
       <strong>ARM Racing Performance</strong><br>
-      Lun-Sáb 8:00 AM - 7:30 PM<br>
-      instagram: @arm_racing.performance
+      Lun — Sáb: 8:00 AM – 7:30 PM<br>
+      NIT: por registrar
     </div>
-    <div style="text-align:right">
-      <strong>Firma autorizada</strong><br><br>
-      ____________________<br>
-      <span style="font-size:11px">ARM Racing Performance</span>
+    <div class="footer-right">
+      <div style="color:#475569;font-size:11px">Autorizado por</div>
+      <div class="firma-line">ARM Racing Performance</div>
     </div>
   </div>
 
@@ -221,22 +267,41 @@ def generar_html_cotizacion(cot):
 
 
 def generar_html_factura(fac):
-    orden_info = f"{fac.orden.codigo}" if fac.orden else "N/A"
+    orden_info = fac.orden.codigo if fac.orden else "N/A"
     v = fac.orden.vehiculo if fac.orden else None
-    vehiculo_info = f"{v.marca} {v.modelo} - {v.placa}" if v else "N/A"
+    vehiculo_info = f"{v.marca} {v.modelo} — {v.placa}" if v else "N/A"
+
     lineas_html = ""
     for l in fac.lineas.all():
-        tipo_badge = "🔧" if l.tipo == "servicio" else "🔩"
+        icono = "🔧" if l.tipo == "servicio" else "🔩"
         lineas_html += f"""
         <tr>
-            <td>{tipo_badge} {l.descripcion}</td>
-            <td style="text-align:center">{l.tipo.capitalize()}</td>
-            <td style="text-align:center">{l.cantidad}</td>
-            <td style="text-align:right">${float(l.precio_unit):,.0f}</td>
-            <td style="text-align:right"><strong>${float(l.subtotal):,.0f}</strong></td>
+            <td><span class="tipo-badge {l.tipo}">{icono} {l.tipo.capitalize()}</span></td>
+            <td class="desc">{l.descripcion}</td>
+            <td class="center">{l.cantidad}</td>
+            <td class="right">${float(l.precio_unit):,.0f}</td>
+            <td class="right bold green">${float(l.subtotal):,.0f}</td>
         </tr>"""
-    if not lineas_html:
-        lineas_html = "<tr><td colspan='5' style='text-align:center;color:#999'>Sin ítems detallados</td></tr>"
+
+    iva_row = ""
+    if fac.aplica_iva and float(fac.iva) > 0:
+        base = float(fac.subtotal) / 1.19
+        iva_row = f"""
+        <tr class="subtotal-row">
+            <td>Base gravable</td>
+            <td class="right">${base:,.0f}</td>
+        </tr>
+        <tr class="subtotal-row">
+            <td>IVA incluido (19%)</td>
+            <td class="right">${float(fac.iva):,.0f}</td>
+        </tr>"""
+
+    descuento_row = ""
+    if float(fac.descuento) > 0:
+        descuento_row = f'<tr class="subtotal-row"><td>Descuento</td><td class="right red">-${float(fac.descuento):,.0f}</td></tr>'
+
+    estado_color = {'pendiente': '#f59e0b', 'pagada': '#10B981', 'anulada': '#ef4444'}
+    color = estado_color.get(fac.estado, '#94a3b8')
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -244,103 +309,138 @@ def generar_html_factura(fac):
 <meta charset="UTF-8">
 <title>Factura {fac.numero}</title>
 <style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-  body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; }}
-  .page {{ max-width: 800px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }}
-  .header {{ background: linear-gradient(135deg, #0D1117, #1a2a1a); color: white; padding: 40px; display: flex; justify-content: space-between; align-items: center; }}
-  .logo-area h1 {{ font-size: 28px; font-weight: 800; color: #10B981; }}
-  .logo-area p {{ font-size: 12px; color: #9CA3AF; margin-top: 4px; }}
-  .factura-num {{ text-align: right; }}
-  .factura-num .num {{ font-size: 24px; font-weight: 700; color: #10B981; }}
-  .factura-num .fecha {{ font-size: 12px; color: #9CA3AF; margin-top: 4px; }}
-  .badge {{ display: inline-block; background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 8px; }}
-  .info-section {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0; }}
-  .info-box {{ padding: 24px 32px; border-bottom: 1px solid #eee; }}
-  .info-box:nth-child(odd) {{ border-right: 1px solid #eee; }}
-  .info-box h3 {{ font-size: 11px; font-weight: 600; color: #10B981; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }}
-  .info-box p {{ font-size: 13px; color: #555; margin-bottom: 4px; }}
-  .totales {{ padding: 24px 32px; display: flex; justify-content: flex-end; }}
-  .totales-box {{ width: 280px; }}
-  .totales-row {{ display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #eee; }}
-  .totales-row.total {{ font-size: 18px; font-weight: 700; color: #10B981; border-bottom: none; padding-top: 12px; }}
-  .pago-info {{ padding: 16px 32px; background: #E8F5E9; border-left: 4px solid #10B981; margin: 0 32px 24px; border-radius: 0 8px 8px 0; font-size: 13px; color: #1B5E20; }}
-  .footer {{ background: #0D1117; color: #9CA3AF; padding: 24px 32px; display: flex; justify-content: space-between; font-size: 12px; }}
-  .footer strong {{ color: #10B981; }}
-  .print-btn {{ display: block; text-align: center; padding: 12px; background: #10B981; color: white; font-size: 14px; font-weight: 600; cursor: pointer; border: none; width: 100%; }}
-  @media print {{ .print-btn {{ display: none; }} }}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{font-family:'Inter',sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact}}
+  .page{{max-width:820px;margin:24px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}}
+  .header{{background:linear-gradient(135deg,#0a0f1e 0%,#0d2137 50%,#0a1628 100%);padding:36px 40px;display:flex;justify-content:space-between;align-items:flex-start}}
+  .brand h1{{font-size:26px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
+  .brand p{{font-size:11.5px;color:#64748b;margin-top:3px}}
+  .brand .contact{{margin-top:12px;display:flex;flex-direction:column;gap:3px}}
+  .brand .contact span{{font-size:11px;color:#94a3b8}}
+  .doc-info{{text-align:right}}
+  .doc-num{{font-size:26px;font-weight:800;color:#10B981;font-family:monospace}}
+  .doc-date{{font-size:12px;color:#64748b;margin-top:4px}}
+  .badge{{display:inline-block;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-top:10px;text-transform:uppercase}}
+  .info-grid{{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f1f5f9}}
+  .info-box{{padding:24px 32px}}
+  .info-box:first-child{{border-right:1px solid #f1f5f9}}
+  .info-box h3{{font-size:10px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}}
+  .info-box .name{{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px}}
+  .info-box p{{font-size:12.5px;color:#64748b;margin-bottom:3px}}
+  .info-box .highlight{{color:#1a1a2e;font-weight:600}}
+  .estado-pill{{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase}}
+  table{{width:100%;border-collapse:collapse}}
+  .table-head{{background:#0a0f1e}}
+  .table-head th{{padding:11px 16px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;text-transform:uppercase;letter-spacing:.06em}}
+  .table-head th.right{{text-align:right}}
+  .table-head th.center{{text-align:center}}
+  tbody tr{{border-bottom:1px solid #f8fafc}}
+  tbody tr:nth-child(even){{background:#fafbff}}
+  tbody td{{padding:11px 16px;font-size:13px;color:#374151}}
+  td.center{{text-align:center}}
+  td.right{{text-align:right}}
+  td.bold{{font-weight:700}}
+  td.green{{color:#059669}}
+  td.red{{color:#dc2626}}
+  td.desc{{font-weight:500;color:#1a1a2e}}
+  .tipo-badge{{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}}
+  .tipo-badge.servicio{{background:#dcfce7;color:#166534}}
+  .tipo-badge.repuesto{{background:#dbeafe;color:#1e40af}}
+  .totales-section{{display:flex;justify-content:flex-end;padding:20px 32px 0}}
+  .totales-table{{width:260px;border-collapse:collapse}}
+  .subtotal-row td{{padding:7px 0;font-size:13px;color:#64748b;border-bottom:1px solid #f1f5f9}}
+  .subtotal-row td.right{{text-align:right}}
+  .total-row td{{padding:14px 0 4px;font-size:20px;font-weight:800;color:#10B981}}
+  .total-row td.right{{text-align:right}}
+  .pago-box{{margin:20px 32px;padding:14px 18px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-left:4px solid #10B981;border-radius:0 8px 8px 0;font-size:12.5px;color:#166534;display:flex;align-items:center;gap:10px}}
+  .footer{{background:#0a0f1e;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:20px}}
+  .footer-left{{color:#64748b;font-size:11.5px;line-height:1.6}}
+  .footer-left strong{{color:#10B981}}
+  .footer-right{{text-align:right;color:#64748b;font-size:11.5px}}
+  .footer-right .firma-line{{border-top:1px solid #334155;padding-top:6px;margin-top:24px;color:#94a3b8}}
+  .print-btn{{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.03em}}
+  @media print{{.print-btn{{display:none}}body{{background:white}}.page{{box-shadow:none;margin:0;border-radius:0}}}}
 </style>
 </head>
 <body>
 <div class="page">
   <div class="header">
-    <div class="logo-area">
+    <div class="brand">
       <h1>🔧 ARM Racing Performance</h1>
       <p>Potencia, confianza y calidad en cada servicio</p>
-      <p style="margin-top:8px">📍 Carrera 54b #50-09 sur, Venecia, Bogotá</p>
-      <p>📞 323 233 8894 | ✉️ armracingpeformance@gmail.com</p>
+      <div class="contact">
+        <span>📍 Carrera 54b #50-09 sur, Venecia, Bogotá</span>
+        <span>📞 323 233 8894 &nbsp;|&nbsp; ✉️ armracingpeformance@gmail.com</span>
+        <span>📸 @arm_racing.performance</span>
+      </div>
     </div>
-    <div class="factura-num">
-      <div class="num">{fac.numero}</div>
-      <div class="fecha">{fac.fecha_emision.strftime('%d/%m/%Y')}</div>
-      <div class="badge">FACTURA</div>
+    <div class="doc-info">
+      <div class="doc-num">{fac.numero}</div>
+      <div class="doc-date">{fac.fecha_emision.strftime('%d de %B de %Y')}</div>
+      <div class="badge" style="background:{color}22;color:{color};border:1px solid {color}">
+        Factura — {fac.estado.upper()}
+      </div>
     </div>
   </div>
 
-  <div class="info-section">
+  <div class="info-grid">
     <div class="info-box">
       <h3>Cliente</h3>
-      <p><strong>{fac.cliente.nombre}</strong></p>
-      <p>📞 {fac.cliente.telefono or 'N/A'}</p>
+      <div class="name">{fac.cliente.nombre}</div>
+      <p>📞 <span class="highlight">{fac.cliente.telefono or 'N/A'}</span></p>
       <p>✉️ {fac.cliente.correo or 'N/A'}</p>
-      <p>🪪 CC/NIT: {fac.cliente.documento or 'N/A'}</p>
+      <p>🪪 CC/NIT: <span class="highlight">{fac.cliente.documento or 'N/A'}</span></p>
     </div>
     <div class="info-box">
-      <h3>Detalle</h3>
-      <p>Orden: <strong>{orden_info}</strong></p>
-      <p>Vehículo: <strong>{vehiculo_info}</strong></p>
-      <p>Método de pago: <strong>{fac.metodo_pago}</strong></p>
-      <p>Estado: <strong>{fac.estado.upper()}</strong></p>
+      <h3>Detalle del servicio</h3>
+      <div class="name">{vehiculo_info}</div>
+      <p>📋 Orden: <span class="highlight">{orden_info}</span></p>
+      <p>💳 Pago: <span class="highlight">{fac.metodo_pago.upper()}</span></p>
+      {f'<p>📝 {fac.observaciones}</p>' if fac.observaciones else ''}
     </div>
   </div>
 
   <table>
-    <thead class="table-header">
+    <thead class="table-head">
       <tr>
+        <th>Tipo</th>
         <th>Descripción</th>
-        <th style="text-align:center">Tipo</th>
-        <th style="text-align:center">Cantidad</th>
-        <th style="text-align:right">Precio Unit.</th>
-        <th style="text-align:right">Subtotal</th>
+        <th class="center">Cant.</th>
+        <th class="right">Precio Unit.</th>
+        <th class="right">Subtotal</th>
       </tr>
     </thead>
     <tbody>
-      {lineas_html}
+      {lineas_html if lineas_html else '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">Sin ítems detallados</td></tr>'}
     </tbody>
   </table>
 
-  <div class="totales">
-    <div class="totales-box">
-      <div class="totales-row"><span>Subtotal</span><span>${{float(fac.subtotal):,.0f}}</span></div>
-      <div class="totales-row"><span>Descuento</span><span>-${float(fac.descuento):,.0f}</span></div>
-      <div class="totales-row total"><span>TOTAL</span><span>${{float(fac.total):,.0f}}</span></div>
-    </div>
+  <div class="totales-section">
+    <table class="totales-table">
+      {iva_row}
+      {descuento_row}
+      <tr class="total-row">
+        <td>TOTAL</td>
+        <td class="right">${float(fac.total):,.0f}</td>
+      </tr>
+    </table>
   </div>
 
-  <div class="pago-info">
-    💳 Método de pago: <strong>{fac.metodo_pago.upper()}</strong>
-    {f'<br>📝 {fac.observaciones}' if fac.observaciones else ''}
+  <div class="pago-box">
+    💳 Pago recibido en: <strong>{fac.metodo_pago.upper()}</strong>
+    &nbsp;|&nbsp; Estado: <strong>{fac.estado.upper()}</strong>
   </div>
 
   <div class="footer">
-    <div>
+    <div class="footer-left">
       <strong>ARM Racing Performance</strong><br>
-      Lun-Sáb 8:00 AM - 7:30 PM<br>
-      instagram: @arm_racing.performance
+      Lun — Sáb: 8:00 AM – 7:30 PM<br>
+      NIT: por registrar
     </div>
-    <div style="text-align:right">
-      <strong>Firma autorizada</strong><br><br>
-      ____________________<br>
-      <span style="font-size:11px">ARM Racing Performance</span>
+    <div class="footer-right">
+      <div style="color:#475569;font-size:11px">Autorizado por</div>
+      <div class="firma-line">ARM Racing Performance</div>
     </div>
   </div>
 
@@ -349,88 +449,57 @@ def generar_html_factura(fac):
 </body>
 </html>"""
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Count
-from django.db.models.functions import TruncMonth
-from datetime import datetime, timedelta
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def reporte_financiero(request):
-    # Parámetros opcionales de fecha
     anio = int(request.query_params.get('anio', datetime.now().year))
     mes  = request.query_params.get('mes')
 
-    # Filtro base
     filtro_facturas = {'fecha_emision__year': anio, 'estado': 'pagada'}
     filtro_gastos   = {'fecha__year': anio}
     if mes:
         filtro_facturas['fecha_emision__month'] = mes
         filtro_gastos['fecha__month']           = mes
 
-    # Ingresos
-    ingresos = Factura.objects.filter(**filtro_facturas).aggregate(
-        total=Sum('total'), cantidad=Count('id')
-    )
+    ingresos = Factura.objects.filter(**filtro_facturas).aggregate(total=Sum('total'), cantidad=Count('id'))
+    gastos   = Gasto.objects.filter(**filtro_gastos).aggregate(total=Sum('monto'), cantidad=Count('id'))
 
-    # Gastos
-    gastos = Gasto.objects.filter(**filtro_gastos).aggregate(
-        total=Sum('monto'), cantidad=Count('id')
-    )
-
-    # Ganancia neta
     total_ingresos = float(ingresos['total'] or 0)
     total_gastos   = float(gastos['total'] or 0)
     ganancia_neta  = total_ingresos - total_gastos
 
-    # Ingresos por mes (para gráfica)
-    ingresos_por_mes = Factura.objects.filter(
-        fecha_emision__year=anio, estado='pagada'
-    ).annotate(mes=TruncMonth('fecha_emision')).values('mes').annotate(
-        total=Sum('total'), cantidad=Count('id')
-    ).order_by('mes')
+    ingresos_por_mes = Factura.objects.filter(fecha_emision__year=anio, estado='pagada').annotate(
+        mes=TruncMonth('fecha_emision')).values('mes').annotate(total=Sum('total'), cantidad=Count('id')).order_by('mes')
 
-    # Gastos por mes
-    gastos_por_mes = Gasto.objects.filter(
-        fecha__year=anio
-    ).annotate(mes=TruncMonth('fecha')).values('mes').annotate(
-        total=Sum('monto'), cantidad=Count('id')
-    ).order_by('mes')
+    gastos_por_mes = Gasto.objects.filter(fecha__year=anio).annotate(
+        mes=TruncMonth('fecha')).values('mes').annotate(total=Sum('monto'), cantidad=Count('id')).order_by('mes')
 
-    # Gastos por categoría
     gastos_por_categoria = Gasto.objects.filter(**filtro_gastos).values('categoria').annotate(
-        total=Sum('monto'), cantidad=Count('id')
-    ).order_by('-total')
+        total=Sum('monto'), cantidad=Count('id')).order_by('-total')
 
-    # Cotizaciones pendientes
-    cotizaciones_pendientes = Cotizacion.objects.filter(
-        estado__in=['borrador', 'enviada']
-    ).aggregate(total=Sum('total'), cantidad=Count('id'))
+    cotizaciones_pendientes = Cotizacion.objects.filter(estado__in=['borrador','enviada']).aggregate(
+        total=Sum('total'), cantidad=Count('id'))
 
     return Response({
         'resumen': {
-            'ingresos':       total_ingresos,
-            'gastos':         total_gastos,
-            'ganancia_neta':  ganancia_neta,
-            'margen':         round((ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0, 1),
+            'ingresos': total_ingresos, 'gastos': total_gastos,
+            'ganancia_neta': ganancia_neta,
+            'margen': round((ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0, 1),
             'facturas_count': ingresos['cantidad'] or 0,
-            'gastos_count':   gastos['cantidad'] or 0,
+            'gastos_count': gastos['cantidad'] or 0,
         },
         'cotizaciones_pendientes': {
-            'total':    float(cotizaciones_pendientes['total'] or 0),
+            'total': float(cotizaciones_pendientes['total'] or 0),
             'cantidad': cotizaciones_pendientes['cantidad'] or 0,
         },
         'ingresos_por_mes': [
             {'mes': i['mes'].strftime('%Y-%m'), 'total': float(i['total']), 'cantidad': i['cantidad']}
-            for i in ingresos_por_mes
-        ],
+            for i in ingresos_por_mes],
         'gastos_por_mes': [
             {'mes': g['mes'].strftime('%Y-%m'), 'total': float(g['total']), 'cantidad': g['cantidad']}
-            for g in gastos_por_mes
-        ],
+            for g in gastos_por_mes],
         'gastos_por_categoria': [
             {'categoria': g['categoria'], 'total': float(g['total']), 'cantidad': g['cantidad']}
-            for g in gastos_por_categoria
-        ],
+            for g in gastos_por_categoria],
     })
