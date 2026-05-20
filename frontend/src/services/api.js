@@ -1,16 +1,11 @@
 import axios from "axios"
 
 const getBaseURL = () => {
-  const protocol = window.location.protocol
   const hostname = window.location.hostname
-  const port = window.location.port
-  
-  if (hostname === 'localhost' || hostname.startsWith('192.')) {
-    return `${protocol}//192.168.0.8:8000/api`
+  if (hostname === 'localhost' || hostname.startsWith('192.') || hostname === '127.0.0.1') {
+    return `http://192.168.0.8:8000/api`
   }
-  
-  const currentPort = port ? `:${port}` : ''
-  return `${protocol}//${hostname}${currentPort}/api`
+  return `${window.location.protocol}//${hostname}/api`
 }
 
 const API = axios.create({

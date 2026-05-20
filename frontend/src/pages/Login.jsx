@@ -1,5 +1,5 @@
 import { useState } from "react"
-import axios from "axios"
+import API from "../services/api"
 
 export default function Login({ onLogin }) {
   const [form, setForm]     = useState({ username: "", password: "" })
@@ -14,7 +14,7 @@ export default function Login({ onLogin }) {
     setLoading(true)
     setError("")
     try {
-      const res = await axios.post("/api/auth/login/", form)
+      const res = await API.post("/auth/login/", form)
       localStorage.setItem("access",  res.data.access)
       localStorage.setItem("refresh", res.data.refresh)
       localStorage.setItem("username", form.username)
