@@ -85,6 +85,7 @@ export const facturasAPI = {
   crear:         (data)        => API.post("/facturas/", data),
   editar:        (id, data)    => API.put(`/facturas/${id}/`, data),
   eliminar:      (id)          => API.delete(`/facturas/${id}/`),
+  cambiarEstado: (id, estado)  => API.patch(`/facturas/${id}/`, { estado }),
   agregarLinea:  (id, data)    => API.post(`/facturas/${id}/agregar_linea/`, data),
   eliminarLinea: (id, lineaId) => API.delete(`/facturas/${id}/eliminar_linea/${lineaId}/`),
   pdf:           (id)          => `${API.defaults.baseURL.replace('/api','')}/api/facturas/${id}/pdf/`,
