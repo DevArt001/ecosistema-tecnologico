@@ -80,12 +80,14 @@ export const productosAPI = {
 }
 
 export const facturasAPI = {
-  listar:   ()         => API.get("/facturas/"),
-  obtener:  (id)       => API.get(`/facturas/${id}/`),
-  crear:    (data)     => API.post("/facturas/", data),
-  editar:   (id, data) => API.put(`/facturas/${id}/`, data),
-  eliminar: (id)       => API.delete(`/facturas/${id}/`),
-  pdf:      (id)       => `${API.defaults.baseURL.replace('/api','')}/api/facturas/${id}/pdf/`,
+  listar:        ()            => API.get("/facturas/"),
+  obtener:       (id)          => API.get(`/facturas/${id}/`),
+  crear:         (data)        => API.post("/facturas/", data),
+  editar:        (id, data)    => API.put(`/facturas/${id}/`, data),
+  eliminar:      (id)          => API.delete(`/facturas/${id}/`),
+  agregarLinea:  (id, data)    => API.post(`/facturas/${id}/agregar_linea/`, data),
+  eliminarLinea: (id, lineaId) => API.delete(`/facturas/${id}/eliminar_linea/${lineaId}/`),
+  pdf:           (id)          => `${API.defaults.baseURL.replace('/api','')}/api/facturas/${id}/pdf/`,
 }
 
 export const agendamientoAPI = {

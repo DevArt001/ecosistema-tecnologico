@@ -2,8 +2,8 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.http import HttpResponse
-from .models import Factura, Gasto, Cotizacion, LineaCotizacion
-from .serializers import FacturaSerializer, GastoSerializer, CotizacionSerializer, LineaCotizacionSerializer
+from .models import Factura, Gasto, Cotizacion, LineaCotizacion, LineaFactura
+from .serializers import FacturaSerializer, GastoSerializer, CotizacionSerializer, LineaCotizacionSerializer, LineaFacturaSerializer
 import io
 
 class FacturaViewSet(viewsets.ModelViewSet):
@@ -12,6 +12,23 @@ class FacturaViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['numero', 'cliente__nombre']
     ordering_fields = ['fecha_emision', 'total']
+
+    @action(detail=True, methods=['post'])
+    def agregar_linea(self, request, pk=None):
+        factura = self.get_object()
+        serializer = LineaFacturaSerializer(data={**request.data, 'factura': factura.id})
+        if serializer.is_valid():
+            serializer.save()
+            factura.calcular_totales()
+            return Response(FacturaSerializer(factura).data)
+        return Response(serializer.errors, status=400)
+
+    @action(detail=True, methods=['delete'], url_path='eliminar_linea/(?P<linea_id>[^/.]+)')
+    def eliminar_linea(self, request, pk=None, linea_id=None):
+        factura = self.get_object()
+        LineaFactura.objects.filter(id=linea_id, factura=factura).delete()
+        factura.calcular_totales()
+        return Response(FacturaSerializer(factura).data)
 
     @action(detail=True, methods=['get'])
     def pdf(self, request, pk=None):
@@ -207,6 +224,19 @@ def generar_html_factura(fac):
     orden_info = f"{fac.orden.codigo}" if fac.orden else "N/A"
     v = fac.orden.vehiculo if fac.orden else None
     vehiculo_info = f"{v.marca} {v.modelo} - {v.placa}" if v else "N/A"
+    lineas_html = ""
+    for l in fac.lineas.all():
+        tipo_badge = "🔧" if l.tipo == "servicio" else "🔩"
+        lineas_html += f"""
+        <tr>
+            <td>{tipo_badge} {l.descripcion}</td>
+            <td style="text-align:center">{l.tipo.capitalize()}</td>
+            <td style="text-align:center">{l.cantidad}</td>
+            <td style="text-align:right">${float(l.precio_unit):,.0f}</td>
+            <td style="text-align:right"><strong>${float(l.subtotal):,.0f}</strong></td>
+        </tr>"""
+    if not lineas_html:
+        lineas_html = "<tr><td colspan='5' style='text-align:center;color:#999'>Sin ítems detallados</td></tr>"
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -272,6 +302,21 @@ def generar_html_factura(fac):
       <p>Estado: <strong>{fac.estado.upper()}</strong></p>
     </div>
   </div>
+
+  <table>
+    <thead class="table-header">
+      <tr>
+        <th>Descripción</th>
+        <th style="text-align:center">Tipo</th>
+        <th style="text-align:center">Cantidad</th>
+        <th style="text-align:right">Precio Unit.</th>
+        <th style="text-align:right">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {lineas_html}
+    </tbody>
+  </table>
 
   <div class="totales">
     <div class="totales-box">

@@ -39,6 +39,14 @@ class Factura(models.Model):
 
     observaciones   = models.TextField(blank=True)
 
+    def calcular_totales(self):
+        lineas = self.lineas.all()
+        if lineas.exists():
+            from decimal import Decimal
+            self.subtotal = sum(l.subtotal for l in lineas)
+            self.total = self.subtotal - self.descuento
+        self.save()
+
     def save(self, *args, **kwargs):
         if not self.numero:
             import datetime
@@ -115,7 +123,7 @@ class Cotizacion(models.Model):
     def calcular_totales(self):
         lineas = self.lineas.all()
         self.subtotal = sum(l.subtotal for l in lineas)
-        self.iva = round(self.subtotal * 0.19, 2)
+        self.iva = round(self.subtotal * 19 / 100, 2)
         self.total = self.subtotal + self.iva - self.descuento
         self.save()
 
@@ -165,3 +173,26 @@ class LineaCotizacion(models.Model):
         verbose_name_plural = 'Lineas de Cotizacion'
 
 
+
+
+class LineaFactura(models.Model):
+    TIPO_CHOICES = [
+        ('servicio', 'Servicio / Mano de obra'),
+        ('repuesto', 'Repuesto'),
+    ]
+    factura     = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='lineas')
+    tipo        = models.CharField(max_length=10, choices=TIPO_CHOICES, default='servicio')
+    descripcion = models.CharField(max_length=255)
+    cantidad    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+    precio_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    subtotal    = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def save(self, *args, **kwargs):
+        self.subtotal = self.cantidad * self.precio_unit
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.descripcion} x{self.cantidad} = ${self.subtotal}"
+
+    class Meta:
+        verbose_name_plural = "Lineas de Factura"

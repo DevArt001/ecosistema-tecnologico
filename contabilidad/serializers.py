@@ -1,8 +1,14 @@
 from rest_framework import serializers
-from .models import Factura, Gasto, Cotizacion, LineaCotizacion
+from .models import Factura, Gasto, Cotizacion, LineaCotizacion, LineaFactura
+
+class LineaFacturaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LineaFactura
+        fields = '__all__'
 
 class FacturaSerializer(serializers.ModelSerializer):
     cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
+    lineas         = LineaFacturaSerializer(many=True, read_only=True)
     class Meta:
         model = Factura
         fields = '__all__'
