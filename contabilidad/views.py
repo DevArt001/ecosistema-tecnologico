@@ -13,6 +13,14 @@ class FacturaViewSet(viewsets.ModelViewSet):
     search_fields = ['numero', 'cliente__nombre']
     ordering_fields = ['fecha_emision', 'total']
 
+    @action(detail=True, methods=['get'])
+    def pdf(self, request, pk=None):
+        factura = self.get_object()
+        html = generar_html_factura(factura)
+        response = HttpResponse(html, content_type='text/html')
+        response['Content-Disposition'] = f'inline; filename="factura_{factura.numero}.html"'
+        return response
+
 class GastoViewSet(viewsets.ModelViewSet):
     queryset = Gasto.objects.all()
     serializer_class = GastoSerializer
@@ -136,8 +144,8 @@ def generar_html_cotizacion(cot):
       <h3>Cliente</h3>
       <p><strong>{cot.cliente.nombre}</strong></p>
       <p>📞 {cot.cliente.telefono or 'N/A'}</p>
-      <p>✉️ {cot.cliente.email or 'N/A'}</p>
-      <p>🪪 CC/NIT: {cot.cliente.cedula or 'N/A'}</p>
+      <p>✉️ {cot.cliente.correo or 'N/A'}</p>
+      <p>🪪 CC/NIT: {cot.cliente.documento or 'N/A'}</p>
     </div>
     <div class="info-box">
       <h3>Vehículo</h3>
@@ -174,6 +182,108 @@ def generar_html_cotizacion(cot):
   <div class="vigencia">
     ⏰ Esta cotización tiene una vigencia de <strong>{cot.vigencia_dias} días</strong> a partir de la fecha de emisión.
     {f'<br>📝 {cot.notas}' if cot.notas else ''}
+  </div>
+
+  <div class="footer">
+    <div>
+      <strong>ARM Racing Performance</strong><br>
+      Lun-Sáb 8:00 AM - 7:30 PM<br>
+      instagram: @arm_racing.performance
+    </div>
+    <div style="text-align:right">
+      <strong>Firma autorizada</strong><br><br>
+      ____________________<br>
+      <span style="font-size:11px">ARM Racing Performance</span>
+    </div>
+  </div>
+
+  <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+</div>
+</body>
+</html>"""
+
+
+def generar_html_factura(fac):
+    orden_info = f"{fac.orden.codigo}" if fac.orden else "N/A"
+    v = fac.orden.vehiculo if fac.orden else None
+    vehiculo_info = f"{v.marca} {v.modelo} - {v.placa}" if v else "N/A"
+
+    return f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura {fac.numero}</title>
+<style>
+  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #333; }}
+  .page {{ max-width: 800px; margin: 20px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }}
+  .header {{ background: linear-gradient(135deg, #0D1117, #1a2a1a); color: white; padding: 40px; display: flex; justify-content: space-between; align-items: center; }}
+  .logo-area h1 {{ font-size: 28px; font-weight: 800; color: #10B981; }}
+  .logo-area p {{ font-size: 12px; color: #9CA3AF; margin-top: 4px; }}
+  .factura-num {{ text-align: right; }}
+  .factura-num .num {{ font-size: 24px; font-weight: 700; color: #10B981; }}
+  .factura-num .fecha {{ font-size: 12px; color: #9CA3AF; margin-top: 4px; }}
+  .badge {{ display: inline-block; background: #10B981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 8px; }}
+  .info-section {{ display: grid; grid-template-columns: 1fr 1fr; gap: 0; }}
+  .info-box {{ padding: 24px 32px; border-bottom: 1px solid #eee; }}
+  .info-box:nth-child(odd) {{ border-right: 1px solid #eee; }}
+  .info-box h3 {{ font-size: 11px; font-weight: 600; color: #10B981; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }}
+  .info-box p {{ font-size: 13px; color: #555; margin-bottom: 4px; }}
+  .totales {{ padding: 24px 32px; display: flex; justify-content: flex-end; }}
+  .totales-box {{ width: 280px; }}
+  .totales-row {{ display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #eee; }}
+  .totales-row.total {{ font-size: 18px; font-weight: 700; color: #10B981; border-bottom: none; padding-top: 12px; }}
+  .pago-info {{ padding: 16px 32px; background: #E8F5E9; border-left: 4px solid #10B981; margin: 0 32px 24px; border-radius: 0 8px 8px 0; font-size: 13px; color: #1B5E20; }}
+  .footer {{ background: #0D1117; color: #9CA3AF; padding: 24px 32px; display: flex; justify-content: space-between; font-size: 12px; }}
+  .footer strong {{ color: #10B981; }}
+  .print-btn {{ display: block; text-align: center; padding: 12px; background: #10B981; color: white; font-size: 14px; font-weight: 600; cursor: pointer; border: none; width: 100%; }}
+  @media print {{ .print-btn {{ display: none; }} }}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="logo-area">
+      <h1>🔧 ARM Racing Performance</h1>
+      <p>Potencia, confianza y calidad en cada servicio</p>
+      <p style="margin-top:8px">📍 Carrera 54b #50-09 sur, Venecia, Bogotá</p>
+      <p>📞 323 233 8894 | ✉️ armracingpeformance@gmail.com</p>
+    </div>
+    <div class="factura-num">
+      <div class="num">{fac.numero}</div>
+      <div class="fecha">{fac.fecha_emision.strftime('%d/%m/%Y')}</div>
+      <div class="badge">FACTURA</div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-box">
+      <h3>Cliente</h3>
+      <p><strong>{fac.cliente.nombre}</strong></p>
+      <p>📞 {fac.cliente.telefono or 'N/A'}</p>
+      <p>✉️ {fac.cliente.correo or 'N/A'}</p>
+      <p>🪪 CC/NIT: {fac.cliente.documento or 'N/A'}</p>
+    </div>
+    <div class="info-box">
+      <h3>Detalle</h3>
+      <p>Orden: <strong>{orden_info}</strong></p>
+      <p>Vehículo: <strong>{vehiculo_info}</strong></p>
+      <p>Método de pago: <strong>{fac.metodo_pago}</strong></p>
+      <p>Estado: <strong>{fac.estado.upper()}</strong></p>
+    </div>
+  </div>
+
+  <div class="totales">
+    <div class="totales-box">
+      <div class="totales-row"><span>Subtotal</span><span>${{float(fac.subtotal):,.0f}}</span></div>
+      <div class="totales-row"><span>Descuento</span><span>-${float(fac.descuento):,.0f}</span></div>
+      <div class="totales-row total"><span>TOTAL</span><span>${{float(fac.total):,.0f}}</span></div>
+    </div>
+  </div>
+
+  <div class="pago-info">
+    💳 Método de pago: <strong>{fac.metodo_pago.upper()}</strong>
+    {f'<br>📝 {fac.observaciones}' if fac.observaciones else ''}
   </div>
 
   <div class="footer">

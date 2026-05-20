@@ -138,6 +138,10 @@ export default function Facturas() {
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "6px" }}>
+                      <button onClick={() => window.open(facturasAPI.pdf(f.id), "_blank")} style={{
+                        background: "#1F2937", border: "1px solid #374151",
+                        color: "#D1D5DB", borderRadius: "6px",
+                        padding: "4px 10px", fontSize: "12px", cursor: "pointer" }}>📄</button>
                       <button onClick={() => handleEditar(f)} style={{
                         background: "#1E3A5F", border: "1px solid #3B82F6",
                         color: "#3B82F6", borderRadius: "6px",

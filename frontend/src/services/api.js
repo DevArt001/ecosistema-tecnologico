@@ -85,6 +85,7 @@ export const facturasAPI = {
   crear:    (data)     => API.post("/facturas/", data),
   editar:   (id, data) => API.put(`/facturas/${id}/`, data),
   eliminar: (id)       => API.delete(`/facturas/${id}/`),
+  pdf:      (id)       => `${API.defaults.baseURL.replace('/api','')}/api/facturas/${id}/pdf/`,
 }
 
 export const agendamientoAPI = {
