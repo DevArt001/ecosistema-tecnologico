@@ -136,6 +136,17 @@ class Cotizacion(models.Model):
             descuento=self.descuento,
             total=self.total,
         )
+        # Copiar líneas de cotización a factura
+        for linea in self.lineas.all():
+            from .models import LineaFactura
+            LineaFactura.objects.create(
+                factura=factura,
+                tipo=linea.tipo,
+                descripcion=linea.descripcion,
+                cantidad=linea.cantidad,
+                precio_unit=linea.precio_unit,
+                subtotal=linea.subtotal,
+            )
         self.estado = 'aprobada'
         self.fecha_aprobacion = datetime.datetime.now()
         self.save()

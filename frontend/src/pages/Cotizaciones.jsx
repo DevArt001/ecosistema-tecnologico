@@ -174,15 +174,30 @@ export default function Cotizaciones() {
                   {new Date(c.fecha_emision).toLocaleDateString("es-CO")}
                 </td>
                 <td>
-                  <button onClick={async () => {
-                    const res = await API.get(`/cotizaciones/${c.id}/`)
-                    setCotActual(res.data)
-                    setModal("detalle")
-                  }} style={{
-                    background: "#1E3A5F", border: "1px solid #3B82F6",
-                    color: "#3B82F6", borderRadius: "6px",
-                    padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                  }}>Ver</button>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={async () => {
+                      const res = await API.get(`/cotizaciones/${c.id}/`)
+                      setCotActual(res.data)
+                      setModal("detalle")
+                    }} style={{
+                      background: "#1E3A5F", border: "1px solid #3B82F6",
+                      color: "#3B82F6", borderRadius: "6px",
+                      padding: "4px 10px", fontSize: "12px", cursor: "pointer"
+                    }}>Ver</button>
+                    {c.estado === "borrador" && (
+                      <button onClick={async () => {
+                        if (!window.confirm(`¿Eliminar cotización ${c.numero}?`)) return
+                        try {
+                          await API.delete(`/cotizaciones/${c.id}/`)
+                          cargar()
+                        } catch { mostrarMensaje("❌ Error al eliminar") }
+                      }} style={{
+                        background: "#3B0A0A", border: "1px solid #EF4444",
+                        color: "#EF4444", borderRadius: "6px",
+                        padding: "4px 10px", fontSize: "12px", cursor: "pointer"
+                      }}>🗑️</button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
