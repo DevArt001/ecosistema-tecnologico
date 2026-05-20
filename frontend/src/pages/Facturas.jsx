@@ -23,6 +23,15 @@ export default function Facturas() {
 
   const handleEditar = (f) => { setFacturaEditar(f); setShowForm(true) }
 
+  const handleCambiarEstado = async (id, estado) => {
+    try {
+      await facturasAPI.editar(id, { estado })
+      cargarFacturas()
+    } catch (err) {
+      alert("Error al cambiar estado")
+    }
+  }
+
   const handleEliminar = async (id) => {
     try {
       await facturasAPI.eliminar(id)
@@ -131,10 +140,23 @@ export default function Facturas() {
                   <td style={{ color: "var(--green)", fontWeight: "600" }}>${Number(f.total).toLocaleString()}</td>
                   <td>{f.metodo_pago}</td>
                   <td>
-                    <span className="badge" style={{
-                      background: estadoBadge[f.estado]?.bg || "#1F2937",
-                      color: estadoBadge[f.estado]?.color || "#9CA3AF"
-                    }}>{f.estado}</span>
+                    <select
+                      value={f.estado}
+                      onChange={e => handleCambiarEstado(f.id, e.target.value)}
+                      style={{
+                        background: estadoBadge[f.estado]?.bg || "#1F2937",
+                        color: estadoBadge[f.estado]?.color || "#9CA3AF",
+                        border: `1px solid ${estadoBadge[f.estado]?.color || "#9CA3AF"}`,
+                        borderRadius: "20px",
+                        padding: "3px 8px",
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                      }}>
+                      <option value="pendiente">pendiente</option>
+                      <option value="pagada">pagada</option>
+                      <option value="anulada">anulada</option>
+                    </select>
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "6px" }}>
