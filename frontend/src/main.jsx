@@ -14,6 +14,7 @@ import Public from "./pages/Public"
 import Agendamiento from "./pages/Agendamiento"
 import Portal from "./pages/Portal"
 import Cotizaciones from "./pages/Cotizaciones"
+import Reportes from "./pages/Reportes"
 import "./index.css"
 
 function App() {
@@ -59,6 +60,7 @@ function App() {
                 <Route path="facturas"     element={<Facturas />} />
                 <Route path="agendamiento" element={<Agendamiento />} />
                 <Route path="cotizaciones" element={<Cotizaciones />} />
+                <Route path="reportes"      element={<Reportes />} />
               </Route>
             </Routes>
           )

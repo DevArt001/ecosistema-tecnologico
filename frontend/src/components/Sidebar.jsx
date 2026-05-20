@@ -9,6 +9,7 @@ const menu = [
   { path: "/facturas",     label: "Facturacion",  color: "#10B981" },
   { path: "/agendamiento", label: "Agendamiento", color: "#3B82F6" },  
   { path: '/cotizaciones', label: 'Cotizaciones', color: '#F59E0B' },
+  { path: '/reportes',     label: 'Reportes',     color: '#8B5CF6' },
 ]
 
 const enlaces = [

@@ -1,9 +1,6 @@
-from rest_framework.routers import DefaultRouter
-from .views import FacturaViewSet, GastoViewSet, CotizacionViewSet
+from django.urls import path
+from . import views
 
-router = DefaultRouter()
-router.register('facturas', FacturaViewSet)
-router.register('gastos', GastoViewSet)
-router.register('cotizaciones', CotizacionViewSet)
-
-urlpatterns = router.urls
+urlpatterns = [
+    path('financiero/', views.reporte_financiero, name='reporte-financiero'),
+]

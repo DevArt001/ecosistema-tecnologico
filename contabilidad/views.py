@@ -303,3 +303,89 @@ def generar_html_factura(fac):
 </div>
 </body>
 </html>"""
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth
+from datetime import datetime, timedelta
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def reporte_financiero(request):
+    # Parámetros opcionales de fecha
+    anio = int(request.query_params.get('anio', datetime.now().year))
+    mes  = request.query_params.get('mes')
+
+    # Filtro base
+    filtro_facturas = {'fecha_emision__year': anio, 'estado': 'pagada'}
+    filtro_gastos   = {'fecha__year': anio}
+    if mes:
+        filtro_facturas['fecha_emision__month'] = mes
+        filtro_gastos['fecha__month']           = mes
+
+    # Ingresos
+    ingresos = Factura.objects.filter(**filtro_facturas).aggregate(
+        total=Sum('total'), cantidad=Count('id')
+    )
+
+    # Gastos
+    gastos = Gasto.objects.filter(**filtro_gastos).aggregate(
+        total=Sum('monto'), cantidad=Count('id')
+    )
+
+    # Ganancia neta
+    total_ingresos = float(ingresos['total'] or 0)
+    total_gastos   = float(gastos['total'] or 0)
+    ganancia_neta  = total_ingresos - total_gastos
+
+    # Ingresos por mes (para gráfica)
+    ingresos_por_mes = Factura.objects.filter(
+        fecha_emision__year=anio, estado='pagada'
+    ).annotate(mes=TruncMonth('fecha_emision')).values('mes').annotate(
+        total=Sum('total'), cantidad=Count('id')
+    ).order_by('mes')
+
+    # Gastos por mes
+    gastos_por_mes = Gasto.objects.filter(
+        fecha__year=anio
+    ).annotate(mes=TruncMonth('fecha')).values('mes').annotate(
+        total=Sum('monto'), cantidad=Count('id')
+    ).order_by('mes')
+
+    # Gastos por categoría
+    gastos_por_categoria = Gasto.objects.filter(**filtro_gastos).values('categoria').annotate(
+        total=Sum('monto'), cantidad=Count('id')
+    ).order_by('-total')
+
+    # Cotizaciones pendientes
+    cotizaciones_pendientes = Cotizacion.objects.filter(
+        estado__in=['borrador', 'enviada']
+    ).aggregate(total=Sum('total'), cantidad=Count('id'))
+
+    return Response({
+        'resumen': {
+            'ingresos':       total_ingresos,
+            'gastos':         total_gastos,
+            'ganancia_neta':  ganancia_neta,
+            'margen':         round((ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0, 1),
+            'facturas_count': ingresos['cantidad'] or 0,
+            'gastos_count':   gastos['cantidad'] or 0,
+        },
+        'cotizaciones_pendientes': {
+            'total':    float(cotizaciones_pendientes['total'] or 0),
+            'cantidad': cotizaciones_pendientes['cantidad'] or 0,
+        },
+        'ingresos_por_mes': [
+            {'mes': i['mes'].strftime('%Y-%m'), 'total': float(i['total']), 'cantidad': i['cantidad']}
+            for i in ingresos_por_mes
+        ],
+        'gastos_por_mes': [
+            {'mes': g['mes'].strftime('%Y-%m'), 'total': float(g['total']), 'cantidad': g['cantidad']}
+            for g in gastos_por_mes
+        ],
+        'gastos_por_categoria': [
+            {'categoria': g['categoria'], 'total': float(g['total']), 'cantidad': g['cantidad']}
+            for g in gastos_por_categoria
+        ],
+    })
