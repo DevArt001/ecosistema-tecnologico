@@ -25,7 +25,7 @@ export default function Facturas() {
 
   const handleCambiarEstado = async (id, estado) => {
     try {
-      await facturasAPI.editar(id, { estado })
+      await facturasAPI.cambiarEstado(id, estado)
       cargarFacturas()
     } catch (err) {
       alert("Error al cambiar estado")
