@@ -119,4 +119,16 @@ export const procesosAPI = {
   }),
 }
 
+export const cotizacionesAPI = {
+  listar:        ()              => API.get("/cotizaciones/"),
+  obtener:       (id)            => API.get(`/cotizaciones/${id}/`),
+  crear:         (data)          => API.post("/cotizaciones/", data),
+  editar:        (id, data)      => API.put(`/cotizaciones/${id}/`, data),
+  eliminar:      (id)            => API.delete(`/cotizaciones/${id}/`),
+  agregarLinea:  (id, data)      => API.post(`/cotizaciones/${id}/agregar_linea/`, data),
+  eliminarLinea: (id, lineaId)   => API.delete(`/cotizaciones/${id}/eliminar_linea/${lineaId}/`),
+  aprobar:       (id)            => API.post(`/cotizaciones/${id}/aprobar/`),
+  pdf:           (id)            => `${API.defaults.baseURL.replace('/api','')}/api/cotizaciones/${id}/pdf/`,
+}
+
 export default API

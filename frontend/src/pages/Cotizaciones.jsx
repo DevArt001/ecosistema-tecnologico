@@ -1,38 +1,43 @@
 import { useState, useEffect } from "react"
-import axios from "axios"
-
-const api = (token) => axios.create({
-  baseURL: "/api",
-  headers: { Authorization: `Bearer ${token}` }
-})
+import API from "../services/api"
 
 export default function Cotizaciones() {
-  const token = localStorage.getItem("access")
   const [cotizaciones, setCotizaciones] = useState([])
-  const [ordenes, setOrdenes] = useState([])
-  const [modal, setModal] = useState(null) // null | 'nueva' | 'detalle'
-  const [cotActual, setCotActual] = useState(null)
-  const [form, setForm] = useState({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" })
-  const [lineaForm, setLineaForm] = useState({ tipo: "servicio", descripcion: "", cantidad: 1, precio_unit: 0 })
-  const [loading, setLoading] = useState(false)
+  const [ordenes, setOrdenes]           = useState([])
+  const [modal, setModal]               = useState(null)
+  const [cotActual, setCotActual]       = useState(null)
+  const [form, setForm]                 = useState({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" })
+  const [lineaForm, setLineaForm]       = useState({ tipo: "servicio", descripcion: "", cantidad: 1, precio_unit: 0 })
+  const [loading, setLoading]           = useState(false)
+  const [error, setError]               = useState(null)
+  const [mensaje, setMensaje]           = useState("")
 
   useEffect(() => { cargar() }, [])
 
   const cargar = async () => {
-    const [c, o] = await Promise.all([
-      api(token).get("/cotizaciones/"),
-      api(token).get("/ordenes/")
-    ])
-    setCotizaciones(c.data.results || c.data)
-    setOrdenes(o.data.results || o.data)
+    try {
+      const [c, o] = await Promise.all([
+        API.get("/cotizaciones/"),
+        API.get("/ordenes/")
+      ])
+      setCotizaciones(c.data.results || c.data)
+      setOrdenes(o.data.results || o.data)
+    } catch (err) {
+      setError(err.mensaje || "Error al cargar cotizaciones")
+    }
+  }
+
+  const mostrarMensaje = (msg) => {
+    setMensaje(msg)
+    setTimeout(() => setMensaje(""), 3000)
   }
 
   const crearCotizacion = async () => {
-    if (!form.orden) return alert("Selecciona una orden")
+    if (!form.orden) return mostrarMensaje("❌ Selecciona una orden")
     setLoading(true)
     try {
       const orden = ordenes.find(o => o.id == form.orden)
-      const res = await api(token).post("/cotizaciones/", {
+      const res = await API.post("/cotizaciones/", {
         orden: form.orden,
         cliente: orden.cliente,
         descuento: form.descuento,
@@ -42,88 +47,142 @@ export default function Cotizaciones() {
       setCotActual(res.data)
       setModal("detalle")
       cargar()
-    } catch(e) { alert("Error al crear cotización") }
+    } catch (e) {
+      mostrarMensaje("❌ Error al crear cotización")
+    }
     setLoading(false)
   }
 
   const agregarLinea = async () => {
-    if (!lineaForm.descripcion) return alert("Ingresa una descripción")
-    await api(token).post(`/cotizaciones/${cotActual.id}/agregar_linea/`, lineaForm)
-    const res = await api(token).get(`/cotizaciones/${cotActual.id}/`)
-    setCotActual(res.data)
-    setLineaForm({ tipo: "servicio", descripcion: "", cantidad: 1, precio_unit: 0 })
-    cargar()
+    if (!lineaForm.descripcion) return mostrarMensaje("❌ Ingresa una descripción")
+    try {
+      await API.post(`/cotizaciones/${cotActual.id}/agregar_linea/`, lineaForm)
+      const res = await API.get(`/cotizaciones/${cotActual.id}/`)
+      setCotActual(res.data)
+      setLineaForm({ tipo: "servicio", descripcion: "", cantidad: 1, precio_unit: 0 })
+      cargar()
+    } catch (e) {
+      mostrarMensaje("❌ Error al agregar línea")
+    }
   }
 
   const eliminarLinea = async (lineaId) => {
-    await api(token).delete(`/cotizaciones/${cotActual.id}/eliminar_linea/${lineaId}/`)
-    const res = await api(token).get(`/cotizaciones/${cotActual.id}/`)
-    setCotActual(res.data)
-    cargar()
+    try {
+      await API.delete(`/cotizaciones/${cotActual.id}/eliminar_linea/${lineaId}/`)
+      const res = await API.get(`/cotizaciones/${cotActual.id}/`)
+      setCotActual(res.data)
+      cargar()
+    } catch (e) {
+      mostrarMensaje("❌ Error al eliminar línea")
+    }
   }
 
   const aprobar = async () => {
-    if (!confirm("¿Aprobar cotización y generar factura?")) return
-    await api(token).post(`/cotizaciones/${cotActual.id}/aprobar/`)
-    alert("✅ Factura generada")
-    setModal(null)
-    cargar()
+    if (!window.confirm("¿Aprobar cotización y generar factura?")) return
+    try {
+      const res = await API.post(`/cotizaciones/${cotActual.id}/aprobar/`)
+      mostrarMensaje("✅ Factura generada correctamente")
+      setModal(null)
+      cargar()
+    } catch (e) {
+      mostrarMensaje("❌ Error al aprobar cotización")
+    }
   }
 
   const verPDF = () => {
-    window.open(`/api/cotizaciones/${cotActual.id}/pdf/`, "_blank")
+    const baseURL = API.defaults.baseURL.replace('/api', '')
+    window.open(`${baseURL}/api/cotizaciones/${cotActual.id}/pdf/`, "_blank")
   }
 
-  const estadoColor = { borrador: "#6B7280", enviada: "#3B82F6", aprobada: "#10B981", rechazada: "#EF4444" }
+  const estadoColor = {
+    borrador:  { bg: "#1F2937", color: "#9CA3AF" },
+    enviada:   { bg: "#1E3A5F", color: "#3B82F6" },
+    aprobada:  { bg: "#065F46", color: "#10B981" },
+    rechazada: { bg: "#3B0A0A", color: "#EF4444" },
+  }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "1200px" }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+    <div>
+      {mensaje && (
+        <div style={{
+          position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
+          background: mensaje.startsWith("✅") ? "#065F46" : "#3B0A0A",
+          border: `1px solid ${mensaje.startsWith("✅") ? "#10B981" : "#EF4444"}`,
+          color: "white", borderRadius: "8px", padding: "12px 20px",
+          fontSize: "13px", fontWeight: "500"
+        }}>{mensaje}</div>
+      )}
+
+      <div style={{ display: "flex", justifyContent: "space-between",
+        alignItems: "flex-start", marginBottom: "2rem" }}>
         <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)" }}>Cotizaciones</h1>
+          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
+            Cotizaciones
+          </h1>
           <p style={{ color: "var(--text3)", fontSize: "13px" }}>{cotizaciones.length} cotizaciones</p>
         </div>
-        <button className="btn btn-primary" onClick={() => { setForm({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" }); setModal("nueva") }}>
+        <button className="btn btn-primary" onClick={() => {
+          setForm({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" })
+          setModal("nueva")
+        }}>
           + Nueva Cotización
         </button>
       </div>
 
-      {/* Tabla */}
-      <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      {error && (
+        <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
+          padding: "12px 16px", marginBottom: "1rem", color: "#FCA5A5", fontSize: "13px",
+          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {error}
+          <button onClick={cargar} style={{ background: "none", border: "none",
+            color: "#FCA5A5", cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      <div className="card">
+        <table>
           <thead>
-            <tr style={{ borderBottom: "1px solid var(--border)", background: "var(--bg3)" }}>
-              {["Número", "Cliente", "Vehículo", "Total", "Estado", "Fecha", "Acciones"].map(h => (
-                <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "var(--text3)", textTransform: "uppercase" }}>{h}</th>
-              ))}
+            <tr>
+              <th>Número</th><th>Cliente</th><th>Vehículo</th>
+              <th>Total</th><th>Estado</th><th>Fecha</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {cotizaciones.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: "40px", textAlign: "center", color: "var(--text3)" }}>No hay cotizaciones</td></tr>
+              <tr><td colSpan={7} style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
+                No hay cotizaciones
+              </td></tr>
             ) : cotizaciones.map(c => (
-              <tr key={c.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                <td style={{ padding: "12px 16px", fontWeight: "600", color: "#10B981" }}>{c.numero}</td>
-                <td style={{ padding: "12px 16px" }}>{c.cliente_nombre}</td>
-                <td style={{ padding: "12px 16px", fontSize: "13px" }}>{c.vehiculo_info}</td>
-                <td style={{ padding: "12px 16px", fontWeight: "600" }}>${parseFloat(c.total).toLocaleString()}</td>
-                <td style={{ padding: "12px 16px" }}>
-                  <span style={{ background: estadoColor[c.estado] + "22", color: estadoColor[c.estado], padding: "3px 10px", borderRadius: "20px", fontSize: "12px", fontWeight: "600" }}>
-                    {c.estado}
-                  </span>
+              <tr key={c.id}>
+                <td style={{ color: "#10B981", fontWeight: "600", fontFamily: "monospace", fontSize: "12px" }}>
+                  {c.numero}
                 </td>
-                <td style={{ padding: "12px 16px", fontSize: "13px", color: "var(--text3)" }}>
-                  {new Date(c.fecha_emision).toLocaleDateString()}
+                <td style={{ color: "var(--text)" }}>{c.cliente_nombre}</td>
+                <td style={{ fontSize: "12px" }}>{c.vehiculo_info}</td>
+                <td style={{ color: "var(--green)", fontWeight: "600" }}>
+                  ${parseFloat(c.total).toLocaleString()}
                 </td>
-                <td style={{ padding: "12px 16px" }}>
+                <td>
+                  <span className="badge" style={{
+                    background: estadoColor[c.estado]?.bg || "#1F2937",
+                    color: estadoColor[c.estado]?.color || "#9CA3AF"
+                  }}>{c.estado}</span>
+                </td>
+                <td style={{ fontSize: "12px", color: "var(--text3)" }}>
+                  {new Date(c.fecha_emision).toLocaleDateString("es-CO")}
+                </td>
+                <td>
                   <button onClick={async () => {
-                    const res = await api(token).get(`/cotizaciones/${c.id}/`)
+                    const res = await API.get(`/cotizaciones/${c.id}/`)
                     setCotActual(res.data)
                     setModal("detalle")
-                  }} style={{ background: "#1F2937", border: "1px solid var(--border)", color: "var(--text)", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px" }}>
-                    Ver
-                  </button>
+                  }} style={{
+                    background: "#1E3A5F", border: "1px solid #3B82F6",
+                    color: "#3B82F6", borderRadius: "6px",
+                    padding: "4px 10px", fontSize: "12px", cursor: "pointer"
+                  }}>Ver</button>
                 </td>
               </tr>
             ))}
@@ -133,37 +192,64 @@ export default function Cotizaciones() {
 
       {/* Modal Nueva Cotización */}
       {modal === "nueva" && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "32px", width: "500px", maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ marginBottom: "24px", color: "var(--text)" }}>Nueva Cotización</h2>
-            <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>Orden de Trabajo</label>
-              <select value={form.orden} onChange={e => setForm({...form, orden: e.target.value})} style={{ width: "100%" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)", padding: "1.5rem",
+            width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
+            <h2 style={{ marginBottom: "1.5rem", color: "var(--text)", fontSize: "18px" }}>
+              Nueva Cotización
+            </h2>
+            <div style={{ marginBottom: "1rem" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
+                color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
+                Orden de Trabajo
+              </label>
+              <select value={form.orden} onChange={e => setForm({...form, orden: e.target.value})}
+                style={{ width: "100%" }}>
                 <option value="">Seleccionar orden...</option>
-                {ordenes.map(o => (
-                  <option key={o.id} value={o.id}>{o.codigo} — {o.cliente_nombre || o.cliente}</option>
+                {ordenes.filter(o => o.estado !== 'entregado').map(o => (
+                  <option key={o.id} value={o.id}>
+                    {o.codigo} — {o.cliente_nombre} · {o.vehiculo_placa}
+                  </option>
                 ))}
               </select>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>Descuento ($)</label>
-                <input type="number" value={form.descuento} onChange={e => setForm({...form, descuento: e.target.value})} style={{ width: "100%" }} />
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
+                  color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
+                  Descuento ($)
+                </label>
+                <input type="number" value={form.descuento}
+                  onChange={e => setForm({...form, descuento: e.target.value})}
+                  style={{ width: "100%" }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>Vigencia (días)</label>
-                <input type="number" value={form.vigencia_dias} onChange={e => setForm({...form, vigencia_dias: e.target.value})} style={{ width: "100%" }} />
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
+                  color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
+                  Vigencia (días)
+                </label>
+                <input type="number" value={form.vigencia_dias}
+                  onChange={e => setForm({...form, vigencia_dias: e.target.value})}
+                  style={{ width: "100%" }} />
               </div>
             </div>
-            <div style={{ marginBottom: "24px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>Notas</label>
-              <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})} style={{ width: "100%", minHeight: "80px", background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "8px", padding: "10px", color: "var(--text)", resize: "vertical" }} />
+            <div style={{ marginBottom: "1.5rem" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
+                color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
+                Notas
+              </label>
+              <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
+                style={{ width: "100%", minHeight: "80px" }} />
             </div>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <button className="btn btn-primary" onClick={crearCotizacion} disabled={loading} style={{ flex: 1 }}>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button className="btn btn-primary" onClick={crearCotizacion}
+                disabled={loading} style={{ flex: 1 }}>
                 {loading ? "Creando..." : "Crear Cotización"}
               </button>
-              <button onClick={() => setModal(null)} style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", padding: "10px 20px", borderRadius: "8px", cursor: "pointer" }}>
+              <button className="btn btn-secondary" onClick={() => setModal(null)}>
                 Cancelar
               </button>
             </div>
@@ -171,81 +257,109 @@ export default function Cotizaciones() {
         </div>
       )}
 
-      {/* Modal Detalle Cotización */}
+      {/* Modal Detalle */}
       {modal === "detalle" && cotActual && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "32px", width: "700px", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)", padding: "1.5rem",
+            width: "100%", maxWidth: "750px", maxHeight: "90vh", overflowY: "auto" }}>
+
+            <div style={{ display: "flex", justifyContent: "space-between",
+              alignItems: "flex-start", marginBottom: "1.5rem" }}>
               <div>
-                <h2 style={{ color: "#10B981", fontSize: "20px" }}>{cotActual.numero}</h2>
-                <p style={{ color: "var(--text3)", fontSize: "13px" }}>{cotActual.cliente_nombre} · {cotActual.vehiculo_info}</p>
+                <h2 style={{ color: "#10B981", fontSize: "20px", fontFamily: "monospace" }}>
+                  {cotActual.numero}
+                </h2>
+                <p style={{ color: "var(--text3)", fontSize: "13px", marginTop: "4px" }}>
+                  {cotActual.cliente_nombre} · {cotActual.vehiculo_info}
+                </p>
+                <p style={{ color: "var(--text3)", fontSize: "12px", marginTop: "2px" }}>
+                  Orden: {cotActual.orden_codigo}
+                </p>
               </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button onClick={verPDF} style={{ background: "#1F2937", border: "1px solid var(--border)", color: "#10B981", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>
-                  📄 Ver PDF
-                </button>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <button onClick={verPDF} style={{
+                  background: "#1F2937", border: "1px solid #374151",
+                  color: "#D1D5DB", padding: "6px 12px",
+                  borderRadius: "6px", cursor: "pointer", fontSize: "12px"
+                }}>📄 PDF</button>
                 {cotActual.estado === "borrador" && (
-                  <button onClick={aprobar} style={{ background: "#10B981", border: "none", color: "white", padding: "8px 16px", borderRadius: "8px", cursor: "pointer", fontSize: "13px" }}>
-                    ✅ Aprobar
-                  </button>
+                  <button onClick={aprobar} style={{
+                    background: "#065F46", border: "1px solid #10B981",
+                    color: "#10B981", padding: "6px 12px",
+                    borderRadius: "6px", cursor: "pointer", fontSize: "12px"
+                  }}>✅ Aprobar → Factura</button>
                 )}
-                <button onClick={() => setModal(null)} style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)", padding: "8px 16px", borderRadius: "8px", cursor: "pointer" }}>✕</button>
+                <button onClick={() => setModal(null)} style={{
+                  background: "none", border: "none",
+                  color: "var(--text3)", cursor: "pointer", fontSize: "20px"
+                }}>×</button>
               </div>
             </div>
 
             {/* Agregar línea */}
             {cotActual.estado === "borrador" && (
-              <div style={{ background: "var(--bg3)", border: "1px solid var(--border)", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
-                <h3 style={{ fontSize: "13px", fontWeight: "600", color: "var(--text2)", marginBottom: "12px", textTransform: "uppercase" }}>Agregar línea</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr 80px 100px auto", gap: "8px", alignItems: "end" }}>
-                  <div>
-                    <label style={{ fontSize: "11px", color: "var(--text3)", display: "block", marginBottom: "4px" }}>Tipo</label>
-                    <select value={lineaForm.tipo} onChange={e => setLineaForm({...lineaForm, tipo: e.target.value})} style={{ width: "100%" }}>
-                      <option value="servicio">🔧 Servicio</option>
-                      <option value="repuesto">🔩 Repuesto</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "11px", color: "var(--text3)", display: "block", marginBottom: "4px" }}>Descripción</label>
-                    <input value={lineaForm.descripcion} onChange={e => setLineaForm({...lineaForm, descripcion: e.target.value})} placeholder="Descripción del servicio o repuesto" style={{ width: "100%" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "11px", color: "var(--text3)", display: "block", marginBottom: "4px" }}>Cantidad</label>
-                    <input type="number" value={lineaForm.cantidad} onChange={e => setLineaForm({...lineaForm, cantidad: e.target.value})} style={{ width: "100%" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "11px", color: "var(--text3)", display: "block", marginBottom: "4px" }}>Precio Unit.</label>
-                    <input type="number" value={lineaForm.precio_unit} onChange={e => setLineaForm({...lineaForm, precio_unit: e.target.value})} style={{ width: "100%" }} />
-                  </div>
-                  <button onClick={agregarLinea} style={{ background: "#10B981", border: "none", color: "white", padding: "10px 16px", borderRadius: "8px", cursor: "pointer", whiteSpace: "nowrap" }}>
-                    + Agregar
-                  </button>
+              <div style={{ background: "var(--bg1)", border: "1px solid var(--border)",
+                borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
+                <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--text2)",
+                  marginBottom: "8px", textTransform: "uppercase" }}>Agregar línea</div>
+                <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 70px 100px auto",
+                  gap: "8px", alignItems: "end" }}>
+                  <select value={lineaForm.tipo}
+                    onChange={e => setLineaForm({...lineaForm, tipo: e.target.value})}
+                    style={{ width: "100%" }}>
+                    <option value="servicio">🔧 Servicio</option>
+                    <option value="repuesto">🔩 Repuesto</option>
+                  </select>
+                  <input value={lineaForm.descripcion}
+                    onChange={e => setLineaForm({...lineaForm, descripcion: e.target.value})}
+                    placeholder="Descripción" style={{ width: "100%" }} />
+                  <input type="number" value={lineaForm.cantidad}
+                    onChange={e => setLineaForm({...lineaForm, cantidad: e.target.value})}
+                    style={{ width: "100%" }} />
+                  <input type="number" value={lineaForm.precio_unit}
+                    onChange={e => setLineaForm({...lineaForm, precio_unit: e.target.value})}
+                    placeholder="Precio" style={{ width: "100%" }} />
+                  <button onClick={agregarLinea} style={{
+                    background: "#10B981", border: "none", color: "white",
+                    padding: "8px 12px", borderRadius: "6px",
+                    cursor: "pointer", whiteSpace: "nowrap", fontSize: "12px"
+                  }}>+ Agregar</button>
                 </div>
               </div>
             )}
 
             {/* Líneas */}
-            <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "16px" }}>
+            <table style={{ marginBottom: "1rem" }}>
               <thead>
-                <tr style={{ background: "var(--bg3)", borderBottom: "1px solid var(--border)" }}>
-                  {["Tipo", "Descripción", "Cant.", "Precio Unit.", "Subtotal", ""].map(h => (
-                    <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: "11px", fontWeight: "600", color: "var(--text3)", textTransform: "uppercase" }}>{h}</th>
-                  ))}
+                <tr>
+                  <th>Tipo</th><th>Descripción</th><th>Cant.</th>
+                  <th>Precio Unit.</th><th>Subtotal</th><th></th>
                 </tr>
               </thead>
               <tbody>
-                {cotActual.lineas?.length === 0 ? (
-                  <tr><td colSpan={6} style={{ padding: "20px", textAlign: "center", color: "var(--text3)", fontSize: "13px" }}>Sin líneas — agrega servicios o repuestos</td></tr>
-                ) : cotActual.lineas?.map(l => (
-                  <tr key={l.id} style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "10px 12px", fontSize: "13px" }}>{l.tipo === "servicio" ? "🔧" : "🔩"}</td>
-                    <td style={{ padding: "10px 12px", fontSize: "13px" }}>{l.descripcion}</td>
-                    <td style={{ padding: "10px 12px", fontSize: "13px", textAlign: "center" }}>{l.cantidad}</td>
-                    <td style={{ padding: "10px 12px", fontSize: "13px", textAlign: "right" }}>${parseFloat(l.precio_unit).toLocaleString()}</td>
-                    <td style={{ padding: "10px 12px", fontSize: "13px", textAlign: "right", fontWeight: "600" }}>${parseFloat(l.subtotal).toLocaleString()}</td>
-                    <td style={{ padding: "10px 12px" }}>
+                {!cotActual.lineas?.length ? (
+                  <tr><td colSpan={6} style={{ padding: "1.5rem", textAlign: "center",
+                    color: "var(--text3)", fontSize: "13px" }}>
+                    Sin líneas — agrega servicios o repuestos
+                  </td></tr>
+                ) : cotActual.lineas.map(l => (
+                  <tr key={l.id}>
+                    <td>{l.tipo === "servicio" ? "🔧" : "🔩"}</td>
+                    <td style={{ color: "var(--text)" }}>{l.descripcion}</td>
+                    <td style={{ textAlign: "center" }}>{l.cantidad}</td>
+                    <td style={{ textAlign: "right" }}>${parseFloat(l.precio_unit).toLocaleString()}</td>
+                    <td style={{ textAlign: "right", fontWeight: "600", color: "var(--green)" }}>
+                      ${parseFloat(l.subtotal).toLocaleString()}
+                    </td>
+                    <td>
                       {cotActual.estado === "borrador" && (
-                        <button onClick={() => eliminarLinea(l.id)} style={{ background: "transparent", border: "none", color: "#EF4444", cursor: "pointer", fontSize: "16px" }}>✕</button>
+                        <button onClick={() => eliminarLinea(l.id)} style={{
+                          background: "none", border: "none",
+                          color: "#EF4444", cursor: "pointer", fontSize: "16px"
+                        }}>✕</button>
                       )}
                     </td>
                   </tr>
@@ -257,16 +371,22 @@ export default function Cotizaciones() {
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <div style={{ width: "260px" }}>
                 {[
-                  ["Subtotal", cotActual.subtotal],
-                  ["IVA (19%)", cotActual.iva],
-                  ["Descuento", `-${cotActual.descuento}`],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: "13px", borderBottom: "1px solid var(--border)", color: "var(--text2)" }}>
-                    <span>{label}</span><span>${parseFloat(val).toLocaleString()}</span>
+                  ["Subtotal", cotActual.subtotal, "var(--text2)"],
+                  ["IVA (19%)", cotActual.iva, "var(--text2)"],
+                  ["Descuento", `-${cotActual.descuento}`, "#EF4444"],
+                ].map(([label, val, color]) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between",
+                    padding: "6px 0", fontSize: "13px",
+                    borderBottom: "1px solid var(--border)", color }}>
+                    <span>{label}</span>
+                    <span>${parseFloat(val).toLocaleString()}</span>
                   </div>
                 ))}
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0 0", fontSize: "18px", fontWeight: "700", color: "#10B981" }}>
-                  <span>TOTAL</span><span>${parseFloat(cotActual.total).toLocaleString()}</span>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  padding: "12px 0 0", fontSize: "20px",
+                  fontWeight: "700", color: "#10B981" }}>
+                  <span>TOTAL</span>
+                  <span>${parseFloat(cotActual.total).toLocaleString()}</span>
                 </div>
               </div>
             </div>
