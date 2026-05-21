@@ -19,6 +19,14 @@ export default function Login({ onLogin }) {
       localStorage.setItem("refresh", res.data.refresh)
       localStorage.setItem("username", form.username)
 
+      // Obtener perfil con rol y permisos
+      const perfil = await API.get("/usuarios/me/", {
+        headers: { Authorization: `Bearer ${res.data.access}` }
+      })
+      const p = perfil.data.perfil || {}
+      localStorage.setItem("rol",      p.rol || "tecnico")
+      localStorage.setItem("permisos", JSON.stringify(p.permisos || ["dashboard"]))
+
       onLogin(res.data.access)
     } catch {
       setError("Usuario o contraseña incorrectos")

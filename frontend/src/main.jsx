@@ -15,6 +15,7 @@ import Agendamiento from "./pages/Agendamiento"
 import Portal from "./pages/Portal"
 import Cotizaciones from "./pages/Cotizaciones"
 import Reportes from "./pages/Reportes"
+import Usuarios from "./pages/Usuarios"
 import "./index.css"
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
                 <Route path="agendamiento" element={<Agendamiento />} />
                 <Route path="cotizaciones" element={<Cotizaciones />} />
                 <Route path="reportes"      element={<Reportes />} />
+                <Route path="usuarios"      element={<Usuarios />} />
               </Route>
             </Routes>
           )

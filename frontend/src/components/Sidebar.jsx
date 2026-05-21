@@ -1,74 +1,94 @@
-import { NavLink } from "react-router-dom"
+import { NavLink, useNavigate } from "react-router-dom"
 
-const menu = [
-  { path: "/",             label: "Dashboard",    color: "#10B981" },
-  { path: "/clientes",     label: "Clientes",     color: "#3B82F6" },
-  { path: "/vehiculos",    label: "Vehiculos",    color: "#8B5CF6" },
-  { path: "/ordenes",      label: "Ordenes",      color: "#F59E0B" },
-  { path: "/inventario",   label: "Inventario",   color: "#EF4444" },
-  { path: "/facturas",     label: "Facturacion",  color: "#10B981" },
-  { path: "/agendamiento", label: "Agendamiento", color: "#3B82F6" },  
-  { path: '/cotizaciones', label: 'Cotizaciones', color: '#F59E0B' },
-  { path: '/reportes',     label: 'Reportes',     color: '#8B5CF6' },
+const TODOS_MODULOS = [
+  { path: "/",             label: "Dashboard",    color: "#10B981", modulo: "dashboard" },
+  { path: "/clientes",     label: "Clientes",     color: "#3B82F6", modulo: "clientes" },
+  { path: "/vehiculos",    label: "Vehículos",    color: "#8B5CF6", modulo: "vehiculos" },
+  { path: "/ordenes",      label: "Órdenes",      color: "#F59E0B", modulo: "ordenes" },
+  { path: "/inventario",   label: "Inventario",   color: "#EF4444", modulo: "inventario" },
+  { path: "/facturas",     label: "Facturación",  color: "#10B981", modulo: "facturas" },
+  { path: "/cotizaciones", label: "Cotizaciones", color: "#F59E0B", modulo: "cotizaciones" },
+  { path: "/agendamiento", label: "Agendamiento", color: "#06B6D4", modulo: "agendamiento" },
+  { path: "/gastos",       label: "Gastos",       color: "#EF4444", modulo: "gastos" },
+  { path: "/reportes",     label: "Reportes",     color: "#8B5CF6", modulo: "reportes" },
+  { path: "/usuarios",     label: "Usuarios",     color: "#EC4899", modulo: "admin" },
 ]
 
-const enlaces = [
-  { url: "https://app.armracing.com/public", label: "Pagina Publica", icon: "🌐" },
-  { url: "https://app.armracing.com/agendar", label: "Agendamiento", icon: "📅" },
-]
+export default function Sidebar({ onLogout }) {
+  const navigate   = useNavigate()
+  const rol        = localStorage.getItem("rol") || "tecnico"
+  const permisos   = JSON.parse(localStorage.getItem("permisos") || '["dashboard"]')
+  const username   = localStorage.getItem("username") || "usuario"
 
-export default function Sidebar({ onLogout, onClose }) {
-  const usuario = (() => {
-    try {
-      const token = localStorage.getItem("access")
-      const payload = JSON.parse(atob(token.split(".")[1]))
-      return payload.username || "Usuario"
-    } catch { return "Usuario" }
-  })()
+  const modulosVisibles = TODOS_MODULOS.filter(m => {
+    if (m.modulo === "admin") return rol === "admin"
+    return rol === "admin" || permisos.includes(m.modulo)
+  })
+
+  const handleLogout = () => {
+    localStorage.clear()
+    onLogout()
+    navigate("/")
+  }
 
   return (
-    <div style={{ width: "240px", height: "100%", background: "#0D1117", borderRight: "1px solid #1F2937", display: "flex", flexDirection: "column", position: "relative" }}>
-      <div style={{ padding: "24px 20px 16px", borderBottom: "1px solid #1F2937", flexShrink: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{ width: "32px", height: "32px", borderRadius: "8px", background: "linear-gradient(135deg, #10B981, #065F46)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>🔧</div>
-          <div>
-            <div style={{ fontWeight: "700", fontSize: "15px", color: "#F9FAFB" }}>TallerOS</div>
-            <div style={{ fontSize: "11px", color: "#9CA3AF" }}>v1.0 Sistema ERP</div>
-          </div>
+    <aside style={{
+      width: "220px", minHeight: "100vh", background: "var(--bg2)",
+      borderRight: "1px solid var(--border)", display: "flex",
+      flexDirection: "column", padding: "1rem 0"
+    }}>
+      {/* Logo */}
+      <div style={{ padding: "0 1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ fontSize: "16px", fontWeight: "700", color: "#10B981" }}>
+          🔧 TallerOS
+        </div>
+        <div style={{ fontSize: "11px", color: "var(--text3)", marginTop: "2px" }}>
+          ARM Racing Performance
         </div>
       </div>
 
-      <nav style={{ padding: "12px 10px", flex: 1, overflowY: "auto", paddingBottom: "120px" }}>
-        <div style={{ fontSize: "10px", fontWeight: "600", color: "#9CA3AF", letterSpacing: ".08em", textTransform: "uppercase", padding: "8px 10px 4px" }}>Modulos</div>
-        {menu.map(item => (
-          <NavLink key={item.path} to={item.path} end={item.path === "/"} onClick={onClose}
-            style={({ isActive }) => ({ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", textDecoration: "none", marginBottom: "2px", color: isActive ? "#ffffff" : "#D1D5DB", background: isActive ? "#1F2937" : "transparent", fontWeight: isActive ? "600" : "400", fontSize: "14px" })}>
-            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: item.color, flexShrink: 0 }} />
+      {/* Nav */}
+      <nav style={{ flex: 1, padding: "1rem 0", overflowY: "auto" }}>
+        {modulosVisibles.map(item => (
+          <NavLink key={item.path} to={item.path} end={item.path === "/"}
+            style={({ isActive }) => ({
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "8px 1rem", margin: "2px 8px",
+              borderRadius: "8px", textDecoration: "none",
+              fontSize: "13px", fontWeight: "500",
+              color: isActive ? item.color : "var(--text2)",
+              background: isActive ? item.color + "18" : "transparent",
+              transition: "all 0.15s",
+            })}>
+            <span style={{
+              width: "6px", height: "6px", borderRadius: "50%",
+              background: item.color, flexShrink: 0
+            }}/>
             {item.label}
           </NavLink>
         ))}
-
-        <div style={{ fontSize: "10px", fontWeight: "600", color: "#9CA3AF", letterSpacing: ".08em", textTransform: "uppercase", padding: "16px 10px 4px" }}>Enlaces Publicos</div>
-        {enlaces.map((item, i) => (
-          <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
-            style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 10px", borderRadius: "8px", textDecoration: "none", marginBottom: "2px", color: "#D1D5DB", fontSize: "14px" }}>
-            <span style={{ fontSize: "14px" }}>{item.icon}</span>
-            {item.label}
-            <span style={{ marginLeft: "auto", fontSize: "10px", color: "#6B7280" }}>arrow</span>
-          </a>
-        ))}
       </nav>
 
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 16px", borderTop: "1px solid #1F2937", background: "#0D1117" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-          <div style={{ width: "30px", height: "30px", borderRadius: "50%", background: "linear-gradient(135deg, #10B981, #3B82F6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "white", fontWeight: "600" }}>{usuario.charAt(0).toUpperCase()}</div>
-          <div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB" }}>{usuario}</div>
-            <div style={{ fontSize: "11px", color: "#9CA3AF" }}>Administrador</div>
-          </div>
+      {/* Usuario y logout */}
+      <div style={{ padding: "1rem", borderTop: "1px solid var(--border)" }}>
+        <div style={{ fontSize: "12px", color: "var(--text3)", marginBottom: "4px" }}>
+          {username}
         </div>
-        <button onClick={onLogout} style={{ width: "100%", background: "#1F2937", border: "1px solid #374151", color: "#D1D5DB", cursor: "pointer", fontSize: "13px", padding: "8px 12px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>Cerrar sesion</button>
+        <div style={{
+          fontSize: "11px", color: "#10B981", fontWeight: "600",
+          textTransform: "uppercase", letterSpacing: ".06em", marginBottom: "8px"
+        }}>
+          {rol}
+        </div>
+        <button onClick={handleLogout} style={{
+          width: "100%", background: "var(--bg1)",
+          border: "1px solid var(--border)", color: "var(--text3)",
+          borderRadius: "6px", padding: "6px", fontSize: "12px",
+          cursor: "pointer"
+        }}>
+          Cerrar sesión
+        </button>
       </div>
-    </div>
+    </aside>
   )
 }
