@@ -7,6 +7,7 @@ from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
 from datetime import datetime
 from .models import Factura, Gasto, Cotizacion, LineaCotizacion, LineaFactura
+from django.db import models as django_models
 from .serializers import FacturaSerializer, GastoSerializer, CotizacionSerializer, LineaCotizacionSerializer, LineaFacturaSerializer
 
 class FacturaViewSet(viewsets.ModelViewSet):
@@ -465,9 +466,22 @@ def reporte_financiero(request):
     ingresos = Factura.objects.filter(**filtro_facturas).aggregate(total=Sum('total'), cantidad=Count('id'))
     gastos   = Gasto.objects.filter(**filtro_gastos).aggregate(total=Sum('monto'), cantidad=Count('id'))
 
-    total_ingresos = float(ingresos['total'] or 0)
-    total_gastos   = float(gastos['total'] or 0)
-    ganancia_neta  = total_ingresos - total_gastos
+    # Costo de repuestos en facturas pagadas
+    from django.db.models import F
+    costo_repuestos = LineaFactura.objects.filter(
+        factura__in=Factura.objects.filter(**filtro_facturas),
+        tipo='repuesto'
+    ).aggregate(
+        total=Sum(django_models.ExpressionWrapper(
+            F('precio_costo') * F('cantidad'),
+            output_field=django_models.DecimalField()
+        ))
+    )['total'] or 0
+
+    total_ingresos    = float(ingresos['total'] or 0)
+    total_gastos      = float(gastos['total'] or 0)
+    total_costo_rep   = float(costo_repuestos)
+    ganancia_neta     = total_ingresos - total_gastos - total_costo_rep
 
     ingresos_por_mes = Factura.objects.filter(fecha_emision__year=anio, estado='pagada').annotate(
         mes=TruncMonth('fecha_emision')).values('mes').annotate(total=Sum('total'), cantidad=Count('id')).order_by('mes')
@@ -483,11 +497,13 @@ def reporte_financiero(request):
 
     return Response({
         'resumen': {
-            'ingresos': total_ingresos, 'gastos': total_gastos,
-            'ganancia_neta': ganancia_neta,
-            'margen': round((ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0, 1),
-            'facturas_count': ingresos['cantidad'] or 0,
-            'gastos_count': gastos['cantidad'] or 0,
+            'ingresos':        total_ingresos,
+            'gastos':          total_gastos,
+            'costo_repuestos': total_costo_rep,
+            'ganancia_neta':   ganancia_neta,
+            'margen':          round((ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0, 1),
+            'facturas_count':  ingresos['cantidad'] or 0,
+            'gastos_count':    gastos['cantidad'] or 0,
         },
         'cotizaciones_pendientes': {
             'total': float(cotizaciones_pendientes['total'] or 0),

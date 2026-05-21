@@ -144,14 +144,16 @@ export default function Reportes() {
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
             <StatCard titulo="Ingresos"     valor={r.ingresos}
               color="#10B981" icono="💰" sub={`${r.facturas_count} facturas pagadas`} />
-            <StatCard titulo="Gastos"       valor={r.gastos}
+            <StatCard titulo="Gastos generales" valor={r.gastos}
               color="#EF4444" icono="📤" sub={`${r.gastos_count} gastos registrados`} />
+            <StatCard titulo="Costo repuestos" valor={r.costo_repuestos || 0}
+              color="#F59E0B" icono="🔩" sub="Costo interno repuestos" />
             <StatCard titulo="Ganancia neta" valor={r.ganancia_neta}
               color={r.ganancia_neta >= 0 ? "#10B981" : "#EF4444"}
               icono="📈" sub={`Margen: ${r.margen}%`} />
             <StatCard titulo="Cot. pendientes"
               valor={data.cotizaciones_pendientes.total}
-              color="#F59E0B" icono="📋"
+              color="#8B5CF6" icono="📋"
               sub={`${data.cotizaciones_pendientes.cantidad} por aprobar`} />
           </div>
 
@@ -231,9 +233,10 @@ export default function Reportes() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)",
               gap: "1rem" }}>
               {[
-                { label: "Total ingresos", valor: r.ingresos, color: "#10B981" },
-                { label: "Total gastos",   valor: r.gastos,   color: "#EF4444" },
-                { label: "Ganancia neta",  valor: r.ganancia_neta,
+                { label: "Total ingresos",     valor: r.ingresos,            color: "#10B981" },
+                { label: "Gastos generales",   valor: r.gastos,              color: "#EF4444" },
+                { label: "Costo repuestos",    valor: r.costo_repuestos || 0, color: "#F59E0B" },
+                { label: "Ganancia neta",      valor: r.ganancia_neta,
                   color: r.ganancia_neta >= 0 ? "#10B981" : "#EF4444" },
               ].map(({ label, valor, color }) => (
                 <div key={label} style={{ background: "var(--bg1)",
