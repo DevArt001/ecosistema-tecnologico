@@ -7,7 +7,7 @@ export default function Cotizaciones() {
   const [modal, setModal]               = useState(null)
   const [cotActual, setCotActual]       = useState(null)
   const [form, setForm]                 = useState({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" })
-  const [lineaForm, setLineaForm]       = useState({ tipo: "servicio", descripcion: "", cantidad: 1, precio_unit: 0 })
+  const [lineaForm, setLineaForm]       = useState({ tipo: "servicio", descripcion: "", cantidad: 1, precio_costo: 0, precio_unit: 0 })
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState(null)
   const [mensaje, setMensaje]           = useState("")
@@ -59,7 +59,7 @@ export default function Cotizaciones() {
       await API.post(`/cotizaciones/${cotActual.id}/agregar_linea/`, lineaForm)
       const res = await API.get(`/cotizaciones/${cotActual.id}/`)
       setCotActual(res.data)
-      setLineaForm({ tipo: "servicio", descripcion: "", cantidad: 1, precio_unit: 0 })
+      setLineaForm({ tipo: "servicio", descripcion: "", cantidad: 1, precio_costo: 0, precio_unit: 0 })
       cargar()
     } catch (e) {
       mostrarMensaje("❌ Error al agregar línea")
@@ -332,7 +332,7 @@ export default function Cotizaciones() {
                 borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
                 <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--text2)",
                   marginBottom: "8px", textTransform: "uppercase" }}>Agregar línea</div>
-                <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 70px 100px auto",
+                <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 60px 90px 90px auto",
                   gap: "8px", alignItems: "end" }}>
                   <select value={lineaForm.tipo}
                     onChange={e => setLineaForm({...lineaForm, tipo: e.target.value})}
@@ -346,13 +346,27 @@ export default function Cotizaciones() {
                   <input type="number" value={lineaForm.cantidad}
                     onChange={e => setLineaForm({...lineaForm, cantidad: e.target.value})}
                     style={{ width: "100%" }} />
-                  <input type="number" value={lineaForm.precio_unit}
-                    onChange={e => setLineaForm({...lineaForm, precio_unit: e.target.value})}
-                    placeholder="Precio" style={{ width: "100%" }} />
+                  <div>
+                    <label style={{ fontSize: "10px", color: "var(--text3)", display: "block", marginBottom: "2px" }}>
+                      Costo interno
+                    </label>
+                    <input type="number" value={lineaForm.precio_costo}
+                      onChange={e => setLineaForm({...lineaForm, precio_costo: e.target.value})}
+                      placeholder="$0" style={{ width: "100%" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "10px", color: "var(--text3)", display: "block", marginBottom: "2px" }}>
+                      Precio cliente
+                    </label>
+                    <input type="number" value={lineaForm.precio_unit}
+                      onChange={e => setLineaForm({...lineaForm, precio_unit: e.target.value})}
+                      placeholder="$0" style={{ width: "100%" }} />
+                  </div>
                   <button onClick={agregarLinea} style={{
                     background: "#10B981", border: "none", color: "white",
                     padding: "8px 12px", borderRadius: "6px",
-                    cursor: "pointer", whiteSpace: "nowrap", fontSize: "12px"
+                    cursor: "pointer", whiteSpace: "nowrap", fontSize: "12px",
+                    alignSelf: "flex-end"
                   }}>+ Agregar</button>
                 </div>
               </div>
@@ -363,7 +377,7 @@ export default function Cotizaciones() {
               <thead>
                 <tr>
                   <th>Tipo</th><th>Descripción</th><th>Cant.</th>
-                  <th>Precio Unit.</th><th>Subtotal</th><th></th>
+                  <th>Costo</th><th>Precio</th><th>Margen</th><th></th>
                 </tr>
               </thead>
               <tbody>

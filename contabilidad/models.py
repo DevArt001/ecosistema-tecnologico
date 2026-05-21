@@ -155,6 +155,7 @@ class Cotizacion(models.Model):
                 tipo=linea.tipo,
                 descripcion=linea.descripcion,
                 cantidad=linea.cantidad,
+                precio_costo=linea.precio_costo,
                 precio_unit=linea.precio_unit,
                 subtotal=linea.subtotal,
             )
@@ -177,12 +178,13 @@ class LineaCotizacion(models.Model):
         ('repuesto', 'Repuesto'),
     ]
 
-    cotizacion  = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, related_name='lineas')
-    tipo        = models.CharField(max_length=10, choices=TIPO_CHOICES, default='servicio')
-    descripcion = models.CharField(max_length=255)
-    cantidad    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
-    precio_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    subtotal    = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    cotizacion   = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, related_name='lineas')
+    tipo         = models.CharField(max_length=10, choices=TIPO_CHOICES, default='servicio')
+    descripcion  = models.CharField(max_length=255)
+    cantidad     = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+    precio_costo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    precio_unit  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    subtotal     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.precio_unit
@@ -202,12 +204,13 @@ class LineaFactura(models.Model):
         ('servicio', 'Servicio / Mano de obra'),
         ('repuesto', 'Repuesto'),
     ]
-    factura     = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='lineas')
-    tipo        = models.CharField(max_length=10, choices=TIPO_CHOICES, default='servicio')
-    descripcion = models.CharField(max_length=255)
-    cantidad    = models.DecimalField(max_digits=8, decimal_places=2, default=1)
-    precio_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    subtotal    = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    factura      = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='lineas')
+    tipo         = models.CharField(max_length=10, choices=TIPO_CHOICES, default='servicio')
+    descripcion  = models.CharField(max_length=255)
+    cantidad     = models.DecimalField(max_digits=8, decimal_places=2, default=1)
+    precio_costo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    precio_unit  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    subtotal     = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
         self.subtotal = self.cantidad * self.precio_unit
