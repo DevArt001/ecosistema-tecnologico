@@ -20,7 +20,7 @@ const PUBLICOS = [
   { label: "Portal cliente", url: "/portal",  icon: "🔗", color: "#8B5CF6" },
 ]
 
-export default function Sidebar({ onLogout }) {
+export default function Sidebar({ onLogout, onClose }) {
   const navigate = useNavigate()
   const rol      = localStorage.getItem("rol") || "tecnico"
   const permisos = JSON.parse(localStorage.getItem("permisos") || '["dashboard"]')
@@ -47,7 +47,7 @@ export default function Sidebar({ onLogout }) {
 
       {/* Logo */}
       <div style={{
-        padding: "1.5rem 1.25rem",
+        padding: "1rem 1.25rem",
         borderBottom: "1px solid var(--border)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -57,7 +57,7 @@ export default function Sidebar({ onLogout }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "18px", flexShrink: 0
           }}>🔧</div>
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981" }}>
               TallerOS
             </div>
@@ -65,6 +65,13 @@ export default function Sidebar({ onLogout }) {
               ARM Racing Performance
             </div>
           </div>
+          {onClose && (
+            <button onClick={onClose} style={{
+              background: "none", border: "none", color: "var(--text3)",
+              fontSize: "20px", cursor: "pointer", padding: "4px",
+              display: "flex", alignItems: "center"
+            }}>✕</button>
+          )}
         </div>
       </div>
 
@@ -80,7 +87,7 @@ export default function Sidebar({ onLogout }) {
 
         {modulosVisibles.map(item => (
           <div key={item.path} style={{ padding: "0 0.75rem" }}>
-            <NavLink to={item.path} end={item.path === "/"}
+            <NavLink to={item.path} end={item.path === "/"} onClick={onClose}
               style={({ isActive }) => ({
                 display: "flex", alignItems: "center", gap: "10px",
                 padding: "9px 12px", marginBottom: "2px",
