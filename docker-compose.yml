@@ -56,9 +56,20 @@ services:
     networks:
       - taller_net
 
+  uptime_kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_data:/app/data
+    networks:
+      - taller_net
+
 volumes:
   postgres_data:
   media_files:
+  uptime_data:
 
 networks:
   taller_net:
