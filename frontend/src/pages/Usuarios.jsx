@@ -8,16 +8,16 @@ const ROLES = [
 ]
 
 const MODULOS = [
-  { value: "dashboard",    label: "Dashboard" },
-  { value: "clientes",     label: "Clientes" },
-  { value: "vehiculos",    label: "Vehículos" },
-  { value: "ordenes",      label: "Órdenes" },
-  { value: "inventario",   label: "Inventario" },
-  { value: "cotizaciones", label: "Cotizaciones" },
-  { value: "facturas",     label: "Facturas" },
-  { value: "agendamiento", label: "Agendamiento" },
-  { value: "gastos",       label: "Gastos" },
-  { value: "reportes",     label: "Reportes" },
+  { value: "dashboard",    label: "Dashboard",    icon: "⊞" },
+  { value: "clientes",     label: "Clientes",     icon: "👥" },
+  { value: "vehiculos",    label: "Vehículos",    icon: "🏍" },
+  { value: "ordenes",      label: "Órdenes",      icon: "🔧" },
+  { value: "inventario",   label: "Inventario",   icon: "📦" },
+  { value: "cotizaciones", label: "Cotizaciones", icon: "📋" },
+  { value: "facturas",     label: "Facturas",     icon: "💰" },
+  { value: "agendamiento", label: "Agendamiento", icon: "📅" },
+  { value: "gastos",       label: "Gastos",       icon: "📤" },
+  { value: "reportes",     label: "Reportes",     icon: "📊" },
 ]
 
 const PERMISOS_POR_ROL = {
@@ -32,12 +32,13 @@ export default function Usuarios() {
   const [usuarios, setUsuarios]     = useState([])
   const [modal, setModal]           = useState(null)
   const [userActual, setUserActual] = useState(null)
-  const [form, setForm]             = useState({
+  const [permisos, setPermisos]     = useState([])
+  const [nuevaClave, setNuevaClave] = useState("")
+  const [editForm, setEditForm]     = useState({})
+  const [formNuevo, setFormNuevo]   = useState({
     username: "", first_name: "", last_name: "",
     email: "", password: "", rol: "tecnico", telefono: ""
   })
-  const [permisos, setPermisos]     = useState([])
-  const [nuevaClave, setNuevaClave] = useState("")
   const [loading, setLoading]       = useState(false)
   const [mensaje, setMensaje]       = useState("")
 
@@ -55,27 +56,31 @@ export default function Usuarios() {
     setTimeout(() => setMensaje(""), 3000)
   }
 
-  const abrirNuevo = () => {
-    setForm({ username: "", first_name: "", last_name: "",
-      email: "", password: "", rol: "tecnico", telefono: "" })
-    setPermisos(PERMISOS_POR_ROL["tecnico"])
-    setModal("nuevo")
-  }
-
   const crearUsuario = async () => {
-    if (!form.username || !form.password) {
+    if (!formNuevo.username || !formNuevo.password) {
       mostrarMensaje("❌ Usuario y contraseña son obligatorios")
       return
     }
     setLoading(true)
     try {
-      await API.post("/usuarios/", { ...form })
+      await API.post("/usuarios/", formNuevo)
       mostrarMensaje("✅ Usuario creado")
       setModal(null)
       cargar()
     } catch (e) {
-      mostrarMensaje("❌ Error: " + (e.response?.data?.username?.[0] || "Usuario ya existe"))
+      mostrarMensaje("❌ " + (e.response?.data?.username?.[0] || "Error al crear"))
     }
+    setLoading(false)
+  }
+
+  const guardarEdicion = async () => {
+    setLoading(true)
+    try {
+      await API.patch(`/usuarios/${userActual.id}/`, editForm)
+      mostrarMensaje("✅ Usuario actualizado")
+      setModal(null)
+      cargar()
+    } catch { mostrarMensaje("❌ Error al actualizar") }
     setLoading(false)
   }
 
@@ -98,7 +103,7 @@ export default function Usuarios() {
 
   const cambiarContrasena = async () => {
     if (!nuevaClave || nuevaClave.length < 4) {
-      mostrarMensaje("❌ La contraseña debe tener al menos 4 caracteres")
+      mostrarMensaje("❌ Mínimo 4 caracteres")
       return
     }
     setLoading(true)
@@ -134,114 +139,144 @@ export default function Usuarios() {
           <h1 style={{ fontSize: "24px", fontWeight: "700",
             color: "var(--text)", marginBottom: "4px" }}>Usuarios</h1>
           <p style={{ color: "var(--text3)", fontSize: "13px" }}>
-            {usuarios.length} usuarios registrados
+            {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""} registrado{usuarios.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button className="btn btn-primary" onClick={abrirNuevo}>
-          + Nuevo usuario
-        </button>
+        <button className="btn btn-primary" onClick={() => {
+          setFormNuevo({ username: "", first_name: "", last_name: "",
+            email: "", password: "", rol: "tecnico", telefono: "" })
+          setModal("nuevo")
+        }}>+ Nuevo usuario</button>
       </div>
 
-      {/* Tarjetas de usuarios */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-        gap: "1rem", marginBottom: "1.5rem" }}>
+      {/* Tarjetas individuales — una por fila */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {usuarios.map(u => {
-          const rol = u.perfil?.rol || "tecnico"
+          const rol   = u.perfil?.rol || "tecnico"
           const color = rolColor[rol] || "#F59E0B"
+          const rolLabel = ROLES.find(r => r.value === rol)?.label || rol
           const inicial = (u.first_name || u.username)[0]?.toUpperCase()
+          const modCount = u.perfil?.permisos?.length || 0
+
           return (
             <div key={u.id} style={{
               background: "var(--bg2)", border: "1px solid var(--border)",
               borderRadius: "var(--radius-lg)", overflow: "hidden"
             }}>
-              {/* Header tarjeta */}
-              <div style={{
-                padding: "1.25rem", borderBottom: "1px solid var(--border)",
-                display: "flex", alignItems: "center", gap: "12px"
-              }}>
+              {/* Barra de color superior */}
+              <div style={{ height: "4px", background: color }} />
+
+              <div style={{ padding: "1.5rem", display: "flex",
+                alignItems: "center", gap: "1.5rem", flexWrap: "wrap" }}>
+
+                {/* Avatar */}
                 <div style={{
-                  width: "44px", height: "44px", borderRadius: "50%",
+                  width: "56px", height: "56px", borderRadius: "50%",
                   background: color + "22", border: `2px solid ${color}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "18px", fontWeight: "700", color, flexShrink: 0
+                  fontSize: "22px", fontWeight: "700", color, flexShrink: 0
                 }}>{inicial}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: "600", color: "var(--text)",
-                    fontSize: "15px" }}>
-                    {u.first_name ? `${u.first_name} ${u.last_name}` : u.username}
+
+                {/* Info principal */}
+                <div style={{ flex: 1, minWidth: "200px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px",
+                    marginBottom: "4px" }}>
+                    <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--text)" }}>
+                      {u.first_name ? `${u.first_name} ${u.last_name}` : u.username}
+                    </span>
+                    <span style={{
+                      background: color + "22", color,
+                      padding: "3px 10px", borderRadius: "20px",
+                      fontSize: "11px", fontWeight: "700",
+                      textTransform: "uppercase", letterSpacing: ".06em"
+                    }}>{rolLabel}</span>
+                    <span style={{
+                      background: u.is_active ? "#065F4622" : "#3B0A0A",
+                      color: u.is_active ? "#10B981" : "#EF4444",
+                      padding: "3px 10px", borderRadius: "20px", fontSize: "11px"
+                    }}>{u.is_active ? "Activo" : "Inactivo"}</span>
                   </div>
-                  <div style={{ fontSize: "12px", color: "var(--text3)",
-                    fontFamily: "monospace" }}>@{u.username}</div>
+                  <div style={{ fontSize: "13px", color: "var(--text3)", fontFamily: "monospace" }}>
+                    @{u.username}
+                    {u.email && <span style={{ marginLeft: "12px" }}>· {u.email}</span>}
+                  </div>
                 </div>
-                <span style={{
-                  background: color + "22", color,
-                  padding: "4px 10px", borderRadius: "20px",
-                  fontSize: "11px", fontWeight: "700",
-                  textTransform: "uppercase", letterSpacing: ".06em",
-                  flexShrink: 0
-                }}>{rol}</span>
+
+                {/* Módulos y rol */}
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem",
+                  flexShrink: 0 }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "22px", fontWeight: "700", color }}>
+                      {modCount}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "var(--text3)" }}>módulos</div>
+                  </div>
+
+                  <select value={rol} onChange={e => cambiarRol(u.id, e.target.value)}
+                    style={{
+                      background: color + "22", color,
+                      border: `1px solid ${color}44`,
+                      borderRadius: "8px", padding: "6px 10px",
+                      fontSize: "12px", fontWeight: "600", cursor: "pointer"
+                    }}>
+                    {ROLES.map(r => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Acciones */}
+                <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                  <button onClick={() => {
+                    setUserActual(u)
+                    setEditForm({
+                      first_name: u.first_name || "",
+                      last_name:  u.last_name  || "",
+                      email:      u.email      || "",
+                    })
+                    setModal("editar")
+                  }} style={{
+                    background: "#1F2937", border: "1px solid #374151",
+                    color: "#9CA3AF", borderRadius: "8px",
+                    padding: "8px 14px", fontSize: "12px", cursor: "pointer"
+                  }}>✏️ Editar</button>
+
+                  <button onClick={() => {
+                    setUserActual(u)
+                    setPermisos(u.perfil?.permisos || [])
+                    setModal("permisos")
+                  }} style={{
+                    background: "#1E3A5F", border: "1px solid #3B82F6",
+                    color: "#3B82F6", borderRadius: "8px",
+                    padding: "8px 14px", fontSize: "12px", cursor: "pointer"
+                  }}>🔐 Permisos</button>
+
+                  <button onClick={() => {
+                    setUserActual(u)
+                    setNuevaClave("")
+                    setModal("clave")
+                  }} style={{
+                    background: "#1F2937", border: "1px solid #374151",
+                    color: "#F59E0B", borderRadius: "8px",
+                    padding: "8px 14px", fontSize: "12px", cursor: "pointer"
+                  }}>🔑 Contraseña</button>
+                </div>
               </div>
 
-              {/* Info */}
-              <div style={{ padding: "1rem 1.25rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  marginBottom: "8px" }}>
-                  <span style={{ fontSize: "12px", color: "var(--text3)" }}>Módulos</span>
-                  <span style={{ fontSize: "12px", fontWeight: "600", color: "var(--text)" }}>
-                    {u.perfil?.permisos?.length || 0} módulos
-                  </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  marginBottom: "8px" }}>
-                  <span style={{ fontSize: "12px", color: "var(--text3)" }}>Estado</span>
-                  <span style={{
-                    fontSize: "11px", fontWeight: "600",
-                    color: u.is_active ? "#10B981" : "#EF4444"
-                  }}>{u.is_active ? "● Activo" : "● Inactivo"}</span>
-                </div>
-                {u.email && (
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "12px", color: "var(--text3)" }}>Correo</span>
-                    <span style={{ fontSize: "12px", color: "var(--text2)" }}>{u.email}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Cambiar rol */}
-              <div style={{ padding: "0 1.25rem 0.75rem" }}>
-                <label style={{ fontSize: "11px", color: "var(--text3)",
-                  display: "block", marginBottom: "4px", textTransform: "uppercase",
-                  letterSpacing: ".06em" }}>Rol</label>
-                <select value={rol} onChange={e => cambiarRol(u.id, e.target.value)}
-                  style={{ width: "100%" }}>
-                  {ROLES.map(r => (
-                    <option key={r.value} value={r.value}>{r.label}</option>
+              {/* Módulos activos */}
+              {u.perfil?.permisos?.length > 0 && (
+                <div style={{ padding: "0.75rem 1.5rem 1rem",
+                  borderTop: "1px solid var(--border)",
+                  display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {MODULOS.filter(m => u.perfil.permisos.includes(m.value)).map(m => (
+                    <span key={m.value} style={{
+                      background: "var(--bg1)", border: "1px solid var(--border)",
+                      color: "var(--text2)", padding: "3px 10px",
+                      borderRadius: "20px", fontSize: "11px"
+                    }}>{m.icon} {m.label}</span>
                   ))}
-                </select>
-              </div>
-
-              {/* Acciones */}
-              <div style={{ padding: "0.75rem 1.25rem", borderTop: "1px solid var(--border)",
-                display: "flex", gap: "8px" }}>
-                <button onClick={() => {
-                  setUserActual(u)
-                  setPermisos(u.perfil?.permisos || [])
-                  setModal("permisos")
-                }} style={{
-                  flex: 1, background: "#1E3A5F", border: "1px solid #3B82F6",
-                  color: "#3B82F6", borderRadius: "6px",
-                  padding: "6px", fontSize: "12px", cursor: "pointer"
-                }}>🔐 Permisos</button>
-                <button onClick={() => {
-                  setUserActual(u)
-                  setNuevaClave("")
-                  setModal("clave")
-                }} style={{
-                  flex: 1, background: "#1F2937", border: "1px solid #374151",
-                  color: "#9CA3AF", borderRadius: "6px",
-                  padding: "6px", fontSize: "12px", cursor: "pointer"
-                }}>🔑 Contraseña</button>
-              </div>
+                </div>
+              )}
             </div>
           )
         })}
@@ -272,8 +307,8 @@ export default function Usuarios() {
                     color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
                     {f.label}
                   </label>
-                  <input type={f.type || "text"} value={form[f.name]}
-                    onChange={e => setForm({...form, [f.name]: e.target.value})}
+                  <input type={f.type || "text"} value={formNuevo[f.name]}
+                    onChange={e => setFormNuevo({...formNuevo, [f.name]: e.target.value})}
                     style={{ width: "100%" }} />
                 </div>
               ))}
@@ -281,13 +316,11 @@ export default function Usuarios() {
             <div style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
               <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
                 color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
-                Rol
+                Rol inicial
               </label>
-              <select value={form.rol}
-                onChange={e => {
-                  setForm({...form, rol: e.target.value})
-                  setPermisos(PERMISOS_POR_ROL[e.target.value] || ["dashboard"])
-                }} style={{ width: "100%" }}>
+              <select value={formNuevo.rol}
+                onChange={e => setFormNuevo({...formNuevo, rol: e.target.value})}
+                style={{ width: "100%" }}>
                 {ROLES.map(r => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
@@ -306,8 +339,8 @@ export default function Usuarios() {
         </div>
       )}
 
-      {/* Modal permisos */}
-      {modal === "permisos" && userActual && (
+      {/* Modal editar */}
+      {modal === "editar" && userActual && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
           display: "flex", alignItems: "center", justifyContent: "center",
           zIndex: 1000, padding: "1rem" }}>
@@ -315,17 +348,62 @@ export default function Usuarios() {
             borderRadius: "var(--radius-lg)", padding: "1.5rem",
             width: "100%", maxWidth: "440px" }}>
             <h2 style={{ marginBottom: "4px", color: "var(--text)", fontSize: "18px" }}>
+              Editar usuario
+            </h2>
+            <p style={{ fontSize: "12px", color: "var(--text3)", marginBottom: "1.5rem" }}>
+              @{userActual.username}
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem",
+              marginBottom: "1.5rem" }}>
+              {[
+                { name: "first_name", label: "Nombre" },
+                { name: "last_name",  label: "Apellido" },
+                { name: "email",      label: "Correo", type: "email", full: true },
+              ].map(f => (
+                <div key={f.name} style={{ gridColumn: f.full ? "1 / -1" : "auto" }}>
+                  <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
+                    color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
+                    {f.label}
+                  </label>
+                  <input type={f.type || "text"} value={editForm[f.name] || ""}
+                    onChange={e => setEditForm({...editForm, [f.name]: e.target.value})}
+                    style={{ width: "100%" }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button className="btn btn-primary" onClick={guardarEdicion}
+                disabled={loading} style={{ flex: 1 }}>
+                {loading ? "Guardando..." : "Guardar cambios"}
+              </button>
+              <button className="btn btn-secondary" onClick={() => setModal(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal permisos */}
+      {modal === "permisos" && userActual && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)", padding: "1.5rem",
+            width: "100%", maxWidth: "460px" }}>
+            <h2 style={{ marginBottom: "4px", color: "var(--text)", fontSize: "18px" }}>
               Permisos — @{userActual.username}
             </h2>
             <p style={{ fontSize: "12px", color: "var(--text3)", marginBottom: "1.5rem" }}>
-              Módulos accesibles para este usuario
+              Selecciona los módulos accesibles
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
               gap: "8px", marginBottom: "1.5rem" }}>
               {MODULOS.map(m => (
                 <label key={m.value} style={{
                   display: "flex", alignItems: "center", gap: "8px",
-                  padding: "8px 12px", borderRadius: "8px", cursor: "pointer",
+                  padding: "10px 12px", borderRadius: "8px", cursor: "pointer",
                   background: permisos.includes(m.value) ? "#065F4633" : "var(--bg1)",
                   border: `1px solid ${permisos.includes(m.value) ? "#10B981" : "var(--border)"}`,
                   fontSize: "13px",
@@ -334,7 +412,7 @@ export default function Usuarios() {
                   <input type="checkbox" checked={permisos.includes(m.value)}
                     onChange={() => togglePermiso(m.value)}
                     style={{ width: "14px", height: "14px" }} />
-                  {m.label}
+                  {m.icon} {m.label}
                 </label>
               ))}
             </div>
@@ -350,7 +428,7 @@ export default function Usuarios() {
         </div>
       )}
 
-      {/* Modal cambiar contraseña */}
+      {/* Modal contraseña */}
       {modal === "clave" && userActual && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -371,6 +449,7 @@ export default function Usuarios() {
               </label>
               <input type="password" value={nuevaClave}
                 onChange={e => setNuevaClave(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && cambiarContrasena()}
                 placeholder="Mínimo 4 caracteres"
                 style={{ width: "100%" }} />
             </div>
