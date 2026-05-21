@@ -5,6 +5,9 @@ const getBaseURL = () => {
   if (hostname === 'localhost' || hostname.startsWith('192.') || hostname === '127.0.0.1') {
     return `http://192.168.0.8:8000/api`
   }
+  if (hostname === 'app.armracing.com') {
+    return `https://api.armracing.com/api`
+  }
   return `${window.location.protocol}//${hostname}/api`
 }
 
