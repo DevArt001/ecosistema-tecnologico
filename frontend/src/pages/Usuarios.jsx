@@ -230,6 +230,7 @@ export default function Usuarios() {
                   <button onClick={() => {
                     setUserActual(u)
                     setEditForm({
+                      username:   u.username   || "",
                       first_name: u.first_name || "",
                       last_name:  u.last_name  || "",
                       email:      u.email      || "",
@@ -356,6 +357,7 @@ export default function Usuarios() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem",
               marginBottom: "1.5rem" }}>
               {[
+                { name: "username",   label: "Usuario *", full: true },
                 { name: "first_name", label: "Nombre" },
                 { name: "last_name",  label: "Apellido" },
                 { name: "email",      label: "Correo", type: "email", full: true },
