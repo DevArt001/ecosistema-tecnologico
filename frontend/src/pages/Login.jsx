@@ -80,7 +80,7 @@ export default function Login({ onLogin }) {
               value={form.username}
               onChange={e => setForm({ ...form, username: e.target.value })}
               onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              placeholder="usuario"
+              placeholder="usuario" autoComplete="off"
               style={{ width: "100%" }}
             />
           </div>
@@ -94,7 +94,7 @@ export default function Login({ onLogin }) {
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              placeholder="••••••••"
+              placeholder="••••••••" autoComplete="new-password"
               style={{ width: "100%" }}
             />
           </div>
