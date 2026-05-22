@@ -125,7 +125,7 @@ def generar_html_cotizacion(cot):
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="color-scheme" content="light only"><style>:root{color-scheme:light only}</style>
+<meta charset="UTF-8"><meta name="color-scheme" content="light only"><style>:root{{color-scheme:light only}}</style>
 <title>Cotización {cot.numero}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -307,7 +307,7 @@ def generar_html_factura(fac):
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="color-scheme" content="light only"><style>:root{color-scheme:light only}</style>
+<meta charset="UTF-8"><meta name="color-scheme" content="light only"><style>:root{{color-scheme:light only}}</style>
 <title>Factura {fac.numero}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
