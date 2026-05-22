@@ -39,6 +39,21 @@ class OrdenTrabajoViewSet(viewsets.ModelViewSet):
             }
         )).start()
 
+    def perform_update(self, serializer):
+        estado_anterior = self.get_object().estado
+        orden = serializer.save()
+        if orden.estado == 'finalizado' and estado_anterior != 'finalizado':
+            threading.Thread(target=notificar_n8n, args=(
+                'https://n8n.armracing.com/webhook/Moto-Lista',
+                {
+                    'codigo': orden.codigo,
+                    'cliente': orden.cliente.nombre,
+                    'vehiculo': orden.vehiculo.placa,
+                    'telefono': orden.cliente.telefono,
+                    'costo': str(orden.costo_final),
+                }
+            )).start()
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def obtener_orden_con_proceso(request, orden_id):
