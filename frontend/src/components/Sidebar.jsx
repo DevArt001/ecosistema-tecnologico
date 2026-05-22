@@ -15,9 +15,10 @@ const TODOS_MODULOS = [
 ]
 
 const PUBLICOS = [
-  { label: "Agendar cita",   url: "/agendar", color: "#10B981" },
-  { label: "Pagina publica", url: "/public",  color: "#3B82F6" },
-  { label: "Portal cliente", url: "/portal",  color: "#8B5CF6" },
+  { label: "Agendar cita",   url: "/agendar",  color: "#10B981" },
+  { label: "Registro cliente", url: "/registro", color: "#F59E0B" },
+  { label: "Pagina publica", url: "/public",   color: "#3B82F6" },
+  { label: "Portal cliente", url: "/portal",   color: "#8B5CF6" },
 ]
 
 export default function Sidebar({ onLogout, onClose }) {
