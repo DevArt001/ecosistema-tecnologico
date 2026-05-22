@@ -22,7 +22,7 @@ export default function Layout({ onLogout }) {
 
       {sidebarOpen && isMobile && (
         <div
-          onPointerDown={() => setSidebarOpen(false)}
+          onClick={() => setSidebarOpen(false)}
           style={{
             position: "fixed", inset: 0,
             background: "rgba(0,0,0,.6)",
@@ -57,7 +57,7 @@ export default function Layout({ onLogout }) {
           justifyContent: "space-between",
         }}>
           <button
-            onPointerDown={() => setSidebarOpen(prev => !prev)}
+            onClick={() => setSidebarOpen(prev => !prev)}
             style={{
               background: "none", border: "none", color: "white",
               fontSize: "26px", cursor: "pointer", padding: "8px",
