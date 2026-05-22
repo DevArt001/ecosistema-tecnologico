@@ -64,10 +64,10 @@ export default function Sidebar({ onLogout, onClose }) {
           fontSize: "18px", flexShrink: 0
         }}>🔧</div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981" }}>
+          <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981", WebkitTextFillColor: "#10B981" }}>
             TallerOS
           </div>
-          <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "1px" }}>
+          <div style={{ fontSize: "10px", color: "#8B949E", marginTop: "1px" }}>
             ARM Racing Performance
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function Sidebar({ onLogout, onClose }) {
           padding: "0 0.75rem", marginBottom: "4px"
         }}>
           <div style={{
-            fontSize: "10px", fontWeight: "700", color: "#4B5563",
+            fontSize: "10px", fontWeight: "700", color: "#8B949E",
             textTransform: "uppercase", letterSpacing: ".1em",
             padding: "6px 8px"
           }}>Módulos</div>
@@ -108,9 +108,10 @@ export default function Sidebar({ onLogout, onClose }) {
                 textDecoration: "none",
                 fontSize: "13.5px",
                 fontWeight: isActive ? "600" : "400",
-                color: isActive ? item.color : "#9CA3AF",
+                color: isActive ? item.color : "#C9D1D9",
                 background: isActive ? item.color + "18" : "transparent",
                 borderLeft: isActive ? `3px solid ${item.color}` : "3px solid transparent",
+                WebkitTextFillColor: isActive ? item.color : "#C9D1D9",
               })}>
               <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>
                 {item.icon}
@@ -123,7 +124,7 @@ export default function Sidebar({ onLogout, onClose }) {
         {/* Links públicos */}
         <div style={{ padding: "0 0.75rem", marginTop: "12px", marginBottom: "4px" }}>
           <div style={{
-            fontSize: "10px", fontWeight: "700", color: "#4B5563",
+            fontSize: "10px", fontWeight: "700", color: "#8B949E",
             textTransform: "uppercase", letterSpacing: ".1em",
             padding: "12px 8px 6px",
             borderTop: "1px solid #1F2937"
@@ -177,11 +178,11 @@ export default function Sidebar({ onLogout, onClose }) {
             {username[0]?.toUpperCase()}
           </div>
           <div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB" }}>
+            <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB", WebkitTextFillColor: "#F9FAFB" }}>
               {username}
             </div>
             <div style={{
-              fontSize: "10px", fontWeight: "700", color: "#10B981",
+              fontSize: "10px", fontWeight: "700", color: "#10B981", WebkitTextFillColor: "#10B981",
               textTransform: "uppercase", letterSpacing: ".08em"
             }}>{rol}</div>
           </div>
