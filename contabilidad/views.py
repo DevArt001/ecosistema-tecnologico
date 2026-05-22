@@ -125,12 +125,12 @@ def generar_html_cotizacion(cot):
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><meta name="color-scheme" content="light only"><style>:root{color-scheme:light only}</style>
 <title>Cotización {cot.numero}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:'Inter',sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact}}
+  body{{font-family:'Inter',sans-serif;background:#ffffff;color:#1a1a2e;-webkit-print-color-adjust:exact}}
   .page{{max-width:820px;margin:24px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}}
   .header{{background:linear-gradient(135deg,#0a0f1e 0%,#0d2137 50%,#0a1628 100%);padding:36px 40px;display:flex;justify-content:space-between;align-items:flex-start}}
   .brand h1{{font-size:26px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
@@ -307,12 +307,12 @@ def generar_html_factura(fac):
     return f"""<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8"><meta name="color-scheme" content="light only"><style>:root{color-scheme:light only}</style>
 <title>Factura {fac.numero}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:'Inter',sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact}}
+  body{{font-family:'Inter',sans-serif;background:#ffffff;color:#1a1a2e;-webkit-print-color-adjust:exact}}
   .page{{max-width:820px;margin:24px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}}
   .header{{background:linear-gradient(135deg,#0a0f1e 0%,#0d2137 50%,#0a1628 100%);padding:36px 40px;display:flex;justify-content:space-between;align-items:flex-start}}
   .brand h1{{font-size:26px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
