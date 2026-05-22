@@ -91,7 +91,7 @@ export const facturasAPI = {
   cambiarEstado: (id, estado)  => API.patch(`/facturas/${id}/`, { estado }),
   agregarLinea:  (id, data)    => API.post(`/facturas/${id}/agregar_linea/`, data),
   eliminarLinea: (id, lineaId) => API.delete(`/facturas/${id}/eliminar_linea/${lineaId}/`),
-  pdf:           (id)          => `${API.defaults.baseURL.replace('/api','')}/api/facturas/${id}/pdf/`,
+  pdf:           (id)          => `${API.defaults.baseURL.replace('/api','')}/api/facturas/${id}/pdf/?token=${localStorage.getItem('access')}`,
 }
 
 export const agendamientoAPI = {
@@ -135,7 +135,7 @@ export const cotizacionesAPI = {
   agregarLinea:  (id, data)      => API.post(`/cotizaciones/${id}/agregar_linea/`, data),
   eliminarLinea: (id, lineaId)   => API.delete(`/cotizaciones/${id}/eliminar_linea/${lineaId}/`),
   aprobar:       (id)            => API.post(`/cotizaciones/${id}/aprobar/`),
-  pdf:           (id)            => `${API.defaults.baseURL.replace('/api','')}/api/cotizaciones/${id}/pdf/`,
+  pdf:           (id)            => `${API.defaults.baseURL.replace('/api','')}/api/cotizaciones/${id}/pdf/?token=${localStorage.getItem('access')}`,
 }
 
 export default API
