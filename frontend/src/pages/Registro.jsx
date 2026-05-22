@@ -26,7 +26,7 @@ export default function Registro() {
     setLoading(true)
     setError("")
     try {
-      const res = await fetch(`${API_URL}/agendamiento/cliente-publico/`, {
+      const res = await fetch(`${API_URL}/agendamiento/publico/registrar-cliente/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cliente)
@@ -52,7 +52,7 @@ export default function Registro() {
     setLoading(true)
     setError("")
     try {
-      const res = await fetch(`${API_URL}/agendamiento/vehiculo-publico/`, {
+      const res = await fetch(`${API_URL}/agendamiento/publico/registrar-vehiculo/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...vehiculo, cliente_id: clienteId })
