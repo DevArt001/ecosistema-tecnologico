@@ -1,34 +1,44 @@
 import { NavLink, useNavigate } from "react-router-dom"
 
-const MODULOS = [
-  { path: "/",             label: "Dashboard",    icon: "⊞", color: "#10B981", modulo: "dashboard" },
-  { path: "/clientes",     label: "Clientes",     icon: "👥", color: "#3B82F6", modulo: "clientes" },
-  { path: "/vehiculos",    label: "Vehículos",    icon: "🏍", color: "#8B5CF6", modulo: "vehiculos" },
-  { path: "/ordenes",      label: "Órdenes",      icon: "🔧", color: "#F59E0B", modulo: "ordenes" },
-  { path: "/inventario",   label: "Inventario",   icon: "📦", color: "#EF4444", modulo: "inventario" },
-  { path: "/facturas",     label: "Facturación",  icon: "💰", color: "#10B981", modulo: "facturas" },
-  { path: "/cotizaciones", label: "Cotizaciones", icon: "📋", color: "#F59E0B", modulo: "cotizaciones" },
-  { path: "/agendamiento", label: "Agendamiento", icon: "📅", color: "#06B6D4", modulo: "agendamiento" },
-  { path: "/gastos",       label: "Gastos",       icon: "📤", color: "#EF4444", modulo: "gastos" },
-  { path: "/reportes",     label: "Reportes",     icon: "📊", color: "#8B5CF6", modulo: "reportes" },
-  { path: "/usuarios",     label: "Usuarios",     icon: "👤", color: "#EC4899", modulo: "admin" },
+const TODOS_MODULOS = [
+  { path: "/",             label: "Dashboard",    color: "#10B981", modulo: "dashboard" },
+  { path: "/clientes",     label: "Clientes",     color: "#3B82F6", modulo: "clientes" },
+  { path: "/vehiculos",    label: "Vehiculos",    color: "#8B5CF6", modulo: "vehiculos" },
+  { path: "/ordenes",      label: "Ordenes",      color: "#F59E0B", modulo: "ordenes" },
+  { path: "/inventario",   label: "Inventario",   color: "#EF4444", modulo: "inventario" },
+  { path: "/facturas",     label: "Facturacion",  color: "#10B981", modulo: "facturas" },
+  { path: "/cotizaciones", label: "Cotizaciones", color: "#F59E0B", modulo: "cotizaciones" },
+  { path: "/agendamiento", label: "Agendamiento", color: "#06B6D4", modulo: "agendamiento" },
+  { path: "/gastos",       label: "Gastos",       color: "#EF4444", modulo: "gastos" },
+  { path: "/reportes",     label: "Reportes",     color: "#8B5CF6", modulo: "reportes" },
+  { path: "/usuarios",     label: "Usuarios",     color: "#EC4899", modulo: "admin" },
 ]
 
 const PUBLICOS = [
-  { label: "Agendar cita",   url: "/agendar", icon: "📆", color: "#10B981" },
-  { label: "Página pública", url: "/public",  icon: "🌐", color: "#3B82F6" },
-  { label: "Portal cliente", url: "/portal",  icon: "🔗", color: "#8B5CF6" },
+  { label: "Agendar cita",   url: "/agendar", color: "#10B981" },
+  { label: "Pagina publica", url: "/public",  color: "#3B82F6" },
+  { label: "Portal cliente", url: "/portal",  color: "#8B5CF6" },
 ]
 
 export default function Sidebar({ onLogout, onClose }) {
   const navigate = useNavigate()
-  const rol      = localStorage.getItem("rol") || "tecnico"
-  const permisos = JSON.parse(localStorage.getItem("permisos") || '["dashboard"]')
-  const username = localStorage.getItem("username") || "usuario"
 
-  const modulosVisibles = MODULOS.filter(m => {
+  let rol = "tecnico"
+  let permisos = ["dashboard"]
+  let username = "usuario"
+
+  try {
+    rol      = localStorage.getItem("rol") || "tecnico"
+    permisos = JSON.parse(localStorage.getItem("permisos") || '["dashboard"]')
+    username = localStorage.getItem("username") || "usuario"
+  } catch(e) {
+    rol = "tecnico"
+  }
+
+  const modulosVisibles = TODOS_MODULOS.filter(m => {
     if (m.modulo === "admin") return rol === "admin"
-    return rol === "admin" || permisos.includes(m.modulo)
+    if (rol === "admin") return true
+    return permisos.includes(m.modulo)
   })
 
   const handleLogout = () => {
@@ -38,13 +48,11 @@ export default function Sidebar({ onLogout, onClose }) {
   }
 
   return (
-    <aside style={{
-      width: "240px",
-      height: "100%",
+    <div style={{
+      width: "240px", height: "100%",
       background: "#111827",
       borderRight: "1px solid #1F2937",
-      display: "flex",
-      flexDirection: "column",
+      display: "flex", flexDirection: "column",
       overflowY: "auto",
     }}>
 
@@ -52,110 +60,92 @@ export default function Sidebar({ onLogout, onClose }) {
       <div style={{
         padding: "1rem 1.25rem",
         borderBottom: "1px solid #1F2937",
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        flexShrink: 0,
+        display: "flex", alignItems: "center",
+        gap: "10px", flexShrink: 0,
       }}>
         <div style={{
           width: "36px", height: "36px", borderRadius: "10px",
-          background: "linear-gradient(135deg, #10B981, #065F46)",
+          background: "#065F46",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "18px", flexShrink: 0
+          fontSize: "18px", flexShrink: 0,
         }}>🔧</div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981", WebkitTextFillColor: "#10B981" }}>
+          <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981" }}>
             TallerOS
           </div>
-          <div style={{ fontSize: "10px", color: "#8B949E", marginTop: "1px" }}>
-            ARM Racing Performance
+          <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "1px" }}>
+            ARM Racing
           </div>
         </div>
         {onClose && (
           <button onClick={onClose} style={{
             background: "none", border: "none", color: "#6B7280",
             fontSize: "20px", cursor: "pointer", padding: "4px",
-            display: "flex", alignItems: "center", flexShrink: 0
-          }}>✕</button>
+          }}>x</button>
         )}
       </div>
 
-      {/* Nav */}
-      <nav style={{ flex: 1, padding: "0.75rem 0", overflowY: "auto" }}>
+      {/* Modulos */}
+      <nav style={{ flex: 1, padding: "0.5rem 0", overflowY: "auto" }}>
         <div style={{
-          padding: "0 0.75rem", marginBottom: "4px"
-        }}>
-          <div style={{
-            fontSize: "10px", fontWeight: "700", color: "#8B949E",
-            textTransform: "uppercase", letterSpacing: ".1em",
-            padding: "6px 8px"
-          }}>Módulos</div>
-        </div>
+          fontSize: "10px", fontWeight: "700", color: "#6B7280",
+          textTransform: "uppercase", letterSpacing: ".1em",
+          padding: "8px 1.25rem 4px",
+        }}>Modulos</div>
 
         {modulosVisibles.map(item => (
-          <div key={item.path} style={{ padding: "0 0.75rem" }}>
-            <NavLink
-              to={item.path}
-              end={item.path === "/"}
-              onClick={onClose}
-              style={({ isActive }) => ({
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "9px 12px",
-                marginBottom: "2px",
-                borderRadius: "10px",
-                textDecoration: "none",
-                fontSize: "13.5px",
-                fontWeight: isActive ? "600" : "400",
-                color: isActive ? item.color : "#C9D1D9",
-                background: isActive ? item.color + "18" : "transparent",
-                borderLeft: isActive ? `3px solid ${item.color}` : "3px solid transparent",
-                WebkitTextFillColor: isActive ? item.color : "#C9D1D9",
-              })}>
-              <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>
-                {item.icon}
-              </span>
-              {item.label}
-            </NavLink>
-          </div>
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === "/"}
+            onClick={onClose}
+            style={({ isActive }) => ({
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "9px 1.25rem",
+              textDecoration: "none",
+              fontSize: "14px",
+              fontWeight: isActive ? "600" : "400",
+              color: isActive ? item.color : "#D1D5DB",
+              background: isActive ? item.color + "22" : "transparent",
+              borderLeft: isActive ? `3px solid ${item.color}` : "3px solid transparent",
+            })}>
+            <span style={{
+              width: "8px", height: "8px", borderRadius: "50%",
+              background: item.color, flexShrink: 0,
+            }}/>
+            {item.label}
+          </NavLink>
         ))}
 
-        {/* Links públicos */}
-        <div style={{ padding: "0 0.75rem", marginTop: "12px", marginBottom: "4px" }}>
-          <div style={{
-            fontSize: "10px", fontWeight: "700", color: "#8B949E",
-            textTransform: "uppercase", letterSpacing: ".1em",
-            padding: "12px 8px 6px",
-            borderTop: "1px solid #1F2937"
-          }}>Links públicos</div>
-        </div>
+        {/* Links publicos */}
+        <div style={{
+          fontSize: "10px", fontWeight: "700", color: "#6B7280",
+          textTransform: "uppercase", letterSpacing: ".1em",
+          padding: "12px 1.25rem 4px",
+          borderTop: "1px solid #1F2937",
+          marginTop: "8px",
+        }}>Links publicos</div>
 
         {PUBLICOS.map(link => (
-          <div key={link.url} style={{ padding: "0 0.75rem" }}>
-              <a
-              href={link.url}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                padding: "9px 12px",
-                marginBottom: "2px",
-                borderRadius: "10px",
-                textDecoration: "none",
-                fontSize: "13.5px",
-                color: "#9CA3AF",
-                borderLeft: "3px solid transparent",
-              }}>
-              <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>
-                {link.icon}
-              </span>
-              {link.label}
-              <span style={{ marginLeft: "auto", fontSize: "10px", color: "#4B5563" }}>ext</span>
-            </a>
-          </div>
+
+          <a
+            key={link.url}
+            href={link.url}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "flex", alignItems: "center", gap: "10px",
+              padding: "9px 1.25rem",
+              textDecoration: "none",
+              fontSize: "14px",
+              color: "#D1D5DB",
+            }}>
+            <span style={{
+              width: "8px", height: "8px", borderRadius: "50%",
+              background: link.color, flexShrink: 0,
+            }}/>
+            {link.label}
+          </a>
         ))}
       </nav>
 
@@ -169,8 +159,7 @@ export default function Sidebar({ onLogout, onClose }) {
         <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
           <div style={{
             width: "32px", height: "32px", borderRadius: "50%",
-            background: "#10B98133",
-            border: "2px solid #10B981",
+            background: "#065F46",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "13px", fontWeight: "700", color: "#10B981",
             flexShrink: 0,
@@ -178,28 +167,23 @@ export default function Sidebar({ onLogout, onClose }) {
             {username[0]?.toUpperCase()}
           </div>
           <div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB", WebkitTextFillColor: "#F9FAFB" }}>
+            <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB" }}>
               {username}
             </div>
-            <div style={{
-              fontSize: "10px", fontWeight: "700", color: "#10B981", WebkitTextFillColor: "#10B981",
-              textTransform: "uppercase", letterSpacing: ".08em"
-            }}>{rol}</div>
+            <div style={{ fontSize: "10px", color: "#10B981", textTransform: "uppercase" }}>
+              {rol}
+            </div>
           </div>
         </div>
         <button onClick={handleLogout} style={{
-          width: "100%",
-          background: "transparent",
-          border: "1px solid #374151",
-          color: "#6B7280",
-          borderRadius: "8px",
-          padding: "7px",
-          fontSize: "12px",
-          cursor: "pointer",
+          width: "100%", background: "transparent",
+          border: "1px solid #374151", color: "#9CA3AF",
+          borderRadius: "8px", padding: "7px",
+          fontSize: "12px", cursor: "pointer",
         }}>
-          Cerrar sesión
+          Cerrar sesion
         </button>
       </div>
-    </aside>
+    </div>
   )
 }
