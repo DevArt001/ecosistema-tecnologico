@@ -39,10 +39,12 @@ export default function Sidebar({ onLogout, onClose }) {
 
   return (
     <aside style={{
-      width: "240px", height: "100%",
+      width: "240px",
+      height: "100%",
       background: "#111827",
       borderRight: "1px solid #1F2937",
-      display: "flex", flexDirection: "column",
+      display: "flex",
+      flexDirection: "column",
       overflowY: "auto",
     }}>
 
@@ -50,54 +52,65 @@ export default function Sidebar({ onLogout, onClose }) {
       <div style={{
         padding: "1rem 1.25rem",
         borderBottom: "1px solid #1F2937",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        flexShrink: 0,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "36px", height: "36px", borderRadius: "10px",
-            background: "linear-gradient(135deg, #10B981, #065F46)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "18px", flexShrink: 0
-          }}>🔧</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981" }}>
-              TallerOS
-            </div>
-            <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "1px" }}>
-              ARM Racing Performance
-            </div>
+        <div style={{
+          width: "36px", height: "36px", borderRadius: "10px",
+          background: "linear-gradient(135deg, #10B981, #065F46)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "18px", flexShrink: 0
+        }}>🔧</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981" }}>
+            TallerOS
           </div>
-          {onClose && (
-            <button onClick={onClose} style={{
-              background: "none", border: "none", color: "#6B7280",
-              fontSize: "20px", cursor: "pointer", padding: "4px",
-              display: "flex", alignItems: "center"
-            }}>✕</button>
-          )}
+          <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "1px" }}>
+            ARM Racing Performance
+          </div>
         </div>
+        {onClose && (
+          <button onClick={onClose} style={{
+            background: "none", border: "none", color: "#6B7280",
+            fontSize: "20px", cursor: "pointer", padding: "4px",
+            display: "flex", alignItems: "center", flexShrink: 0
+          }}>✕</button>
+        )}
       </div>
 
-      {/* Nav principal */}
+      {/* Nav */}
       <nav style={{ flex: 1, padding: "0.75rem 0", overflowY: "auto" }}>
-
-        <div style={{ padding: "0 0.75rem", marginBottom: "4px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "#6B7280",
-            textTransform: "uppercase", letterSpacing: ".1em", padding: "6px 8px" }}>
-            Módulos
-          </div>
+        <div style={{
+          padding: "0 0.75rem", marginBottom: "4px"
+        }}>
+          <div style={{
+            fontSize: "10px", fontWeight: "700", color: "#4B5563",
+            textTransform: "uppercase", letterSpacing: ".1em",
+            padding: "6px 8px"
+          }}>Módulos</div>
         </div>
 
         {modulosVisibles.map(item => (
           <div key={item.path} style={{ padding: "0 0.75rem" }}>
-            <NavLink to={item.path} end={item.path === "/"} onClick={onClose}
+            <NavLink
+              to={item.path}
+              end={item.path === "/"}
+              onClick={onClose}
               style={({ isActive }) => ({
-                display: "flex", alignItems: "center", gap: "10px",
-                padding: "9px 12px", marginBottom: "2px",
-                borderRadius: "10px", textDecoration: "none",
-                fontSize: "13.5px", fontWeight: isActive ? "600" : "400",
-                color: isActive ? item.color : "var(--text2)",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "9px 12px",
+                marginBottom: "2px",
+                borderRadius: "10px",
+                textDecoration: "none",
+                fontSize: "13.5px",
+                fontWeight: isActive ? "600" : "400",
+                color: isActive ? item.color : "#9CA3AF",
                 background: isActive ? item.color + "18" : "transparent",
                 borderLeft: isActive ? `3px solid ${item.color}` : "3px solid transparent",
-                transition: "all 0.15s",
               })}>
               <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>
                 {item.icon}
@@ -107,41 +120,39 @@ export default function Sidebar({ onLogout, onClose }) {
           </div>
         ))}
 
-        {/* Separador links públicos */}
+        {/* Links públicos */}
         <div style={{ padding: "0 0.75rem", marginTop: "12px", marginBottom: "4px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "#6B7280",
-            textTransform: "uppercase", letterSpacing: ".1em", padding: "6px 8px",
-            borderTop: "1px solid #1F2937", paddingTop: "12px" }}>
-            Links públicos
-          </div>
+          <div style={{
+            fontSize: "10px", fontWeight: "700", color: "#4B5563",
+            textTransform: "uppercase", letterSpacing: ".1em",
+            padding: "12px 8px 6px",
+            borderTop: "1px solid #1F2937"
+          }}>Links públicos</div>
         </div>
 
         {PUBLICOS.map(link => (
           <div key={link.url} style={{ padding: "0 0.75rem" }}>
-            <a href={link.url} target="_blank" rel="noreferrer"
+              <a
+              href={link.url}
+              target="_blank"
+              rel="noreferrer"
               style={{
-                display: "flex", alignItems: "center", gap: "10px",
-                padding: "9px 12px", marginBottom: "2px",
-                borderRadius: "10px", textDecoration: "none",
-                fontSize: "13.5px", fontWeight: "400",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "9px 12px",
+                marginBottom: "2px",
+                borderRadius: "10px",
+                textDecoration: "none",
+                fontSize: "13.5px",
                 color: "#9CA3AF",
                 borderLeft: "3px solid transparent",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color = link.color
-                e.currentTarget.style.background = link.color + "18"
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = "var(--text2)"
-                e.currentTarget.style.background = "transparent"
               }}>
               <span style={{ fontSize: "15px", width: "20px", textAlign: "center" }}>
                 {link.icon}
               </span>
               {link.label}
-              <span style={{ marginLeft: "auto", fontSize: "10px",
-                color: "#6B7280" }}>↗</span>
+              <span style={{ marginLeft: "auto", fontSize: "10px", color: "#4B5563" }}>ext</span>
             </a>
           </div>
         ))}
@@ -151,15 +162,17 @@ export default function Sidebar({ onLogout, onClose }) {
       <div style={{
         padding: "1rem 1.25rem",
         borderTop: "1px solid #1F2937",
-        background: "#0A0E1A"
+        background: "#0A0E1A",
+        flexShrink: 0,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px",
-          marginBottom: "10px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
           <div style={{
             width: "32px", height: "32px", borderRadius: "50%",
-            background: "#10B98133", border: "2px solid #10B981",
+            background: "#10B98133",
+            border: "2px solid #10B981",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "13px", fontWeight: "700", color: "#10B981"
+            fontSize: "13px", fontWeight: "700", color: "#10B981",
+            flexShrink: 0,
           }}>
             {username[0]?.toUpperCase()}
           </div>
@@ -167,18 +180,21 @@ export default function Sidebar({ onLogout, onClose }) {
             <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB" }}>
               {username}
             </div>
-            <div style={{ fontSize: "10px", fontWeight: "700", color: "#10B981",
-              textTransform: "uppercase", letterSpacing: ".08em" }}>
-              {rol}
-            </div>
+            <div style={{
+              fontSize: "10px", fontWeight: "700", color: "#10B981",
+              textTransform: "uppercase", letterSpacing: ".08em"
+            }}>{rol}</div>
           </div>
         </div>
         <button onClick={handleLogout} style={{
-          width: "100%", background: "transparent",
-          border: "1px solid #1F2937", color: "#6B7280",
-          borderRadius: "8px", padding: "7px",
-          fontSize: "12px", cursor: "pointer",
-          transition: "all 0.15s"
+          width: "100%",
+          background: "transparent",
+          border: "1px solid #374151",
+          color: "#6B7280",
+          borderRadius: "8px",
+          padding: "7px",
+          fontSize: "12px",
+          cursor: "pointer",
         }}>
           Cerrar sesión
         </button>
