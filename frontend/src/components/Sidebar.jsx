@@ -39,10 +39,11 @@ export default function Sidebar({ onLogout, onClose }) {
 
   return (
     <aside style={{
-      width: "240px", minHeight: "100vh",
-      background: "var(--bg2)",
-      borderRight: "1px solid var(--border)",
+      width: "240px", height: "100%",
+      background: "#111827",
+      borderRight: "1px solid #1F2937",
       display: "flex", flexDirection: "column",
+      overflowY: "auto",
     }}>
 
       {/* Logo */}
