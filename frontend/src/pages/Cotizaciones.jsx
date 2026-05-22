@@ -91,7 +91,8 @@ export default function Cotizaciones() {
 
   const verPDF = () => {
     const baseURL = API.defaults.baseURL.replace('/api', '')
-    window.open(`${baseURL}/api/cotizaciones/${cotActual.id}/pdf/`, "_blank")
+    const token = localStorage.getItem("access")
+    window.open(`${baseURL}/api/cotizaciones/${cotActual.id}/pdf/?token=${token}`, "_blank")
   }
 
   const estadoColor = {

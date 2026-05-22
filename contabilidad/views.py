@@ -36,6 +36,16 @@ class FacturaViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def pdf(self, request, pk=None):
+        from rest_framework_simplejwt.tokens import AccessToken
+        from django.contrib.auth.models import User
+        token = request.query_params.get('token')
+        if token:
+            try:
+                access = AccessToken(token)
+                user = User.objects.get(id=access['user_id'])
+                request.user = user
+            except Exception:
+                pass
         factura = self.get_object()
         html = generar_html_factura(factura)
         response = HttpResponse(html, content_type='text/html')
@@ -81,6 +91,16 @@ class CotizacionViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def pdf(self, request, pk=None):
+        from rest_framework_simplejwt.tokens import AccessToken
+        from django.contrib.auth.models import User
+        token = request.query_params.get('token')
+        if token:
+            try:
+                access = AccessToken(token)
+                user = User.objects.get(id=access['user_id'])
+                request.user = user
+            except Exception:
+                pass
         cotizacion = self.get_object()
         html = generar_html_cotizacion(cotizacion)
         response = HttpResponse(html, content_type='text/html')
