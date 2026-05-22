@@ -212,17 +212,7 @@ export default function Usuarios() {
                     <div style={{ fontSize: "11px", color: "var(--text3)" }}>módulos</div>
                   </div>
 
-                  <select value={rol} onChange={e => cambiarRol(u.id, e.target.value)}
-                    style={{
-                      background: color + "22", color,
-                      border: `1px solid ${color}44`,
-                      borderRadius: "8px", padding: "6px 10px",
-                      fontSize: "12px", fontWeight: "600", cursor: "pointer"
-                    }}>
-                    {ROLES.map(r => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                  </select>
+
                 </div>
 
                 {/* Acciones */}
