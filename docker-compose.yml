@@ -69,6 +69,7 @@ services:
       - N8N_PROTOCOL=https
       - WEBHOOK_URL=https://n8n.armracing.com
       - GENERIC_TIMEZONE=America/Bogota
+      - N8N_SECURE_COOKIE=false
     networks:
       - taller_net
 

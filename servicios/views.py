@@ -11,12 +11,33 @@ from .serializers import (
     PasoProcesoSerializer
 )
 
+import requests as http_requests
+import threading
+
+def notificar_n8n(url, data):
+    try:
+        http_requests.post(url, json=data, timeout=5)
+    except:
+        pass
+
 class OrdenTrabajoViewSet(viewsets.ModelViewSet):
     queryset         = OrdenTrabajo.objects.all()
     serializer_class = OrdenTrabajoSerializer
     filter_backends  = [filters.SearchFilter, filters.OrderingFilter]
     search_fields    = ['codigo', 'cliente__nombre', 'vehiculo__placa']
     ordering_fields  = ['fecha_ingreso', 'estado', 'prioridad']
+
+    def perform_create(self, serializer):
+        orden = serializer.save()
+        threading.Thread(target=notificar_n8n, args=(
+            'https://n8n.armracing.com/webhook/Nueva-Orden',
+            {
+                'codigo': orden.codigo,
+                'cliente': orden.cliente.nombre,
+                'vehiculo': orden.vehiculo.placa,
+                'estado': orden.estado,
+            }
+        )).start()
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
