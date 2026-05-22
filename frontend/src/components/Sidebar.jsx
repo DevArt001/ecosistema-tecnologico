@@ -49,7 +49,7 @@ export default function Sidebar({ onLogout, onClose }) {
       {/* Logo */}
       <div style={{
         padding: "1rem 1.25rem",
-        borderBottom: "1px solid var(--border)",
+        borderBottom: "1px solid #1F2937",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={{
@@ -62,13 +62,13 @@ export default function Sidebar({ onLogout, onClose }) {
             <div style={{ fontSize: "15px", fontWeight: "700", color: "#10B981" }}>
               TallerOS
             </div>
-            <div style={{ fontSize: "10px", color: "var(--text3)", marginTop: "1px" }}>
+            <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "1px" }}>
               ARM Racing Performance
             </div>
           </div>
           {onClose && (
             <button onClick={onClose} style={{
-              background: "none", border: "none", color: "var(--text3)",
+              background: "none", border: "none", color: "#6B7280",
               fontSize: "20px", cursor: "pointer", padding: "4px",
               display: "flex", alignItems: "center"
             }}>✕</button>
@@ -80,7 +80,7 @@ export default function Sidebar({ onLogout, onClose }) {
       <nav style={{ flex: 1, padding: "0.75rem 0", overflowY: "auto" }}>
 
         <div style={{ padding: "0 0.75rem", marginBottom: "4px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--text3)",
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "#6B7280",
             textTransform: "uppercase", letterSpacing: ".1em", padding: "6px 8px" }}>
             Módulos
           </div>
@@ -109,9 +109,9 @@ export default function Sidebar({ onLogout, onClose }) {
 
         {/* Separador links públicos */}
         <div style={{ padding: "0 0.75rem", marginTop: "12px", marginBottom: "4px" }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "var(--text3)",
+          <div style={{ fontSize: "10px", fontWeight: "700", color: "#6B7280",
             textTransform: "uppercase", letterSpacing: ".1em", padding: "6px 8px",
-            borderTop: "1px solid var(--border)", paddingTop: "12px" }}>
+            borderTop: "1px solid #1F2937", paddingTop: "12px" }}>
             Links públicos
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function Sidebar({ onLogout, onClose }) {
                 padding: "9px 12px", marginBottom: "2px",
                 borderRadius: "10px", textDecoration: "none",
                 fontSize: "13.5px", fontWeight: "400",
-                color: "var(--text2)",
+                color: "#9CA3AF",
                 borderLeft: "3px solid transparent",
                 transition: "all 0.15s",
               }}
@@ -141,7 +141,7 @@ export default function Sidebar({ onLogout, onClose }) {
               </span>
               {link.label}
               <span style={{ marginLeft: "auto", fontSize: "10px",
-                color: "var(--text3)" }}>↗</span>
+                color: "#6B7280" }}>↗</span>
             </a>
           </div>
         ))}
@@ -150,8 +150,8 @@ export default function Sidebar({ onLogout, onClose }) {
       {/* Usuario */}
       <div style={{
         padding: "1rem 1.25rem",
-        borderTop: "1px solid var(--border)",
-        background: "var(--bg1)"
+        borderTop: "1px solid #1F2937",
+        background: "#0A0E1A"
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px",
           marginBottom: "10px" }}>
@@ -164,7 +164,7 @@ export default function Sidebar({ onLogout, onClose }) {
             {username[0]?.toUpperCase()}
           </div>
           <div>
-            <div style={{ fontSize: "13px", fontWeight: "600", color: "var(--text)" }}>
+            <div style={{ fontSize: "13px", fontWeight: "600", color: "#F9FAFB" }}>
               {username}
             </div>
             <div style={{ fontSize: "10px", fontWeight: "700", color: "#10B981",
@@ -175,7 +175,7 @@ export default function Sidebar({ onLogout, onClose }) {
         </div>
         <button onClick={handleLogout} style={{
           width: "100%", background: "transparent",
-          border: "1px solid var(--border)", color: "var(--text3)",
+          border: "1px solid #1F2937", color: "#6B7280",
           borderRadius: "8px", padding: "7px",
           fontSize: "12px", cursor: "pointer",
           transition: "all 0.15s"
