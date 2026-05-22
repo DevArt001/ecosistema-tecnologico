@@ -17,6 +17,7 @@ import Cotizaciones from "./pages/Cotizaciones"
 import Reportes from "./pages/Reportes"
 import Usuarios from "./pages/Usuarios"
 import Gastos from "./pages/Gastos"
+import Registro from "./pages/Registro"
 import "./index.css"
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
         <Route path="/portal/:token" element={<Portal />} />
         <Route path="/portal/:token" element={<Portal />} />
         <Route path="/agendar" element={<Agendar />} />
+        <Route path="/registro" element={<Registro />} />
 
         {/* Rutas privadas */}
         <Route path="*" element={
@@ -65,6 +67,7 @@ function App() {
                 <Route path="reportes"      element={<Reportes />} />
                 <Route path="usuarios"      element={<Usuarios />} />
                 <Route path="gastos"        element={<Gastos />} />
+
               </Route>
             </Routes>
           )
