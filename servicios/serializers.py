@@ -15,6 +15,7 @@ class PasoProcesoSerializer(serializers.ModelSerializer):
 class OrdenTrabajoSerializer(serializers.ModelSerializer):
     cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
     vehiculo_placa = serializers.CharField(source='vehiculo.placa', read_only=True)
+    codigo         = serializers.CharField(read_only=True)
     
     class Meta:
         model = OrdenTrabajo
