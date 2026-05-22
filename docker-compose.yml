@@ -56,6 +56,22 @@ services:
     networks:
       - taller_net
 
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_HOST=n8n.armracing.com
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.armracing.com
+      - GENERIC_TIMEZONE=America/Bogota
+    networks:
+      - taller_net
+
   uptime_kuma:
     image: louislam/uptime-kuma:1
     restart: unless-stopped
@@ -70,6 +86,7 @@ volumes:
   postgres_data:
   media_files:
   uptime_data:
+  n8n_data:
 
 networks:
   taller_net:
