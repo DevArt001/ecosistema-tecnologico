@@ -130,36 +130,36 @@ def generar_html_cotizacion(cot):
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:'Inter',sans-serif;background:#ffffff;color:#1a1a2e;-webkit-print-color-adjust:exact}}
-  .page{{max-width:820px;margin:24px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}}
-  .header{{background:linear-gradient(135deg,#0a0f1e 0%,#0d2137 50%,#0a1628 100%);padding:36px 40px;display:flex;justify-content:space-between;align-items:flex-start}}
-  .brand h1{{font-size:26px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
+  body{{font-family:'Inter',sans-serif;background:#f5f7fa;color:#1a1a2e;-webkit-print-color-adjust:exact;color-scheme:light}}
+  .page{{max-width:820px;margin:20px auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.08)}}
+  .header{{background:#ffffff;padding:32px 40px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #10B981}}
+  .brand h1{{font-size:24px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
   .brand p{{font-size:11.5px;color:#64748b;margin-top:3px}}
-  .brand .contact{{margin-top:12px;display:flex;flex-direction:column;gap:3px}}
-  .brand .contact span{{font-size:11px;color:#94a3b8}}
+  .brand .contact{{margin-top:10px;display:flex;flex-direction:column;gap:3px}}
+  .brand .contact span{{font-size:11px;color:#64748b}}
   .doc-info{{text-align:right}}
-  .doc-num{{font-size:26px;font-weight:800;color:#10B981;font-family:monospace}}
+  .doc-num{{font-size:24px;font-weight:800;color:#10B981;font-family:monospace}}
   .doc-date{{font-size:12px;color:#64748b;margin-top:4px}}
   .badge{{display:inline-block;background:#10B981;color:white;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-top:10px;text-transform:uppercase}}
-  .info-grid{{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f1f5f9}}
-  .info-box{{padding:24px 32px}}
-  .info-box:first-child{{border-right:1px solid #f1f5f9}}
+  .info-grid{{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}}
+  .info-box{{padding:20px 32px}}
+  .info-box:first-child{{border-right:1px solid #e2e8f0}}
   .info-box h3{{font-size:10px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}}
   .info-box .name{{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px}}
   .info-box p{{font-size:12.5px;color:#64748b;margin-bottom:3px}}
   .info-box .highlight{{color:#1a1a2e;font-weight:600}}
   table{{width:100%;border-collapse:collapse}}
-  .table-head{{background:#0a0f1e}}
-  .table-head th{{padding:11px 16px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;text-transform:uppercase;letter-spacing:.06em}}
+  .table-head{{background:#f8fafc}}
+  .table-head th{{padding:11px 16px;font-size:11px;font-weight:700;color:#64748b;text-align:left;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #e2e8f0}}
   .table-head th.right{{text-align:right}}
   .table-head th.center{{text-align:center}}
-  tbody tr{{border-bottom:1px solid #f8fafc;transition:background .2s}}
+  tbody tr{{border-bottom:1px solid #f1f5f9}}
   tbody tr:nth-child(even){{background:#fafbff}}
   tbody td{{padding:11px 16px;font-size:13px;color:#374151}}
   td.center{{text-align:center}}
   td.right{{text-align:right}}
   td.bold{{font-weight:700}}
-  td.green{{color:#059669}}
+  td.green{{color:#059669;font-weight:600}}
   td.red{{color:#dc2626}}
   td.desc{{font-weight:500;color:#1a1a2e}}
   .tipo-badge{{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}}
@@ -171,14 +171,14 @@ def generar_html_cotizacion(cot):
   .subtotal-row td.right{{text-align:right}}
   .total-row td{{padding:14px 0 4px;font-size:20px;font-weight:800;color:#10B981}}
   .total-row td.right{{text-align:right}}
-  .vigencia{{margin:20px 32px;padding:14px 18px;background:linear-gradient(135deg,#fefce8,#fef9c3);border-left:4px solid #eab308;border-radius:0 8px 8px 0;font-size:12.5px;color:#854d0e}}
-  .footer{{background:#0a0f1e;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:20px}}
+  .vigencia{{margin:20px 32px;padding:14px 18px;background:#f0fdf4;border-left:4px solid #10B981;border-radius:0 8px 8px 0;font-size:12.5px;color:#166534}}
+  .pago-box{{margin:20px 32px;padding:14px 18px;background:#f0fdf4;border-left:4px solid #10B981;border-radius:0 8px 8px 0;font-size:12.5px;color:#166534}}
+  .footer{{background:#f8fafc;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:20px;border-top:1px solid #e2e8f0}}
   .footer-left{{color:#64748b;font-size:11.5px;line-height:1.6}}
   .footer-left strong{{color:#10B981}}
   .footer-right{{text-align:right;color:#64748b;font-size:11.5px}}
-  .footer-right .firma-line{{border-top:1px solid #334155;padding-top:6px;margin-top:24px;color:#94a3b8}}
-  .print-btn{{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.03em}}
-  .print-btn:hover{{background:linear-gradient(135deg,#059669,#047857)}}
+  .footer-right .firma-line{{border-top:1px solid #cbd5e1;padding-top:6px;margin-top:24px;color:#94a3b8}}
+  .print-btn{{display:block;width:100%;padding:14px;background:#10B981;color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.03em}}
   @media print{{.print-btn{{display:none}}body{{background:white}}.page{{box-shadow:none;margin:0;border-radius:0}}}}
 </style>
 </head>
@@ -312,37 +312,36 @@ def generar_html_factura(fac):
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   *{{margin:0;padding:0;box-sizing:border-box}}
-  body{{font-family:'Inter',sans-serif;background:#ffffff;color:#1a1a2e;-webkit-print-color-adjust:exact}}
-  .page{{max-width:820px;margin:24px auto;background:white;border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}}
-  .header{{background:linear-gradient(135deg,#0a0f1e 0%,#0d2137 50%,#0a1628 100%);padding:36px 40px;display:flex;justify-content:space-between;align-items:flex-start}}
-  .brand h1{{font-size:26px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
+  body{{font-family:'Inter',sans-serif;background:#f5f7fa;color:#1a1a2e;-webkit-print-color-adjust:exact;color-scheme:light}}
+  .page{{max-width:820px;margin:20px auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 20px rgba(0,0,0,.08)}}
+  .header{{background:#ffffff;padding:32px 40px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #10B981}}
+  .brand h1{{font-size:24px;font-weight:800;color:#10B981;letter-spacing:-.5px}}
   .brand p{{font-size:11.5px;color:#64748b;margin-top:3px}}
-  .brand .contact{{margin-top:12px;display:flex;flex-direction:column;gap:3px}}
-  .brand .contact span{{font-size:11px;color:#94a3b8}}
+  .brand .contact{{margin-top:10px;display:flex;flex-direction:column;gap:3px}}
+  .brand .contact span{{font-size:11px;color:#64748b}}
   .doc-info{{text-align:right}}
-  .doc-num{{font-size:26px;font-weight:800;color:#10B981;font-family:monospace}}
+  .doc-num{{font-size:24px;font-weight:800;color:#10B981;font-family:monospace}}
   .doc-date{{font-size:12px;color:#64748b;margin-top:4px}}
-  .badge{{display:inline-block;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-top:10px;text-transform:uppercase}}
-  .info-grid{{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f1f5f9}}
-  .info-box{{padding:24px 32px}}
-  .info-box:first-child{{border-right:1px solid #f1f5f9}}
+  .badge{{display:inline-block;background:#10B981;color:white;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-top:10px;text-transform:uppercase}}
+  .info-grid{{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e2e8f0}}
+  .info-box{{padding:20px 32px}}
+  .info-box:first-child{{border-right:1px solid #e2e8f0}}
   .info-box h3{{font-size:10px;font-weight:700;color:#10B981;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}}
   .info-box .name{{font-size:15px;font-weight:700;color:#1a1a2e;margin-bottom:6px}}
   .info-box p{{font-size:12.5px;color:#64748b;margin-bottom:3px}}
   .info-box .highlight{{color:#1a1a2e;font-weight:600}}
-  .estado-pill{{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase}}
   table{{width:100%;border-collapse:collapse}}
-  .table-head{{background:#0a0f1e}}
-  .table-head th{{padding:11px 16px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;text-transform:uppercase;letter-spacing:.06em}}
+  .table-head{{background:#f8fafc}}
+  .table-head th{{padding:11px 16px;font-size:11px;font-weight:700;color:#64748b;text-align:left;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #e2e8f0}}
   .table-head th.right{{text-align:right}}
   .table-head th.center{{text-align:center}}
-  tbody tr{{border-bottom:1px solid #f8fafc}}
+  tbody tr{{border-bottom:1px solid #f1f5f9}}
   tbody tr:nth-child(even){{background:#fafbff}}
   tbody td{{padding:11px 16px;font-size:13px;color:#374151}}
   td.center{{text-align:center}}
   td.right{{text-align:right}}
   td.bold{{font-weight:700}}
-  td.green{{color:#059669}}
+  td.green{{color:#059669;font-weight:600}}
   td.red{{color:#dc2626}}
   td.desc{{font-weight:500;color:#1a1a2e}}
   .tipo-badge{{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}}
@@ -354,13 +353,14 @@ def generar_html_factura(fac):
   .subtotal-row td.right{{text-align:right}}
   .total-row td{{padding:14px 0 4px;font-size:20px;font-weight:800;color:#10B981}}
   .total-row td.right{{text-align:right}}
-  .pago-box{{margin:20px 32px;padding:14px 18px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-left:4px solid #10B981;border-radius:0 8px 8px 0;font-size:12.5px;color:#166534;display:flex;align-items:center;gap:10px}}
-  .footer{{background:#0a0f1e;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:20px}}
+  .vigencia{{margin:20px 32px;padding:14px 18px;background:#f0fdf4;border-left:4px solid #10B981;border-radius:0 8px 8px 0;font-size:12.5px;color:#166534}}
+  .pago-box{{margin:20px 32px;padding:14px 18px;background:#f0fdf4;border-left:4px solid #10B981;border-radius:0 8px 8px 0;font-size:12.5px;color:#166534}}
+  .footer{{background:#f8fafc;padding:20px 32px;display:flex;justify-content:space-between;align-items:center;margin-top:20px;border-top:1px solid #e2e8f0}}
   .footer-left{{color:#64748b;font-size:11.5px;line-height:1.6}}
   .footer-left strong{{color:#10B981}}
   .footer-right{{text-align:right;color:#64748b;font-size:11.5px}}
-  .footer-right .firma-line{{border-top:1px solid #334155;padding-top:6px;margin-top:24px;color:#94a3b8}}
-  .print-btn{{display:block;width:100%;padding:14px;background:linear-gradient(135deg,#10B981,#059669);color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.03em}}
+  .footer-right .firma-line{{border-top:1px solid #cbd5e1;padding-top:6px;margin-top:24px;color:#94a3b8}}
+  .print-btn{{display:block;width:100%;padding:14px;background:#10B981;color:white;font-size:14px;font-weight:700;border:none;cursor:pointer;letter-spacing:.03em}}
   @media print{{.print-btn{{display:none}}body{{background:white}}.page{{box-shadow:none;margin:0;border-radius:0}}}}
 </style>
 </head>
