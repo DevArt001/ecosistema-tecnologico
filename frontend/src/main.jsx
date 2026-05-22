@@ -17,6 +17,7 @@ import Cotizaciones from "./pages/Cotizaciones"
 import Reportes from "./pages/Reportes"
 import Usuarios from "./pages/Usuarios"
 import Gastos from "./pages/Gastos"
+import Diagnostico from "./pages/Diagnostico"
 import Registro from "./pages/Registro"
 import "./index.css"
 
@@ -67,6 +68,7 @@ function App() {
                 <Route path="reportes"      element={<Reportes />} />
                 <Route path="usuarios"      element={<Usuarios />} />
                 <Route path="gastos"        element={<Gastos />} />
+                <Route path="diagnostico"   element={<Diagnostico />} />
 
               </Route>
             </Routes>
