@@ -80,7 +80,7 @@ export default function Inteligencia() {
         API.get("/reportes/financiero/", { params: { anio } }),
         API.get("/clientes/"),
         API.get("/ordenes/"),
-        API.get("/inventario/productos/"),
+        API.get("/productos/"),
         API.get("/facturas/"),
         API.get("/gastos/"),
       ])
