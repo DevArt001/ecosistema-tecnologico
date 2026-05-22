@@ -253,3 +253,11 @@ aside * { color: inherit; }
 aside a, aside button, aside span, aside div {
   -webkit-text-fill-color: initial !important;
 }
+
+/* Forzar visibilidad sidebar */
+aside nav a { color: #9CA3AF !important; }
+aside nav a span { color: inherit !important; }
+aside nav div { color: #4B5563 !important; }
+aside .sidebar-user-name { color: #F9FAFB !important; }
+aside .sidebar-rol { color: #10B981 !important; }
+aside button { color: #6B7280 !important; }
