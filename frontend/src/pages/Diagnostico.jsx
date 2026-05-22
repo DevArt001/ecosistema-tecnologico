@@ -227,7 +227,7 @@ const PRUEBAS = [
         return "API OK"
       }},
       { nombre: "API registro cliente", fn: async () => {
-        const r = await fetch(`${BASE}/agendamiento/cliente-publico/`, {
+        const r = await fetch(`${BASE}/agendamiento/publico/registrar-cliente/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ nombre: "TEST", documento: "888888888", telefono: "3008888888" })
