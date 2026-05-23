@@ -19,6 +19,7 @@ import Usuarios from "./pages/Usuarios"
 import Gastos from "./pages/Gastos"
 import Diagnostico from "./pages/Diagnostico"
 import Inteligencia from "./pages/Inteligencia"
+import Fidelizacion from "./pages/Fidelizacion"
 import Registro from "./pages/Registro"
 import "./index.css"
 
@@ -71,6 +72,7 @@ function App() {
                 <Route path="gastos"        element={<Gastos />} />
                 <Route path="diagnostico"   element={<Diagnostico />} />
                 <Route path="inteligencia"  element={<Inteligencia />} />
+                <Route path="fidelizacion"  element={<Fidelizacion />} />
 
               </Route>
             </Routes>

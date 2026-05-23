@@ -72,3 +72,37 @@ class Vehiculo(models.Model):
     class Meta:
         verbose_name = 'Vehículo'
         verbose_name_plural = 'Vehículos'
+
+class HistorialPuntos(models.Model):
+    TIPO_CHOICES = [
+        ('ganado',    'Puntos ganados'),
+        ('canjeado',  'Puntos canjeados'),
+        ('ajuste',    'Ajuste manual'),
+    ]
+    cliente     = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='historial_puntos')
+    tipo        = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    puntos      = models.IntegerField()
+    descripcion = models.CharField(max_length=200)
+    fecha       = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"{self.cliente.nombre} — {self.tipo} {self.puntos} pts"
+
+
+class Promocion(models.Model):
+    nombre      = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    puntos_req  = models.IntegerField()
+    tipo        = models.CharField(max_length=50, choices=[
+        ('descuento', 'Descuento porcentaje'),
+        ('servicio',  'Servicio gratis'),
+    ])
+    valor       = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    activa      = models.BooleanField(default=True)
+    imagen      = models.CharField(max_length=10, default='🎁')
+
+    def __str__(self):
+        return f"{self.nombre} ({self.puntos_req} pts)"

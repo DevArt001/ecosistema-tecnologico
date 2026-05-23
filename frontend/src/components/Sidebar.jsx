@@ -12,6 +12,7 @@ const TODOS_MODULOS = [
   { path: "/gastos",       label: "Gastos",       color: "#EF4444", modulo: "gastos" },
   { path: "/reportes",     label: "Reportes",     color: "#8B5CF6", modulo: "reportes" },
   { path: "/inteligencia",  label: "Inteligencia",  color: "#06B6D4", modulo: "admin" },
+  { path: "/fidelizacion",  label: "Fidelizacion",  color: "#EC4899", modulo: "admin" },
   { path: "/usuarios",     label: "Usuarios",     color: "#EC4899", modulo: "admin" },
   { path: "/diagnostico",  label: "Diagnostico",  color: "#06B6D4", modulo: "admin" },
 ]
