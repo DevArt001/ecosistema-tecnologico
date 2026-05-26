@@ -15,6 +15,7 @@ const TODOS_MODULOS = [
   { path: "/fidelizacion",  label: "Fidelizacion",  color: "#EC4899", modulo: "admin" },
   { path: "/usuarios",     label: "Usuarios",     color: "#EC4899", modulo: "admin" },
   { path: "/diagnostico",  label: "Diagnostico",  color: "#06B6D4", modulo: "admin" },
+  { path: "/auditoria",     label: "Auditoria",     color: "#F59E0B", modulo: "admin" },
 ]
 
 const PUBLICOS = [
