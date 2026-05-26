@@ -50,3 +50,5 @@ class PerfilUsuario(models.Model):
     class Meta:
         verbose_name = 'Perfil de usuario'
         verbose_name_plural = 'Perfiles de usuario'
+
+from .audit_models import AuditLog

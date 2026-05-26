@@ -12,6 +12,7 @@ from .serializers import (
 )
 
 import requests as http_requests
+from usuarios.audit import log as audit_log
 import threading
 
 def notificar_n8n(url, data):
@@ -29,6 +30,7 @@ class OrdenTrabajoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         orden = serializer.save()
+        audit_log(self.request.user, 'crear', 'ordenes', f'Orden creada: {orden.codigo}', self.request)
         threading.Thread(target=notificar_n8n, args=(
             'https://n8n.armracing.com/webhook/Nueva-Orden',
             {
@@ -42,6 +44,7 @@ class OrdenTrabajoViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         estado_anterior = self.get_object().estado
         orden = serializer.save()
+        audit_log(self.request.user, 'editar', 'ordenes', f'Orden {orden.codigo}: {estado_anterior} -> {orden.estado}', self.request)
         if orden.estado == 'finalizado' and estado_anterior != 'finalizado':
             threading.Thread(target=notificar_n8n, args=(
                 'https://n8n.armracing.com/webhook/Moto-Lista',

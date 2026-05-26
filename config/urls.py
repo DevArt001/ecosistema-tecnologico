@@ -6,6 +6,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 from config.views import CustomTokenObtainPairView
 from clientes.views import ClienteViewSet, VehiculoViewSet, PromocionViewSet, FidelizacionView
+from usuarios.views import AuditLogViewSet
 from servicios.views import OrdenTrabajoViewSet
 from inventario.views import CategoriaViewSet, ProveedorViewSet, ProductoViewSet, MovimientoViewSet
 from contabilidad.views import FacturaViewSet, GastoViewSet, CotizacionViewSet
@@ -23,6 +24,7 @@ router.register(r'gastos',       GastoViewSet)
 router.register(r'cotizaciones', CotizacionViewSet)
 router.register(r'promociones',   PromocionViewSet)
 router.register(r'fidelizacion',  FidelizacionView, basename='fidelizacion')
+router.register(r'auditlog',       AuditLogViewSet,   basename='auditlog')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

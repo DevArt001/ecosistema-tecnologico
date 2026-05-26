@@ -1,4 +1,5 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, filters, status
+from .audit_models import AuditLog
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -53,3 +54,22 @@ def modulos_disponibles(request):
         'modulos': [{'value': m[0], 'label': m[1]} for m in MODULOS],
         'permisos_por_rol': PERMISOS_POR_ROL,
     })
+
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [IsAuthenticated]
+    queryset = AuditLog.objects.select_related('usuario').all()[:500]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['modulo', 'accion', 'descripcion', 'usuario__username']
+    ordering_fields = ['fecha']
+
+    def get_serializer_class(self):
+        from rest_framework import serializers
+        class AuditSerializer(serializers.ModelSerializer):
+            usuario_nombre = serializers.CharField(source='usuario.username', default='Sistema')
+            class Meta:
+                from .audit_models import AuditLog
+                model = AuditLog
+                fields = ['id', 'usuario_nombre', 'accion', 'modulo',
+                         'descripcion', 'ip', 'fecha']
+        return AuditSerializer

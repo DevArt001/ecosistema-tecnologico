@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets, filters
+from usuarios.audit import log as audit_log
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Cliente, Vehiculo, HistorialPuntos, Promocion
