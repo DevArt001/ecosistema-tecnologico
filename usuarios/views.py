@@ -1,5 +1,6 @@
 from rest_framework import viewsets, filters, status
 from .audit_models import AuditLog
+from .audit import log as audit_log
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,6 +9,10 @@ from .models import PerfilUsuario, ROLES, MODULOS, PERMISOS_POR_ROL
 from .serializers import UsuarioSerializer
 
 class UsuarioViewSet(viewsets.ModelViewSet):
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'usuarios', f'Usuario creado: @{obj.username}', self.request)
     queryset = User.objects.all().select_related('perfil')
     serializer_class = UsuarioSerializer
     permission_classes = [IsAuthenticated]

@@ -3,6 +3,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.http import HttpResponse
+from usuarios.audit import log as audit_log
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
 from datetime import datetime
@@ -11,6 +12,14 @@ from django.db import models as django_models
 from .serializers import FacturaSerializer, GastoSerializer, CotizacionSerializer, LineaCotizacionSerializer, LineaFacturaSerializer
 
 class FacturaViewSet(viewsets.ModelViewSet):
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'facturas', f'Factura creada: {obj.numero}', self.request)
+
+    def perform_destroy(self, instance):
+        audit_log(self.request.user, 'eliminar', 'facturas', f'Factura eliminada: {instance.numero}', self.request)
+        instance.delete()
     queryset = Factura.objects.all()
     serializer_class = FacturaSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -53,6 +62,14 @@ class FacturaViewSet(viewsets.ModelViewSet):
         return response
 
 class GastoViewSet(viewsets.ModelViewSet):
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'gastos', f'Gasto registrado: {obj.descripcion} ${obj.monto}', self.request)
+
+    def perform_destroy(self, instance):
+        audit_log(self.request.user, 'eliminar', 'gastos', f'Gasto eliminado: {instance.descripcion}', self.request)
+        instance.delete()
     queryset = Gasto.objects.all()
     serializer_class = GastoSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -60,6 +77,14 @@ class GastoViewSet(viewsets.ModelViewSet):
     ordering_fields = ['fecha', 'monto']
 
 class CotizacionViewSet(viewsets.ModelViewSet):
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'cotizaciones', f'Cotizacion creada: {obj.numero}', self.request)
+
+    def perform_destroy(self, instance):
+        audit_log(self.request.user, 'eliminar', 'cotizaciones', f'Cotizacion eliminada: {instance.numero}', self.request)
+        instance.delete()
     queryset = Cotizacion.objects.all()
     serializer_class = CotizacionSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

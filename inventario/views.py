@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets, filters
+from usuarios.audit import log as audit_log
 from .models import Categoria, Proveedor, Producto, MovimientoInventario
 from .serializers import CategoriaSerializer, ProveedorSerializer, ProductoSerializer, MovimientoSerializer
 
@@ -14,6 +15,18 @@ class ProveedorViewSet(viewsets.ModelViewSet):
     search_fields    = ['nombre', 'ciudad']
 
 class ProductoViewSet(viewsets.ModelViewSet):
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'inventario', f'Producto creado: {obj.nombre} SKU:{obj.sku}', self.request)
+
+    def perform_update(self, serializer):
+        obj = serializer.save()
+        audit_log(self.request.user, 'editar', 'inventario', f'Producto editado: {obj.nombre}', self.request)
+
+    def perform_destroy(self, instance):
+        audit_log(self.request.user, 'eliminar', 'inventario', f'Producto eliminado: {instance.nombre}', self.request)
+        instance.delete()
     queryset         = Producto.objects.all()
     serializer_class = ProductoSerializer
     filter_backends  = [filters.SearchFilter, filters.OrderingFilter]
