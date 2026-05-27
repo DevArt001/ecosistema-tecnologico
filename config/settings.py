@@ -170,3 +170,13 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
+
+
+# Email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'armracingpeformance@gmail.com'
+EMAIL_HOST_PASSWORD = 'xdkkzkrvfzomlipd'
+DEFAULT_FROM_EMAIL = 'TallerOS ARM Racing <armracingpeformance@gmail.com>'

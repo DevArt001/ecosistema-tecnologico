@@ -31,6 +31,8 @@ class OrdenTrabajoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         orden = serializer.save()
         audit_log(self.request.user, 'crear', 'ordenes', f'Orden creada: {orden.codigo}', self.request)
+        from config.emails import email_orden_creada
+        threading.Thread(target=email_orden_creada, args=(orden,)).start()
         threading.Thread(target=notificar_n8n, args=(
             'https://n8n.armracing.com/webhook/Nueva-Orden',
             {
@@ -45,6 +47,9 @@ class OrdenTrabajoViewSet(viewsets.ModelViewSet):
         estado_anterior = self.get_object().estado
         orden = serializer.save()
         audit_log(self.request.user, 'editar', 'ordenes', f'Orden {orden.codigo}: {estado_anterior} -> {orden.estado}', self.request)
+        if orden.estado == 'finalizado' and estado_anterior != 'finalizado':
+            from config.emails import email_moto_lista
+            threading.Thread(target=email_moto_lista, args=(orden,)).start()
         if orden.estado == 'finalizado' and estado_anterior != 'finalizado':
             threading.Thread(target=notificar_n8n, args=(
                 'https://n8n.armracing.com/webhook/Moto-Lista',

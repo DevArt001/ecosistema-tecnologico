@@ -16,6 +16,9 @@ class FacturaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         obj = serializer.save()
         audit_log(self.request.user, 'crear', 'facturas', f'Factura creada: {obj.numero}', self.request)
+        import threading
+        from config.emails import email_factura
+        threading.Thread(target=email_factura, args=(obj,)).start()
 
     def perform_destroy(self, instance):
         audit_log(self.request.user, 'eliminar', 'facturas', f'Factura eliminada: {instance.numero}', self.request)
@@ -81,6 +84,9 @@ class CotizacionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         obj = serializer.save()
         audit_log(self.request.user, 'crear', 'cotizaciones', f'Cotizacion creada: {obj.numero}', self.request)
+        import threading
+        from config.emails import email_cotizacion
+        threading.Thread(target=email_cotizacion, args=(obj,)).start()
 
     def perform_destroy(self, instance):
         audit_log(self.request.user, 'eliminar', 'cotizaciones', f'Cotizacion eliminada: {instance.numero}', self.request)
