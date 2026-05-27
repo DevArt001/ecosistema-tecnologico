@@ -40,9 +40,14 @@ export default function Usuarios() {
     email: "", password: "", rol: "tecnico", telefono: ""
   })
   const [loading, setLoading]       = useState(false)
+  const [modal2FA, setModal2FA]     = useState(false)
+  const [qrCode, setQrCode]         = useState(null)
+  const [codigo2FA, setCodigo2FA]   = useState("")
+  const [estado2FA, setEstado2FA]   = useState(false)
+  const [paso2FA, setPaso2FA]       = useState(1)
   const [mensaje, setMensaje]       = useState("")
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => { cargar(); cargar2FAStatus() }, [])
 
   const cargar = async () => {
     try {
@@ -116,6 +121,48 @@ export default function Usuarios() {
     setLoading(false)
   }
 
+  const cargar2FAStatus = async () => {
+    try {
+      const r = await API.get("/usuarios/2fa/status/")
+      setEstado2FA(r.data.tiene_2fa)
+    } catch {}
+  }
+
+  const iniciarSetup2FA = async () => {
+    try {
+      const r = await API.get("/usuarios/2fa/setup/")
+      setQrCode(r.data.qr_code)
+      setPaso2FA(1)
+      setModal2FA(true)
+      cargar2FAStatus()
+    } catch { mostrarMensaje("❌ Error al configurar 2FA") }
+  }
+
+  const verificar2FA = async () => {
+    if (!codigo2FA || codigo2FA.length !== 6) {
+      mostrarMensaje("❌ Ingresa el código de 6 dígitos")
+      return
+    }
+    setLoading(true)
+    try {
+      await API.post("/usuarios/2fa/verify/", { code: codigo2FA })
+      mostrarMensaje("✅ 2FA activado correctamente")
+      setModal2FA(false)
+      setCodigo2FA("")
+      setEstado2FA(true)
+    } catch { mostrarMensaje("❌ Código incorrecto") }
+    setLoading(false)
+  }
+
+  const desactivar2FA = async () => {
+    if (!window.confirm("¿Desactivar el 2FA? Esto reduce la seguridad de tu cuenta.")) return
+    try {
+      await API.post("/usuarios/2fa/disable/")
+      mostrarMensaje("✅ 2FA desactivado")
+      setEstado2FA(false)
+    } catch { mostrarMensaje("❌ Error al desactivar 2FA") }
+  }
+
   const togglePermiso = (modulo) => {
     setPermisos(prev =>
       prev.includes(modulo) ? prev.filter(p => p !== modulo) : [...prev, modulo]
@@ -142,11 +189,22 @@ export default function Usuarios() {
             {usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""} registrado{usuarios.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button className="btn btn-primary" onClick={() => {
-          setFormNuevo({ username: "", first_name: "", last_name: "",
-            email: "", password: "", rol: "tecnico", telefono: "" })
-          setModal("nuevo")
-        }}>+ Nuevo usuario</button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button onClick={estado2FA ? desactivar2FA : iniciarSetup2FA} style={{
+            background: estado2FA ? "#065F46" : "#1F2937",
+            border: `1px solid ${estado2FA ? "#10B981" : "#374151"}`,
+            color: estado2FA ? "#10B981" : "#F59E0B",
+            borderRadius: "8px", padding: "8px 14px",
+            fontSize: "12px", cursor: "pointer"
+          }}>
+            {estado2FA ? "🔐 2FA Activo" : "🔓 Activar 2FA"}
+          </button>
+          <button className="btn btn-primary" onClick={() => {
+            setFormNuevo({ username: "", first_name: "", last_name: "",
+              email: "", password: "", rol: "tecnico", telefono: "" })
+            setModal("nuevo")
+          }}>+ Nuevo usuario</button>
+        </div>
       </div>
 
       {/* Tarjetas individuales — una por fila */}
@@ -454,6 +512,63 @@ export default function Usuarios() {
                 Cancelar
               </button>
             </div>
+          </div>
+        </div>
+      )}
+    {/* Modal 2FA */}
+      {modal2FA && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 1000, padding: "1rem" }}>
+          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)", padding: "1.5rem",
+            width: "100%", maxWidth: "420px" }}>
+            <h2 style={{ marginBottom: "4px", color: "var(--text)", fontSize: "18px" }}>
+              Activar 2FA
+            </h2>
+            <p style={{ fontSize: "12px", color: "var(--text3)", marginBottom: "1.5rem" }}>
+              Doble factor de autenticacion con Google Authenticator
+            </p>
+            {paso2FA === 1 && qrCode && (
+              <>
+                <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+                  <img src={qrCode} alt="QR 2FA"
+                    style={{ width: "200px", height: "200px", borderRadius: "8px" }} />
+                </div>
+                <p style={{ fontSize: "12px", color: "var(--text3)", marginBottom: "1rem", textAlign: "center" }}>
+                  Escanea este QR con Google Authenticator
+                </p>
+                <button className="btn btn-primary" onClick={() => setPaso2FA(2)}
+                  style={{ width: "100%" }}>
+                  Ya escanee el QR →
+                </button>
+              </>
+            )}
+            {paso2FA === 2 && (
+              <>
+                <p style={{ fontSize: "13px", color: "var(--text2)", marginBottom: "1rem" }}>
+                  Ingresa el codigo de 6 digitos que muestra Google Authenticator:
+                </p>
+                <input
+                  type="text"
+                  value={codigo2FA}
+                  onChange={e => setCodigo2FA(e.target.value.replace(/\D/g,'').slice(0,6))}
+                  placeholder="123456"
+                  maxLength={6}
+                  style={{ width: "100%", textAlign: "center", fontSize: "24px",
+                    letterSpacing: "8px", marginBottom: "1.5rem" }}
+                />
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button className="btn btn-primary" onClick={verificar2FA}
+                    disabled={loading} style={{ flex: 1 }}>
+                    {loading ? "Verificando..." : "Activar 2FA"}
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setModal2FA(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

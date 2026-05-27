@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'usuarios',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
     'corsheaders',
     'clientes', 
     'servicios',
