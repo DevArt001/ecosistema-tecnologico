@@ -180,3 +180,18 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'armracingpeformance@gmail.com'
 EMAIL_HOST_PASSWORD = 'xdkkzkrvfzomlipd'
 DEFAULT_FROM_EMAIL = 'TallerOS ARM Racing <armracingpeformance@gmail.com>'
+
+
+# Redis Cache
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# Cache timeout por defecto 5 minutos
+CACHE_TTL = 60 * 5

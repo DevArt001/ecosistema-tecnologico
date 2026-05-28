@@ -73,6 +73,14 @@ services:
     networks:
       - taller_net
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks:
+      - taller_net
+    volumes:
+      - redis_data:/data
+
   uptime_kuma:
     image: louislam/uptime-kuma:1
     restart: unless-stopped
@@ -88,6 +96,7 @@ volumes:
   media_files:
   uptime_data:
   n8n_data:
+  redis_data:
 
 networks:
   taller_net:

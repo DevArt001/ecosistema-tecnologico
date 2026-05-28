@@ -3,6 +3,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.http import HttpResponse
+from django.core.cache import cache
 from usuarios.audit import log as audit_log
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth

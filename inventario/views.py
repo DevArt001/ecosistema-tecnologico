@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets, filters
+from django.core.cache import cache
 from usuarios.audit import log as audit_log
 from .models import Categoria, Proveedor, Producto, MovimientoInventario
 from .serializers import CategoriaSerializer, ProveedorSerializer, ProductoSerializer, MovimientoSerializer
