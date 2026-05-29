@@ -9,13 +9,13 @@ from .models import PerfilUsuario, ROLES, MODULOS, PERMISOS_POR_ROL
 from .serializers import UsuarioSerializer
 
 class UsuarioViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().select_related('perfil')
+    serializer_class = UsuarioSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         obj = serializer.save()
         audit_log(self.request.user, 'crear', 'usuarios', f'Usuario creado: @{obj.username}', self.request)
-    queryset = User.objects.all().select_related('perfil')
-    serializer_class = UsuarioSerializer
-    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # Solo admin puede ver todos los usuarios

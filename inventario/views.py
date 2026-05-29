@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework import viewsets, filters
 from django.core.cache import cache
 from usuarios.audit import log as audit_log
@@ -16,6 +15,11 @@ class ProveedorViewSet(viewsets.ModelViewSet):
     search_fields    = ['nombre', 'ciudad']
 
 class ProductoViewSet(viewsets.ModelViewSet):
+    queryset         = Producto.objects.select_related('categoria', 'proveedor').all()
+    serializer_class = ProductoSerializer
+    filter_backends  = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields    = ['sku', 'nombre']
+    ordering_fields  = ['nombre', 'stock_actual', 'precio_venta']
 
     def perform_create(self, serializer):
         obj = serializer.save()
@@ -28,14 +32,9 @@ class ProductoViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         audit_log(self.request.user, 'eliminar', 'inventario', f'Producto eliminado: {instance.nombre}', self.request)
         instance.delete()
-    queryset         = Producto.objects.all()
-    serializer_class = ProductoSerializer
-    filter_backends  = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields    = ['sku', 'nombre']
-    ordering_fields  = ['nombre', 'stock_actual', 'precio_venta']
 
 class MovimientoViewSet(viewsets.ModelViewSet):
-    queryset         = MovimientoInventario.objects.all()
+    queryset         = MovimientoInventario.objects.select_related('producto').all()
     serializer_class = MovimientoSerializer
     filter_backends  = [filters.SearchFilter]
     search_fields    = ['producto__nombre']

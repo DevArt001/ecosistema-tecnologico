@@ -13,22 +13,22 @@ from django.db import models as django_models
 from .serializers import FacturaSerializer, GastoSerializer, CotizacionSerializer, LineaCotizacionSerializer, LineaFacturaSerializer
 
 class FacturaViewSet(viewsets.ModelViewSet):
+    queryset = Factura.objects.select_related('cliente', 'orden').all()
+    serializer_class = FacturaSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['numero', 'cliente__nombre']
+    ordering_fields = ['fecha_emision', 'total']
 
     def perform_create(self, serializer):
-        obj = serializer.save()
-        audit_log(self.request.user, 'crear', 'facturas', f'Factura creada: {obj.numero}', self.request)
         import threading
         from config.emails import email_factura
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'facturas', f'Factura creada: {obj.numero}', self.request)
         threading.Thread(target=email_factura, args=(obj,)).start()
 
     def perform_destroy(self, instance):
         audit_log(self.request.user, 'eliminar', 'facturas', f'Factura eliminada: {instance.numero}', self.request)
         instance.delete()
-    queryset = Factura.objects.all()
-    serializer_class = FacturaSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['numero', 'cliente__nombre']
-    ordering_fields = ['fecha_emision', 'total']
 
     @action(detail=True, methods=['post'])
     def agregar_linea(self, request, pk=None):
@@ -66,6 +66,11 @@ class FacturaViewSet(viewsets.ModelViewSet):
         return response
 
 class GastoViewSet(viewsets.ModelViewSet):
+    queryset = Gasto.objects.all()
+    serializer_class = GastoSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['descripcion', 'categoria']
+    ordering_fields = ['fecha', 'monto']
 
     def perform_create(self, serializer):
         obj = serializer.save()
@@ -74,29 +79,24 @@ class GastoViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         audit_log(self.request.user, 'eliminar', 'gastos', f'Gasto eliminado: {instance.descripcion}', self.request)
         instance.delete()
-    queryset = Gasto.objects.all()
-    serializer_class = GastoSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['descripcion', 'categoria']
-    ordering_fields = ['fecha', 'monto']
 
 class CotizacionViewSet(viewsets.ModelViewSet):
+    queryset = Cotizacion.objects.select_related('cliente', 'orden').all()
+    serializer_class = CotizacionSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['numero', 'cliente__nombre']
+    ordering_fields = ['fecha_emision', 'total']
 
     def perform_create(self, serializer):
-        obj = serializer.save()
-        audit_log(self.request.user, 'crear', 'cotizaciones', f'Cotizacion creada: {obj.numero}', self.request)
         import threading
         from config.emails import email_cotizacion
+        obj = serializer.save()
+        audit_log(self.request.user, 'crear', 'cotizaciones', f'Cotizacion creada: {obj.numero}', self.request)
         threading.Thread(target=email_cotizacion, args=(obj,)).start()
 
     def perform_destroy(self, instance):
         audit_log(self.request.user, 'eliminar', 'cotizaciones', f'Cotizacion eliminada: {instance.numero}', self.request)
         instance.delete()
-    queryset = Cotizacion.objects.all()
-    serializer_class = CotizacionSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['numero', 'cliente__nombre']
-    ordering_fields = ['fecha_emision', 'total']
 
     @action(detail=True, methods=['post'])
     def agregar_linea(self, request, pk=None):
