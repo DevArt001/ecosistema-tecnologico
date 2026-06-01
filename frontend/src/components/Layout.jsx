@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import BusquedaGlobal from "./BusquedaGlobal"
 import Sidebar from "./Sidebar"
 import { Outlet } from "react-router-dom"
 
@@ -49,13 +50,29 @@ export default function Layout({ onLogout }) {
           <div style={{ fontWeight: "700", color: "#10B981", fontSize: "15px" }}>
             🔧 TallerOS
           </div>
-          <div style={{ width: "40px" }}/>
+          <button onClick={() => setSidebarOpen(false)} style={{
+            background: "none", border: "none", color: "#6B7280",
+            fontSize: "18px", cursor: "pointer", padding: "8px"
+          }}>🔍</button>
+        </div>
+      )}
+      {!isMobile && (
+        <div style={{
+          position: "fixed", top: 0,
+          left: "240px", right: 0,
+          height: "54px", background: "#0A0E1A",
+          borderBottom: "1px solid #1F2937",
+          display: "flex", alignItems: "center",
+          padding: "0 2.5rem", zIndex: 100,
+          gap: "1rem"
+        }}>
+          <BusquedaGlobal />
         </div>
       )}
       <main style={{
         marginLeft: isMobile ? 0 : "240px",
         flex: 1,
-        padding: isMobile ? "70px 1rem 1.5rem" : "2rem 2.5rem",
+        padding: isMobile ? "70px 1rem 1.5rem" : "74px 2.5rem 2rem",
         minHeight: "100vh",
         width: isMobile ? "100%" : "calc(100vw - 240px)",
         overflowX: "hidden",

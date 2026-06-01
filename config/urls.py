@@ -4,7 +4,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from config import views_webhook
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from config.views import CustomTokenObtainPairView
+from config.views import CustomTokenObtainPairView, busqueda_global
 from clientes.views import ClienteViewSet, VehiculoViewSet, PromocionViewSet, FidelizacionView
 from usuarios.views import AuditLogViewSet
 from servicios.views import OrdenTrabajoViewSet
@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/agendamiento/', include('agendamiento.urls')),
     path('api/reportes/', include('contabilidad.urls')),
     path('api/usuarios/', include('usuarios.urls')),
+    path('api/buscar/', busqueda_global, name='busqueda-global'),
     path('api/auth/login/',   CustomTokenObtainPairView.as_view(),  name='token_obtain_pair'),
     path('api/auth/refresh/', TokenRefreshView.as_view(),           name='token_refresh'),
 ]
