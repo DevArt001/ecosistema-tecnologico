@@ -124,9 +124,21 @@ export default function Reportes() {
               <option key={a} value={a}>{a}</option>
             ))}
           </select>
-          <button className="btn btn-primary" onClick={cargar}>
-            Actualizar
-          </button>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <button className="btn btn-primary" onClick={cargar}>↻ Actualizar</button>
+            <select onChange={e => { if(e.target.value) { exportar(e.target.value); e.target.value="" } }}
+              defaultValue=""
+              style={{ background: "#065F46", border: "1px solid #10B981", color: "#10B981",
+                borderRadius: "8px", padding: "8px 12px", fontSize: "13px", cursor: "pointer" }}>
+              <option value="" disabled>📥 Exportar Excel</option>
+              <option value="completo">📊 Todo (completo)</option>
+              <option value="clientes">👥 Clientes</option>
+              <option value="ordenes">🔧 Órdenes</option>
+              <option value="inventario">📦 Inventario</option>
+              <option value="facturas">💰 Facturas</option>
+              <option value="gastos">📤 Gastos</option>
+            </select>
+          </div>
         </div>
       </div>
 
