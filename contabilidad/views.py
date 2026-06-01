@@ -571,3 +571,34 @@ def reporte_financiero(request):
             {'categoria': g['categoria'], 'total': float(g['total']), 'cantidad': g['cantidad']}
             for g in gastos_por_categoria],
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def exportar_excel(request):
+    # Autenticar via query param token si viene
+    from rest_framework_simplejwt.tokens import AccessToken
+    from django.contrib.auth.models import User
+    token = request.query_params.get('token')
+    if token and not request.user.is_authenticated:
+        try:
+            access = AccessToken(token)
+            request.user = User.objects.get(id=access['user_id'])
+        except Exception:
+            pass
+    from config.exports import (exportar_clientes, exportar_ordenes, exportar_inventario,
+                                 exportar_facturas, exportar_gastos, exportar_completo, wb_to_response)
+    tipo = request.query_params.get('tipo', 'completo')
+    fecha = datetime.now().strftime('%Y%m%d')
+    
+    if tipo == 'clientes':
+        return wb_to_response(exportar_clientes(), f'clientes_{fecha}.xlsx')
+    elif tipo == 'ordenes':
+        return wb_to_response(exportar_ordenes(), f'ordenes_{fecha}.xlsx')
+    elif tipo == 'inventario':
+        return wb_to_response(exportar_inventario(), f'inventario_{fecha}.xlsx')
+    elif tipo == 'facturas':
+        return wb_to_response(exportar_facturas(), f'facturas_{fecha}.xlsx')
+    elif tipo == 'gastos':
+        return wb_to_response(exportar_gastos(), f'gastos_{fecha}.xlsx')
+    else:
+        return wb_to_response(exportar_completo(), f'talleros_completo_{fecha}.xlsx')

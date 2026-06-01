@@ -3,4 +3,5 @@ from . import views
 
 urlpatterns = [
     path('financiero/', views.reporte_financiero, name='reporte-financiero'),
+    path('exportar/', views.exportar_excel, name='exportar-excel'),
 ]

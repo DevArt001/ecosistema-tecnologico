@@ -64,6 +64,14 @@ function BarChart({ data, colorPos, colorNeg, label }) {
   )
 }
 
+const exportar = (tipo) => {
+  const token = localStorage.getItem("access")
+  const base = window.location.hostname === "app.armracing.com"
+    ? "https://api.armracing.com/api"
+    : "http://192.168.0.8:8000/api"
+  window.open(`${base}/reportes/exportar/?tipo=${tipo}&token=${token}`, "_blank")
+}
+
 export default function Reportes() {
   const anioActual = new Date().getFullYear()
   const [anio, setAnio]       = useState(anioActual)
