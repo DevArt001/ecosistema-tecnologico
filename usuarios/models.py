@@ -52,3 +52,5 @@ class PerfilUsuario(models.Model):
         verbose_name_plural = 'Perfiles de usuario'
 
 from .audit_models import AuditLog
+
+from .models_nomina import Empleado, PagoServicio, PagoNomina
