@@ -31,9 +31,14 @@ def buscar_cliente(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def registrar_cliente_publico(request):
+    documento = request.data.get('documento')
+    # Si ya existe el documento, retornar el cliente existente
+    existente = Cliente.objects.filter(documento=documento).first()
+    if existente:
+        return Response({'id': existente.id, 'nombre': existente.nombre}, status=200)
     cliente = Cliente.objects.create(
         nombre=request.data.get('nombre'),
-        documento=request.data.get('documento'),
+        documento=documento,
         telefono=request.data.get('telefono'),
         correo=request.data.get('correo', ''),
     )

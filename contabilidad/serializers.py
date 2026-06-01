@@ -27,7 +27,7 @@ class CotizacionSerializer(serializers.ModelSerializer):
     lineas = LineaCotizacionSerializer(many=True, read_only=True)
     cliente_nombre = serializers.CharField(source='cliente.nombre', read_only=True)
     cliente_telefono = serializers.CharField(source='cliente.telefono', read_only=True)
-    cliente_email = serializers.CharField(source='cliente.email', read_only=True)
+    cliente_email = serializers.CharField(source='cliente.correo', read_only=True)
     orden_codigo = serializers.CharField(source='orden.codigo', read_only=True)
     vehiculo_info = serializers.SerializerMethodField()
 

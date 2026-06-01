@@ -27,21 +27,28 @@ import "./index.css"
 function App() {
   const [token, setToken] = useState(() => {
     const t = localStorage.getItem("access")
+    if (!t) return null
     try {
       const payload = JSON.parse(atob(t.split(".")[1]))
       if (payload.exp * 1000 < Date.now()) {
         localStorage.removeItem("access")
         localStorage.removeItem("refresh")
+        localStorage.removeItem("rol")
+        localStorage.removeItem("permisos")
+        localStorage.removeItem("username")
         return null
       }
       return t
-    } catch { return null }
+    } catch {
+      localStorage.removeItem("access")
+      localStorage.removeItem("refresh")
+      return null
+    }
   })
 
   const handleLogin = (t) => setToken(t)
   const handleLogout = () => {
-    localStorage.removeItem("access")
-    localStorage.removeItem("refresh")
+    localStorage.clear()
     setToken(null)
   }
 
@@ -50,7 +57,6 @@ function App() {
       <Routes>
         {/* Rutas públicas — sin auth */}
         <Route path="/public" element={<Public />} />
-        <Route path="/portal/:token" element={<Portal />} />
         <Route path="/portal/:token" element={<Portal />} />
         <Route path="/agendar" element={<Agendar />} />
         <Route path="/registro" element={<Registro />} />
