@@ -5,12 +5,24 @@ import { Outlet } from "react-router-dom"
 
 export default function Layout({ onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth <= 768)
     window.addEventListener("resize", update)
     return () => window.removeEventListener("resize", update)
+  }, [])
+
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault()
+        setBusquedaAbierta(p => !p)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
   }, [])
 
   return (
@@ -56,7 +68,7 @@ export default function Layout({ onLogout }) {
           }}>🔍</button>
         </div>
       )}
-      {!isMobile && (
+      {!isMobile && busquedaAbierta && (
         <div style={{
           position: "fixed", top: 0,
           left: "240px", right: 0,
@@ -66,13 +78,13 @@ export default function Layout({ onLogout }) {
           padding: "0 2.5rem", zIndex: 100,
           gap: "1rem"
         }}>
-          <BusquedaGlobal />
+          <BusquedaGlobal onClose={() => setBusquedaAbierta(false)} />
         </div>
       )}
       <main style={{
         marginLeft: isMobile ? 0 : "240px",
         flex: 1,
-        padding: isMobile ? "70px 1rem 1.5rem" : "74px 2.5rem 2rem",
+        padding: isMobile ? "70px 1rem 1.5rem" : busquedaAbierta ? "74px 2.5rem 2rem" : "2rem 2.5rem",
         minHeight: "100vh",
         width: isMobile ? "100%" : "calc(100vw - 240px)",
         overflowX: "hidden",

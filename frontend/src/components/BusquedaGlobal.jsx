@@ -10,7 +10,7 @@ const TIPO_COLOR = {
   producto: "#EF4444",
 }
 
-export default function BusquedaGlobal() {
+export default function BusquedaGlobal({ onClose }) {
   const [query, setQuery]         = useState("")
   const [resultados, setResultados] = useState([])
   const [loading, setLoading]     = useState(false)
@@ -18,6 +18,10 @@ export default function BusquedaGlobal() {
   const [seleccionado, setSeleccionado] = useState(0)
   const inputRef = useRef(null)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }, [])
   let timer = useRef(null)
 
   useEffect(() => {
@@ -42,7 +46,7 @@ export default function BusquedaGlobal() {
         e.preventDefault()
         inputRef.current?.focus()
       }
-      if (e.key === "Escape") { setAbierto(false); setQuery("") }
+      if (e.key === "Escape") { setAbierto(false); setQuery(""); onClose?.() }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
