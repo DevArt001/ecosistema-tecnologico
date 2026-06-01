@@ -573,18 +573,19 @@ def reporte_financiero(request):
     })
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
 def exportar_excel(request):
-    # Autenticar via query param token si viene
     from rest_framework_simplejwt.tokens import AccessToken
     from django.contrib.auth.models import User
+    from rest_framework.exceptions import AuthenticationFailed
     token = request.query_params.get('token')
-    if token and not request.user.is_authenticated:
-        try:
-            access = AccessToken(token)
-            request.user = User.objects.get(id=access['user_id'])
-        except Exception:
-            pass
+    if not token:
+        raise AuthenticationFailed("Token requerido")
+    try:
+        access = AccessToken(token)
+        user = User.objects.get(id=access['user_id'])
+    except Exception:
+        raise AuthenticationFailed("Token invalido")
     from config.exports import (exportar_clientes, exportar_ordenes, exportar_inventario,
                                  exportar_facturas, exportar_gastos, exportar_completo, wb_to_response)
     tipo = request.query_params.get('tipo', 'completo')
