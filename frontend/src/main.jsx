@@ -21,6 +21,7 @@ import Diagnostico from "./pages/Diagnostico"
 import Inteligencia from "./pages/Inteligencia"
 import Fidelizacion from "./pages/Fidelizacion"
 import Auditoria from "./pages/Auditoria"
+import Nomina from "./pages/Nomina"
 import Registro from "./pages/Registro"
 import "./index.css"
 
@@ -81,6 +82,7 @@ function App() {
                 <Route path="inteligencia"  element={<Inteligencia />} />
                 <Route path="fidelizacion"  element={<Fidelizacion />} />
                 <Route path="auditoria"    element={<Auditoria />} />
+                <Route path="nomina"       element={<Nomina />} />
 
               </Route>
             </Routes>
