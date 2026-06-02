@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { ordenesAPI, portalAPI, procesosAPI } from "../services/api"
 import FormOrden from "../components/FormOrden"
+import { PageHeader, Toast, KPICard, SearchBar } from "../components/UI"
 
 const ESTADOS = [
   { value: "recibido",             label: "Recibido",             bg: "#1F2937", color: "#9CA3AF" },
@@ -155,14 +156,7 @@ export default function Ordenes() {
 
   return (
     <div>
-      {mensajeExito && (
-        <div style={{
-          position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
-          background: mensajeExito.startsWith("✅") ? "#065F46" : "#3B0A0A",
-          border: `1px solid ${mensajeExito.startsWith("✅") ? "#10B981" : "#EF4444"}`,
-          color: "white", borderRadius: "8px", padding: "12px 20px", fontSize: "13px", fontWeight: "500"
-        }}>{mensajeExito}</div>
-      )}
+      <Toast mensaje={mensajeExito} />
 
       {confirmDelete && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
@@ -360,17 +354,26 @@ export default function Ordenes() {
         />
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "2rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Órdenes de Trabajo
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>{ordenes.length} órdenes en el sistema</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => { setOrdenEditar(null); setShowForm(true) }}>
+      <PageHeader titulo="Órdenes de Trabajo"
+        sub={`${ordenes.length} órdenes en el sistema`}>
+        <button className="btn btn-primary"
+          onClick={() => { setOrdenEditar(null); setShowForm(true) }}>
           + Nueva orden
         </button>
+      </PageHeader>
+
+      {/* KPIs */}
+      <div className="stagger" style={{ display: "flex", gap: "1rem",
+        flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        {[
+          { titulo: "Total", valor: ordenes.length, color: "#1E5FD4", icon: "📋" },
+          { titulo: "En proceso", valor: ordenes.filter(o=>o.estado==="en_proceso").length, color: "#00D4A0", icon: "⚙️" },
+          { titulo: "Finalizadas", valor: ordenes.filter(o=>o.estado==="finalizado").length, color: "#F5A623", icon: "🏁" },
+          { titulo: "Entregadas", valor: ordenes.filter(o=>o.estado==="entregado").length, color: "#4A5A72", icon: "✔️" },
+        ].map((k, i) => (
+          <KPICard key={k.titulo} titulo={k.titulo} valor={k.valor}
+            color={k.color} icon={k.icon} delay={i * .04} />
+        ))}
       </div>
 
       <div style={{ display: "flex", gap: "6px", marginBottom: "1.5rem", flexWrap: "wrap" }}>

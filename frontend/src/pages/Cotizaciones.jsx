@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
+import { PageHeader, Toast, KPICard, EmptyState, SearchBar, TableSkeleton } from "../components/UI"
 
 export default function Cotizaciones() {
   const [cotizaciones, setCotizaciones] = useState([])
