@@ -1,8 +1,11 @@
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 from .serializers import CustomTokenObtainPairSerializer
 
 from usuarios.audit import log as audit_log
 
+@method_decorator(ratelimit(key='ip', rate='5/m', method='POST', block=True), name='post')
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 

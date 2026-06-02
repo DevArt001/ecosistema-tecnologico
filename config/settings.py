@@ -195,3 +195,9 @@ CACHES = {
 
 # Cache timeout por defecto 5 minutos
 CACHE_TTL = 60 * 5
+
+
+# Rate limiting
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_FAIL_OPEN = False
