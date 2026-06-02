@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
-import { PageHeader, KPICard } from "../components/UI"
+import { PageHeader } from "../components/UI"
 
 const MESES = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
 
