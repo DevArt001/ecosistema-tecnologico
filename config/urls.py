@@ -9,7 +9,7 @@ from clientes.views import ClienteViewSet, VehiculoViewSet, PromocionViewSet, Fi
 from usuarios.views import AuditLogViewSet
 from usuarios.views_nomina import EmpleadoViewSet, PagoServicioViewSet, PagoNominaViewSet, resumen_nomina
 from servicios.views import OrdenTrabajoViewSet
-from inventario.views import CategoriaViewSet, ProveedorViewSet, ProductoViewSet, MovimientoViewSet
+from inventario.views import CategoriaViewSet, ProveedorViewSet, ProductoViewSet, MovimientoViewSet, OrdenCompraViewSet, HistorialPrecioViewSet
 from contabilidad.views import FacturaViewSet, GastoViewSet, CotizacionViewSet
 
 router = DefaultRouter()
@@ -20,6 +20,8 @@ router.register(r'categorias',   CategoriaViewSet)
 router.register(r'proveedores',  ProveedorViewSet)
 router.register(r'productos',    ProductoViewSet)
 router.register(r'movimientos',  MovimientoViewSet)
+router.register(r'ordenes-compra', OrdenCompraViewSet, basename='ordenes-compra')
+router.register(r'historial-precios', HistorialPrecioViewSet, basename='historial-precios')
 router.register(r'facturas',     FacturaViewSet)
 router.register(r'gastos',       GastoViewSet)
 router.register(r'cotizaciones', CotizacionViewSet)
