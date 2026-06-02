@@ -1,159 +1,205 @@
 import { useState, useEffect } from "react"
-import { vehiculosAPI } from "../services/api"
-import FormVehiculo from "../components/FormVehiculo"
+import { vehiculosAPI, clientesAPI } from "../services/api"
+import { PageHeader, Toast, ConfirmModal, EmptyState, KPICard,
+         SearchBar, TableSkeleton, ModalForm, Field } from "../components/UI"
 
 export default function Vehiculos() {
-  const [vehiculos, setVehiculos]           = useState([])
-  const [loading, setLoading]               = useState(true)
-  const [error, setError]                   = useState(null)
-  const [buscar, setBuscar]                 = useState("")
-  const [showForm, setShowForm]             = useState(false)
-  const [vehiculoEditar, setVehiculoEditar] = useState(null)
-  const [confirmDelete, setConfirmDelete]   = useState(null)
+  const [vehiculos, setVehiculos] = useState([])
+  const [clientes, setClientes]   = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [buscar, setBuscar]       = useState("")
+  const [modal, setModal]         = useState(null)
+  const [confirmDel, setConfirmDel] = useState(null)
+  const [mensaje, setMensaje]     = useState("")
+  const [guardando, setGuardando] = useState(false)
+  const [form, setForm] = useState({
+    cliente:"", placa:"", marca:"", linea:"", modelo:"",
+    cilindraje:"", color:"", kilometraje:0, tipo:"moto"
+  })
 
-  useEffect(() => { cargarVehiculos() }, [])
+  useEffect(() => { cargar() }, [])
 
-  const cargarVehiculos = () => {
+  const cargar = async () => {
     setLoading(true)
-    setError(null)
-    vehiculosAPI.listar()
-      .then(res => setVehiculos(res.data.results || res.data))
-      .catch(err => setError(err.mensaje || "Error al cargar vehículos"))
-      .finally(() => setLoading(false))
-  }
-
-  const handleEditar = (v) => { setVehiculoEditar(v); setShowForm(true) }
-
-  const handleEliminar = async (id) => {
     try {
-      await vehiculosAPI.eliminar(id)
-      setConfirmDelete(null)
-      cargarVehiculos()
-    } catch (err) {
-      alert(err.mensaje || "Error al eliminar vehículo")
-    }
+      const [v, c] = await Promise.all([vehiculosAPI.listar(), clientesAPI.listar()])
+      setVehiculos(v.data.results || v.data)
+      setClientes(c.data.results || c.data)
+    } catch { mostrar("❌ Error al cargar") }
+    setLoading(false)
   }
+
+  const mostrar = (msg) => { setMensaje(msg); setTimeout(() => setMensaje(""), 3000) }
+
+  const abrirModal = (v = null) => {
+    setForm(v ? { ...v, cliente: v.cliente } : {
+      cliente:"", placa:"", marca:"", linea:"", modelo: new Date().getFullYear(),
+      cilindraje:"", color:"", kilometraje:0, tipo:"moto"
+    })
+    setModal(v || {})
+  }
+
+  const guardar = async () => {
+    if (!form.cliente || !form.placa || !form.marca || !form.linea) {
+      mostrar("❌ Cliente, placa, marca y línea son obligatorios")
+      return
+    }
+    setGuardando(true)
+    try {
+      if (modal?.id) await vehiculosAPI.editar(modal.id, form)
+      else await vehiculosAPI.crear(form)
+      mostrar("✅ Vehículo guardado")
+      setModal(null)
+      cargar()
+    } catch(e) {
+      mostrar("❌ " + (e.response?.data?.placa?.[0] || "Error al guardar"))
+    }
+    setGuardando(false)
+  }
+
+  const eliminar = async () => {
+    try {
+      await vehiculosAPI.eliminar(confirmDel.id)
+      mostrar("✅ Vehículo eliminado")
+      setConfirmDel(null)
+      cargar()
+    } catch { mostrar("❌ No se puede eliminar — tiene órdenes asociadas") }
+  }
+
+  const TIPO_ICON = { moto: "🏍", carro: "🚗", bicicleta: "⚡" }
 
   const filtrados = vehiculos.filter(v =>
     v.placa?.toLowerCase().includes(buscar.toLowerCase()) ||
-    v.marca?.toLowerCase().includes(buscar.toLowerCase())
+    v.marca?.toLowerCase().includes(buscar.toLowerCase()) ||
+    v.linea?.toLowerCase().includes(buscar.toLowerCase())
   )
 
-  const estadoBadge = {
-    activo:      { bg: "#065F46", color: "#10B981" },
-    en_servicio: { bg: "#451A03", color: "#F59E0B" },
-    inactivo:    { bg: "#1F2937", color: "#6B7280" },
-  }
+  const marcas = [...new Set(vehiculos.map(v => v.marca))].filter(Boolean)
 
   return (
     <div>
-      {confirmDelete && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000, padding: "1rem" }}>
-          <div style={{ background: "var(--bg2)", borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--border)", width: "100%", maxWidth: "400px", padding: "1.5rem" }}>
-            <div style={{ fontWeight: "600", color: "var(--text)", marginBottom: "8px", fontSize: "16px" }}>
-              ¿Eliminar vehículo?
-            </div>
-            <div style={{ color: "var(--text3)", fontSize: "13px", marginBottom: "1.5rem" }}>
-              Se eliminará el vehículo <strong style={{ color: "var(--text)" }}>{confirmDelete.placa}</strong> permanentemente.
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-              <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="btn" onClick={() => handleEliminar(confirmDelete.id)}
-                style={{ background: "#7F1D1D", color: "#FCA5A5", border: "1px solid #EF4444" }}>
-                Eliminar
-              </button>
-            </div>
+      <Toast mensaje={mensaje} />
+
+      {confirmDel && (
+        <ConfirmModal titulo="¿Eliminar vehículo?"
+          texto={<>Se eliminará <strong style={{ color: "var(--text)" }}>{confirmDel.placa}</strong> permanentemente.</>}
+          onConfirm={eliminar} onCancel={() => setConfirmDel(null)} />
+      )}
+
+      {modal !== null && (
+        <ModalForm titulo={modal?.id ? "Editar vehículo" : "Nuevo vehículo"}
+          onClose={() => setModal(null)} onGuardar={guardar} loading={guardando}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <Field label="Cliente *" style={{ gridColumn: "1/-1" }}>
+              <select value={form.cliente} onChange={e => setForm({...form, cliente: e.target.value})}>
+                <option value="">Seleccionar cliente...</option>
+                {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre} — {c.documento}</option>)}
+              </select>
+            </Field>
+            <Field label="Placa *">
+              <input value={form.placa} onChange={e => setForm({...form, placa: e.target.value.toUpperCase()})}
+                placeholder="NHX14G" />
+            </Field>
+            <Field label="Tipo">
+              <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}>
+                <option value="moto">🏍 Motocicleta</option>
+                <option value="carro">🚗 Automóvil</option>
+                <option value="bicicleta">⚡ Bicicleta Eléctrica</option>
+              </select>
+            </Field>
+            <Field label="Marca *">
+              <input value={form.marca} onChange={e => setForm({...form, marca: e.target.value})}
+                placeholder="Bajaj, Honda, Yamaha..." list="marcas-list" />
+              <datalist id="marcas-list">
+                {marcas.map(m => <option key={m} value={m} />)}
+              </datalist>
+            </Field>
+            <Field label="Línea / Modelo *">
+              <input value={form.linea} onChange={e => setForm({...form, linea: e.target.value})}
+                placeholder="Pulsar NS200" />
+            </Field>
+            <Field label="Año">
+              <input type="number" value={form.modelo}
+                onChange={e => setForm({...form, modelo: e.target.value})}
+                placeholder={new Date().getFullYear()} />
+            </Field>
+            <Field label="Cilindraje (cc)">
+              <input type="number" value={form.cilindraje}
+                onChange={e => setForm({...form, cilindraje: e.target.value})}
+                placeholder="200" />
+            </Field>
+            <Field label="Color">
+              <input value={form.color} onChange={e => setForm({...form, color: e.target.value})}
+                placeholder="Negro" />
+            </Field>
+            <Field label="Kilometraje">
+              <input type="number" value={form.kilometraje}
+                onChange={e => setForm({...form, kilometraje: e.target.value})}
+                placeholder="15000" />
+            </Field>
           </div>
-        </div>
+        </ModalForm>
       )}
 
-      {showForm && (
-        <FormVehiculo
-          vehiculoEditar={vehiculoEditar}
-          onGuardado={() => { setShowForm(false); setVehiculoEditar(null); cargarVehiculos() }}
-          onCancelar={() => { setShowForm(false); setVehiculoEditar(null) }}
-        />
-      )}
+      <PageHeader titulo="Vehículos" sub={`${vehiculos.length} vehículos registrados`}>
+        <button className="btn btn-primary" onClick={() => abrirModal()}>+ Nuevo vehículo</button>
+      </PageHeader>
 
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "2rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Vehículos
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>{vehiculos.length} vehículos registrados</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => { setVehiculoEditar(null); setShowForm(true) }}>
-          + Nuevo vehículo
-        </button>
+      <div className="stagger" style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        <KPICard titulo="Total" valor={vehiculos.length} color="#E8213A" icon="🚗" delay={0} />
+        <KPICard titulo="Motos" valor={vehiculos.filter(v=>v.tipo==="moto").length} color="#1E5FD4" icon="🏍" delay={.04} />
+        <KPICard titulo="Carros" valor={vehiculos.filter(v=>v.tipo==="carro").length} color="#F5A623" icon="🚗" delay={.08} />
+        <KPICard titulo="Marcas" valor={marcas.length} color="#00D4A0" icon="🏷️" delay={.12} />
       </div>
 
-      {error && (
-        <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
-          padding: "12px 16px", marginBottom: "1rem", color: "#FCA5A5", fontSize: "13px",
-          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {error}
-          <button onClick={cargarVehiculos}
-            style={{ background: "none", border: "none", color: "#FCA5A5",
-              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
-            Reintentar
-          </button>
+      <div className="card fade-in">
+        <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)",
+          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+          <SearchBar value={buscar} onChange={setBuscar} placeholder="Buscar por placa, marca o línea..." />
+          <span style={{ fontSize: "12px", color: "var(--text3)" }}>{filtrados.length} resultados</span>
         </div>
-      )}
-
-      <div className="card">
-        <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
-          <input value={buscar} onChange={e => setBuscar(e.target.value)}
-            placeholder="Buscar por placa o marca..." style={{ width: "280px" }} />
-        </div>
-        {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
-        ) : filtrados.length === 0 ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
-            {buscar ? "No se encontraron vehículos con ese criterio" : "No hay vehículos registrados aún"}
-          </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Placa</th><th>Marca</th><th>Línea</th>
-                <th>Modelo</th><th>Kilometraje</th><th>Estado</th><th>Acciones</th>
+        <table>
+          <thead>
+            <tr><th>Placa</th><th>Tipo</th><th>Marca / Línea</th><th>Año</th>
+              <th>Cilindraje</th><th>Kilometraje</th><th>Color</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {loading ? <TableSkeleton rows={5} cols={8} /> :
+             filtrados.length === 0 ? (
+              <tr><td colSpan="8">
+                <EmptyState icon="🏍" titulo="No hay vehículos"
+                  sub="Registra el primer vehículo"
+                  action={<button className="btn btn-primary" onClick={() => abrirModal()}>+ Nuevo vehículo</button>} />
+              </td></tr>
+            ) : filtrados.map(v => (
+              <tr key={v.id} className="fade-in">
+                <td style={{ fontFamily: "var(--font-mono)", fontWeight: "700",
+                  color: "#E8213A", fontSize: "13px" }}>{v.placa}</td>
+                <td style={{ fontSize: "16px" }}>{TIPO_ICON[v.tipo] || "🚗"}</td>
+                <td>
+                  <div style={{ fontWeight: "600", color: "var(--text)" }}>{v.marca}</div>
+                  <div style={{ fontSize: "11px", color: "var(--text3)" }}>{v.linea}</div>
+                </td>
+                <td style={{ color: "var(--text2)" }}>{v.modelo}</td>
+                <td style={{ color: "var(--text3)", fontSize: "12px" }}>
+                  {v.cilindraje ? `${v.cilindraje}cc` : "—"}
+                </td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: "12px" }}>
+                  {v.kilometraje ? `${Number(v.kilometraje).toLocaleString()} km` : "—"}
+                </td>
+                <td style={{ color: "var(--text3)" }}>{v.color || "—"}</td>
+                <td>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={() => abrirModal(v)} className="btn btn-secondary"
+                      style={{ padding: "4px 10px", fontSize: "12px" }}>✏️</button>
+                    <button onClick={() => setConfirmDel(v)} className="btn btn-danger"
+                      style={{ padding: "4px 10px", fontSize: "12px" }}>🗑️</button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(v => (
-                <tr key={v.id}>
-                  <td style={{ color: "var(--text)", fontWeight: "600", fontFamily: "monospace" }}>{v.placa}</td>
-                  <td style={{ color: "var(--text)" }}>{v.marca}</td>
-                  <td>{v.linea}</td>
-                  <td>{v.modelo}</td>
-                  <td>{v.kilometraje?.toLocaleString()} km</td>
-                  <td>
-                    <span className="badge" style={{
-                      background: estadoBadge[v.estado]?.bg || "#1F2937",
-                      color: estadoBadge[v.estado]?.color || "#9CA3AF"
-                    }}>{v.estado}</span>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <button onClick={() => handleEditar(v)} style={{
-                        background: "#1E3A5F", border: "1px solid #3B82F6",
-                        color: "#3B82F6", borderRadius: "6px",
-                        padding: "4px 10px", fontSize: "12px", cursor: "pointer" }}>✏️</button>
-                      <button onClick={() => setConfirmDelete(v)} style={{
-                        background: "#3B0A0A", border: "1px solid #EF4444",
-                        color: "#EF4444", borderRadius: "6px",
-                        padding: "4px 10px", fontSize: "12px", cursor: "pointer" }}>🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

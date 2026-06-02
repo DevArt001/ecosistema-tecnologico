@@ -1,183 +1,225 @@
 import { useState, useEffect } from "react"
 import { clientesAPI } from "../services/api"
-import FormCliente from "../components/FormCliente"
+import { PageHeader, Toast, ConfirmModal, EmptyState, KPICard,
+         SearchBar, TableSkeleton, ModalForm, Field } from "../components/UI"
 
 export default function Clientes() {
-  const [clientes, setClientes]           = useState([])
-  const [loading, setLoading]             = useState(true)
-  const [error, setError]                 = useState(null)
-  const [buscar, setBuscar]               = useState("")
-  const [showForm, setShowForm]           = useState(false)
-  const [clienteEditar, setClienteEditar] = useState(null)
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [clientes, setClientes]   = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [buscar, setBuscar]       = useState("")
+  const [modal, setModal]         = useState(null)
+  const [confirmDel, setConfirmDel] = useState(null)
+  const [mensaje, setMensaje]     = useState("")
+  const [guardando, setGuardando] = useState(false)
+  const [form, setForm] = useState({
+    nombre:"", documento:"", telefono:"", whatsapp:"",
+    correo:"", ciudad:"", tipo:"regular", observaciones:""
+  })
 
-  useEffect(() => { cargarClientes() }, [])
+  useEffect(() => { cargar() }, [])
 
-  const cargarClientes = () => {
+  const cargar = async () => {
     setLoading(true)
-    setError(null)
-    clientesAPI.listar()
-      .then(res => setClientes(res.data.results || res.data))
-      .catch(err => setError(err.mensaje || "Error al cargar clientes"))
-      .finally(() => setLoading(false))
-  }
-
-  const handleEditar = (cliente) => {
-    setClienteEditar(cliente)
-    setShowForm(true)
-  }
-
-  const handleEliminar = async (id) => {
     try {
-      await clientesAPI.eliminar(id)
-      setConfirmDelete(null)
-      cargarClientes()
-    } catch (err) {
-      alert(err.mensaje || "Error al eliminar cliente")
+      const r = await clientesAPI.listar()
+      setClientes(r.data.results || r.data)
+    } catch { mostrar("❌ Error al cargar clientes") }
+    setLoading(false)
+  }
+
+  const mostrar = (msg) => { setMensaje(msg); setTimeout(() => setMensaje(""), 3000) }
+
+  const abrirModal = (c = null) => {
+    setForm(c ? { ...c } : {
+      nombre:"", documento:"", telefono:"", whatsapp:"",
+      correo:"", ciudad:"", tipo:"regular", observaciones:""
+    })
+    setModal(c || {})
+  }
+
+  const guardar = async () => {
+    if (!form.nombre || !form.documento || !form.telefono) {
+      mostrar("❌ Nombre, documento y teléfono son obligatorios")
+      return
     }
+    setGuardando(true)
+    try {
+      if (modal?.id) await clientesAPI.editar(modal.id, form)
+      else await clientesAPI.crear(form)
+      mostrar("✅ Cliente guardado")
+      setModal(null)
+      cargar()
+    } catch(e) {
+      mostrar("❌ " + (e.response?.data?.documento?.[0] || "Error al guardar"))
+    }
+    setGuardando(false)
+  }
+
+  const eliminar = async () => {
+    try {
+      await clientesAPI.eliminar(confirmDel.id)
+      mostrar("✅ Cliente eliminado")
+      setConfirmDel(null)
+      cargar()
+    } catch { mostrar("❌ No se puede eliminar — tiene órdenes asociadas") }
+  }
+
+  const TIPO_COLOR = {
+    regular:   { color: "#4A5A72", label: "Regular" },
+    frecuente: { color: "#1E5FD4", label: "Frecuente" },
+    premium:   { color: "#F5A623", label: "Premium" },
+    inactivo:  { color: "#3A4A62", label: "Inactivo" },
   }
 
   const filtrados = clientes.filter(c =>
-    c.nombre.toLowerCase().includes(buscar.toLowerCase()) ||
-    c.documento.includes(buscar)
+    c.nombre?.toLowerCase().includes(buscar.toLowerCase()) ||
+    c.documento?.includes(buscar) ||
+    c.telefono?.includes(buscar)
   )
-
-  const tipoBadge = {
-    regular:   { bg: "#1F2937", color: "#9CA3AF" },
-    frecuente: { bg: "#1E3A5F", color: "#3B82F6" },
-    premium:   { bg: "#451A03", color: "#F59E0B" },
-    inactivo:  { bg: "#3B0A0A", color: "#EF4444" },
-  }
 
   return (
     <div>
-      {/* Modal confirmar eliminar */}
-      {confirmDelete && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000, padding: "1rem"
-        }}>
-          <div style={{
-            background: "var(--bg2)", borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--border)", width: "100%", maxWidth: "400px",
-            padding: "1.5rem"
-          }}>
-            <div style={{ fontWeight: "600", color: "var(--text)", marginBottom: "8px", fontSize: "16px" }}>
-              ¿Eliminar cliente?
-            </div>
-            <div style={{ color: "var(--text3)", fontSize: "13px", marginBottom: "1.5rem" }}>
-              Esta acción no se puede deshacer. Se eliminará{" "}
-              <strong style={{ color: "var(--text)" }}>{confirmDelete.nombre}</strong> permanentemente.
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-              <button className="btn btn-secondary" onClick={() => setConfirmDelete(null)}>
-                Cancelar
-              </button>
-              <button
-                className="btn"
-                onClick={() => handleEliminar(confirmDelete.id)}
-                style={{ background: "#7F1D1D", color: "#FCA5A5", border: "1px solid #EF4444" }}
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Toast mensaje={mensaje} />
 
-      {showForm && (
-        <FormCliente
-          clienteEditar={clienteEditar}
-          onGuardado={() => { setShowForm(false); setClienteEditar(null); cargarClientes() }}
-          onCancelar={() => { setShowForm(false); setClienteEditar(null) }}
+      {confirmDel && (
+        <ConfirmModal
+          titulo="¿Eliminar cliente?"
+          texto={<>Se eliminará a <strong style={{ color: "var(--text)" }}>{confirmDel.nombre}</strong> permanentemente. Esta acción no se puede deshacer.</>}
+          onConfirm={eliminar}
+          onCancel={() => setConfirmDel(null)}
         />
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "2rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Clientes
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>
-            {clientes.length} clientes registrados
-          </p>
-        </div>
-        <button className="btn btn-primary" onClick={() => { setClienteEditar(null); setShowForm(true) }}>
-          + Nuevo cliente
-        </button>
-      </div>
-
-      {error && (
-        <div style={{
-          background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
-          padding: "12px 16px", marginBottom: "1rem",
-          color: "#FCA5A5", fontSize: "13px",
-          display: "flex", justifyContent: "space-between", alignItems: "center"
-        }}>
-          {error}
-          <button onClick={cargarClientes}
-            style={{ background: "none", border: "none", color: "#FCA5A5",
-              cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
-            Reintentar
-          </button>
-        </div>
+      {modal !== null && (
+        <ModalForm titulo={modal?.id ? "Editar cliente" : "Nuevo cliente"}
+          onClose={() => setModal(null)} onGuardar={guardar} loading={guardando}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <Field label="Nombre completo *" style={{ gridColumn: "1/-1" }}>
+              <input value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})}
+                placeholder="Ej: Felipe Rodríguez" />
+            </Field>
+            <Field label="Cédula / NIT *">
+              <input value={form.documento} onChange={e => setForm({...form, documento: e.target.value})}
+                placeholder="1000594748" />
+            </Field>
+            <Field label="Teléfono *">
+              <input value={form.telefono} onChange={e => setForm({...form, telefono: e.target.value})}
+                placeholder="3001234567" />
+            </Field>
+            <Field label="WhatsApp">
+              <input value={form.whatsapp} onChange={e => setForm({...form, whatsapp: e.target.value})}
+                placeholder="3001234567" />
+            </Field>
+            <Field label="Correo">
+              <input value={form.correo} onChange={e => setForm({...form, correo: e.target.value})}
+                placeholder="correo@ejemplo.com" />
+            </Field>
+            <Field label="Ciudad">
+              <input value={form.ciudad} onChange={e => setForm({...form, ciudad: e.target.value})}
+                placeholder="Bogotá" />
+            </Field>
+            <Field label="Tipo de cliente" style={{ gridColumn: "1/-1" }}>
+              <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}>
+                <option value="regular">Regular</option>
+                <option value="frecuente">Frecuente</option>
+                <option value="premium">Premium</option>
+                <option value="inactivo">Inactivo</option>
+              </select>
+            </Field>
+            <Field label="Observaciones" style={{ gridColumn: "1/-1" }}>
+              <textarea value={form.observaciones}
+                onChange={e => setForm({...form, observaciones: e.target.value})}
+                placeholder="Notas internas..." style={{ minHeight: "70px" }} />
+            </Field>
+          </div>
+        </ModalForm>
       )}
 
-      <div className="card">
-        <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid var(--border)" }}>
-          <input value={buscar} onChange={e => setBuscar(e.target.value)}
-            placeholder="Buscar por nombre o documento..."
-            style={{ width: "280px" }} />
+      <PageHeader titulo="Clientes"
+        sub={`${clientes.length} clientes registrados`}>
+        <button className="btn btn-primary" onClick={() => abrirModal()}>
+          + Nuevo cliente
+        </button>
+      </PageHeader>
+
+      {/* KPIs */}
+      <div className="stagger" style={{ display: "flex", gap: "1rem",
+        flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        <KPICard titulo="Total" valor={clientes.length}
+          color="#1E5FD4" icon="👤" delay={0} />
+        <KPICard titulo="Frecuentes" valor={clientes.filter(c=>c.tipo==="frecuente").length}
+          color="#F5A623" icon="⭐" delay={.04} />
+        <KPICard titulo="Premium" valor={clientes.filter(c=>c.tipo==="premium").length}
+          color="#E8213A" icon="💎" delay={.08} />
+        <KPICard titulo="Con puntos" valor={clientes.filter(c=>c.puntos>0).length}
+          color="#00D4A0" icon="🏆" delay={.12} />
+      </div>
+
+      <div className="card fade-in">
+        <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          flexWrap: "wrap", gap: "8px" }}>
+          <SearchBar value={buscar} onChange={setBuscar}
+            placeholder="Buscar por nombre, documento o teléfono..." width="320px" />
+          <span style={{ fontSize: "12px", color: "var(--text3)" }}>
+            {filtrados.length} resultado{filtrados.length !== 1 ? "s" : ""}
+          </span>
         </div>
-        {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>Cargando...</div>
-        ) : filtrados.length === 0 ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
-            {buscar ? "No se encontraron clientes con ese criterio" : "No hay clientes registrados aún"}
-          </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th><th>Documento</th><th>Teléfono</th>
-                <th>Ciudad</th><th>Tipo</th><th>Puntos</th><th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(c => (
-                <tr key={c.id}>
-                  <td style={{ color: "var(--text)", fontWeight: "500" }}>{c.nombre}</td>
-                  <td style={{ fontFamily: "monospace", fontSize: "12px" }}>{c.documento}</td>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th><th>Documento</th><th>Teléfono</th>
+              <th>Ciudad</th><th>Tipo</th><th>Puntos</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? <TableSkeleton rows={5} cols={7} /> :
+             filtrados.length === 0 ? (
+              <tr><td colSpan="7">
+                <EmptyState icon="👤"
+                  titulo={buscar ? "Sin resultados" : "No hay clientes"}
+                  sub={buscar ? `No encontramos "${buscar}"` : "Crea el primer cliente"}
+                  action={!buscar && (
+                    <button className="btn btn-primary" onClick={() => abrirModal()}>
+                      + Nuevo cliente
+                    </button>
+                  )} />
+              </td></tr>
+            ) : filtrados.map(c => {
+              const t = TIPO_COLOR[c.tipo] || TIPO_COLOR.regular
+              return (
+                <tr key={c.id} className="fade-in">
+                  <td style={{ fontWeight: "600", color: "var(--text)" }}>{c.nombre}</td>
+                  <td style={{ fontFamily: "var(--font-mono)", fontSize: "12px" }}>{c.documento}</td>
                   <td>{c.telefono}</td>
-                  <td>{c.ciudad || "—"}</td>
+                  <td style={{ color: "var(--text3)" }}>{c.ciudad || "—"}</td>
                   <td>
-                    <span className="badge" style={{
-                      background: tipoBadge[c.tipo]?.bg || "#1F2937",
-                      color: tipoBadge[c.tipo]?.color || "#9CA3AF"
-                    }}>{c.tipo}</span>
+                    <span style={{ background: t.color + "18", color: t.color,
+                      padding: "3px 10px", borderRadius: "20px",
+                      fontSize: "11px", fontWeight: "600" }}>{t.label}</span>
                   </td>
-                  <td style={{ color: "var(--green)" }}>{c.puntos} pts</td>
+                  <td>
+                    {c.puntos > 0 ? (
+                      <span style={{ color: "#F5A623", fontWeight: "600",
+                        fontSize: "12px" }}>⭐ {c.puntos}</span>
+                    ) : <span style={{ color: "var(--text3)" }}>—</span>}
+                  </td>
                   <td>
                     <div style={{ display: "flex", gap: "6px" }}>
-                      <button onClick={() => handleEditar(c)} style={{
-                        background: "#1E3A5F", border: "1px solid #3B82F6",
-                        color: "#3B82F6", borderRadius: "6px",
-                        padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                      }}>✏️</button>
-                      <button onClick={() => setConfirmDelete(c)} style={{
-                        background: "#3B0A0A", border: "1px solid #EF4444",
-                        color: "#EF4444", borderRadius: "6px",
-                        padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                      }}>🗑️</button>
+                      <button onClick={() => abrirModal(c)}
+                        className="btn btn-secondary"
+                        style={{ padding: "4px 10px", fontSize: "12px" }}>✏️</button>
+                      <button onClick={() => setConfirmDel(c)}
+                        className="btn btn-danger"
+                        style={{ padding: "4px 10px", fontSize: "12px" }}>🗑️</button>
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              )
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   )
