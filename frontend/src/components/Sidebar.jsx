@@ -6,6 +6,7 @@ const TODOS_MODULOS = [
   { path: "/vehiculos",    label: "Vehiculos",    color: "#8B5CF6", modulo: "vehiculos" },
   { path: "/ordenes",      label: "Ordenes",      color: "#F59E0B", modulo: "ordenes" },
   { path: "/inventario",   label: "Inventario",   color: "#EF4444", modulo: "inventario" },
+  { path: "/proveedores",   label: "Proveedores",  color: "#06B6D4", modulo: "inventario" },
   { path: "/facturas",     label: "Facturacion",  color: "#10B981", modulo: "facturas" },
   { path: "/cotizaciones", label: "Cotizaciones", color: "#F59E0B", modulo: "cotizaciones" },
   { path: "/agendamiento", label: "Agendamiento", color: "#06B6D4", modulo: "agendamiento" },
