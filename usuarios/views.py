@@ -9,7 +9,7 @@ from .models import PerfilUsuario, ROLES, MODULOS, PERMISOS_POR_ROL
 from .serializers import UsuarioSerializer
 
 class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().select_related('perfil')
+    queryset = User.objects.all().select_related('perfil').order_by('id')
     serializer_class = UsuarioSerializer
     permission_classes = [IsAuthenticated]
 

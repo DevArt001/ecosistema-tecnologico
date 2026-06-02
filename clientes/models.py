@@ -72,6 +72,7 @@ class Vehiculo(models.Model):
     class Meta:
         verbose_name = 'Vehículo'
         verbose_name_plural = 'Vehículos'
+        ordering = ['-fecha_ingreso']
 
 class HistorialPuntos(models.Model):
     TIPO_CHOICES = [
@@ -106,3 +107,6 @@ class Promocion(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.puntos_req} pts)"
+
+    class Meta:
+        ordering = ['puntos_req']

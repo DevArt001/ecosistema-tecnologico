@@ -21,6 +21,9 @@ class Proveedor(models.Model):
     def __str__(self):
         return self.nombre
 
+    class Meta:
+        ordering = ["nombre"]
+
 
 class Producto(models.Model):
     # Identificación
@@ -119,6 +122,7 @@ class OrdenCompra(models.Model):
 
     class Meta:
         verbose_name = "Orden de Compra"
+        verbose_name_plural = "Ordenes de Compra"
         ordering = ["-fecha_emision"]
 
 
@@ -135,6 +139,9 @@ class LineaOrdenCompra(models.Model):
 
     def __str__(self):
         return f"{self.orden.numero} - {self.producto.nombre} x{self.cantidad}"
+
+    class Meta:
+        ordering = ["id"]
 
 
 class HistorialPrecioProveedor(models.Model):
