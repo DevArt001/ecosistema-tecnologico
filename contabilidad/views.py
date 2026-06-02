@@ -603,3 +603,99 @@ def exportar_excel(request):
         return wb_to_response(exportar_gastos(), f'gastos_{fecha}.xlsx')
     else:
         return wb_to_response(exportar_completo(), f'talleros_completo_{fecha}.xlsx')
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def flujo_caja(request):
+    from decimal import Decimal
+    from django.db.models import Sum
+    from clientes.models import Cliente
+
+    anio = int(request.query_params.get('anio', datetime.now().year))
+    mes  = request.query_params.get('mes')
+
+    filtro_base = {'fecha_emision__year': anio}
+    filtro_gasto = {'fecha__year': anio}
+    if mes:
+        filtro_base['fecha_emision__month'] = mes
+        filtro_gasto['fecha__month'] = mes
+
+    # Ingresos reales (facturas pagadas)
+    ingresos_pagados = Factura.objects.filter(
+        **filtro_base, estado='pagada'
+    ).aggregate(total=Sum('total'))['total'] or 0
+
+    # Ingresos pendientes (facturas sin pagar)
+    ingresos_pendientes = Factura.objects.filter(
+        **filtro_base, estado='pendiente'
+    ).aggregate(total=Sum('total'))['total'] or 0
+
+    # Gastos reales
+    gastos_reales = Gasto.objects.filter(**filtro_gasto).aggregate(total=Sum('monto'))['total'] or 0
+
+    # Flujo neto
+    flujo_neto = float(ingresos_pagados) - float(gastos_reales)
+
+    # Flujo por mes del año
+    flujo_mensual = []
+    for m in range(1, 13):
+        ing = Factura.objects.filter(
+            fecha_emision__year=anio, fecha_emision__month=m, estado='pagada'
+        ).aggregate(total=Sum('total'))['total'] or 0
+
+        gas = Gasto.objects.filter(
+            fecha__year=anio, fecha__month=m
+        ).aggregate(total=Sum('monto'))['total'] or 0
+
+        flujo_mensual.append({
+            'mes': m,
+            'ingresos': float(ing),
+            'gastos': float(gas),
+            'neto': float(ing) - float(gas),
+        })
+
+    # Proyección próximo mes (promedio últimos 3 meses)
+    hoy = datetime.now()
+    ultimos3 = []
+    for i in range(1, 4):
+        m = hoy.month - i
+        y = hoy.year
+        if m <= 0:
+            m += 12
+            y -= 1
+        ing = Factura.objects.filter(
+            fecha_emision__year=y, fecha_emision__month=m, estado='pagada'
+        ).aggregate(total=Sum('total'))['total'] or 0
+        ultimos3.append(float(ing))
+
+    proyeccion_ingresos = sum(ultimos3) / len(ultimos3) if ultimos3 else 0
+
+    # Cuentas por cobrar (facturas pendientes)
+    cxc = Factura.objects.filter(estado='pendiente').select_related('cliente')
+    cxc_data = [{
+        'id': f.id,
+        'numero': f.numero,
+        'cliente': f.cliente.nombre,
+        'total': float(f.total),
+        'fecha': f.fecha_emision.strftime('%Y-%m-%d') if f.fecha_emision else '',
+        'dias': (datetime.now() - f.fecha_emision.replace(tzinfo=None)).days if f.fecha_emision else 0,
+    } for f in cxc]
+
+    # Cuentas por pagar (gastos del mes actual sin comprobante = pendientes)
+    cxp_total = Gasto.objects.filter(
+        fecha__year=hoy.year, fecha__month=hoy.month
+    ).aggregate(total=Sum('monto'))['total'] or 0
+
+    return Response({
+        'resumen': {
+            'ingresos_pagados':   float(ingresos_pagados),
+            'ingresos_pendientes': float(ingresos_pendientes),
+            'gastos_reales':      float(gastos_reales),
+            'flujo_neto':         flujo_neto,
+            'proyeccion_mes':     proyeccion_ingresos,
+            'cxc_total':          float(ingresos_pendientes),
+            'cxp_total':          float(cxp_total),
+        },
+        'flujo_mensual': flujo_mensual,
+        'cuentas_por_cobrar': cxc_data,
+    })
