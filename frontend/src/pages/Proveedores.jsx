@@ -36,6 +36,18 @@ export default function Proveedores() {
     setLoading(false)
   }
 
+  const eliminar = async (tipo, id) => {
+    const nombres = { proveedor: "proveedor", orden: "orden de compra", historial: "registro" }
+    if (!window.confirm(`¿Eliminar este ${nombres[tipo]}?`)) return
+    try {
+      if (tipo === "proveedor") await API.delete(`/proveedores/${id}/`)
+      else if (tipo === "orden") await API.delete(`/ordenes-compra/${id}/`)
+      else if (tipo === "historial") await API.delete(`/historial-precios/${id}/`)
+      mostrarMensaje("✅ Eliminado correctamente")
+      cargar()
+    } catch { mostrarMensaje("❌ Error al eliminar") }
+  }
+
   const mostrarMensaje = (msg) => {
     setMensaje(msg)
     setTimeout(() => setMensaje(""), 3000)
@@ -169,10 +181,16 @@ export default function Proveedores() {
                         }}>{p.activo ? "Activo" : "Inactivo"}</span>
                       </td>
                       <td>
+                        <div style={{ display: "flex", gap: "6px" }}>
                         <button onClick={() => { setModalProv(p); setFormProv({...p}) }} style={{
                           background: "#1E3A5F", border: "1px solid #3B82F6", color: "#3B82F6",
                           borderRadius: "6px", padding: "4px 10px", fontSize: "12px", cursor: "pointer"
                         }}>✏️</button>
+                        <button onClick={() => eliminar("proveedor", p.id)} style={{
+                          background: "#3B0A0A", border: "1px solid #EF4444", color: "#EF4444",
+                          borderRadius: "6px", padding: "4px 10px", fontSize: "12px", cursor: "pointer"
+                        }}>🗑️</button>
+                      </div>
                       </td>
                     </tr>
                   ))}
@@ -223,6 +241,12 @@ export default function Proveedores() {
                                 borderRadius: "6px", padding: "4px 8px", fontSize: "11px", cursor: "pointer"
                               }}>✓ Recibir</button>
                             )}
+                            {["borrador","cancelada"].includes(o.estado) && (
+                              <button onClick={() => eliminar("orden", o.id)} style={{
+                                background: "#3B0A0A", border: "1px solid #EF4444", color: "#EF4444",
+                                borderRadius: "6px", padding: "4px 8px", fontSize: "11px", cursor: "pointer"
+                              }}>🗑️</button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -243,7 +267,7 @@ export default function Proveedores() {
             <div className="card">
               <table>
                 <thead>
-                  <tr><th>Proveedor</th><th>Producto</th><th>Precio</th><th>Fecha</th><th>Notas</th></tr>
+                  <tr><th>Proveedor</th><th>Producto</th><th>Precio</th><th>Fecha</th><th>Notas</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>
                   {historial.map(h => (
@@ -253,6 +277,12 @@ export default function Proveedores() {
                       <td style={{ color: "#10B981", fontWeight: "600" }}>${Number(h.precio).toLocaleString("es-CO")}</td>
                       <td style={{ fontSize: "12px", color: "var(--text3)" }}>{h.fecha}</td>
                       <td style={{ fontSize: "12px", color: "var(--text3)" }}>{h.notas || "—"}</td>
+                      <td>
+                        <button onClick={() => eliminar("historial", h.id)} style={{
+                          background: "#3B0A0A", border: "1px solid #EF4444", color: "#EF4444",
+                          borderRadius: "6px", padding: "4px 8px", fontSize: "11px", cursor: "pointer"
+                        }}>🗑️</button>
+                      </td>
                     </tr>
                   ))}
                   {historial.length === 0 && (
