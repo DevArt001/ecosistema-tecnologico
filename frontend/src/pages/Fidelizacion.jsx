@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
+import { PageHeader, Toast, KPICard, EmptyState, SearchBar, Tabs, ModalForm, Field } from "../components/UI"
 
 const NIVELES = [
   { nombre: "Bronce",   min: 0,    max: 99,   color: "#CD7F32", icon: "🥉" },
@@ -87,14 +88,7 @@ export default function Fidelizacion() {
 
   return (
     <div>
-      {mensaje && (
-        <div style={{
-          position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
-          background: mensaje.startsWith("✅") ? "#065F46" : "#3B0A0A",
-          border: `1px solid ${mensaje.startsWith("✅") ? "#10B981" : "#EF4444"}`,
-          color: "white", borderRadius: "8px", padding: "12px 20px", fontSize: "13px"
-        }}>{mensaje}</div>
-      )}
+      <Toast mensaje={mensaje} />
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between",
