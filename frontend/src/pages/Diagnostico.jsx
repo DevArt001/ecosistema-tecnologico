@@ -1,5 +1,6 @@
 import { useState } from "react"
 import API from "../services/api"
+import { PageHeader, KPICard } from "../components/UI"
 
 const BASE = API.defaults.baseURL
 
@@ -237,27 +238,15 @@ export default function Diagnostico() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Diagnóstico del sistema
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>
-            Verifica que todos los módulos funcionen correctamente
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button className="btn btn-primary" onClick={correrTests} disabled={corriendo}>
-            {corriendo ? "Ejecutando..." : "🔍 Diagnóstico"}
-          </button>
-          <button onClick={correrFlujo} disabled={corrFlujo} style={{
-            background: "#1E3A5F", border: "1px solid #3B82F6", color: "#3B82F6",
-            borderRadius: "8px", padding: "8px 16px", fontSize: "13px", cursor: "pointer"
-          }}>
-            {corrFlujo ? "Ejecutando..." : "🔄 Flujo completo"}
-          </button>
-        </div>
-      </div>
+      <PageHeader titulo="Diagnóstico del sistema"
+        sub="Verifica que todos los módulos funcionen correctamente">
+        <button className="btn btn-primary" onClick={correrTests} disabled={corriendo}>
+          {corriendo ? "Ejecutando..." : "🔍 Diagnóstico"}
+        </button>
+        <button className="btn btn-secondary" onClick={correrFlujo} disabled={corrFlujo}>
+          {corrFlujo ? "Ejecutando..." : "🔄 Flujo completo"}
+        </button>
+      </PageHeader>
 
       {/* Resultado flujo */}
       {flujo && (

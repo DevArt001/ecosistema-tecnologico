@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
+import { PageHeader, Toast, KPICard, EmptyState, TableSkeleton } from "../components/UI"
 
 export default function Proveedores() {
   const [proveedores, setProveedores] = useState([])
@@ -105,38 +106,19 @@ export default function Proveedores() {
 
   return (
     <div>
-      {mensaje && (
-        <div style={{
-          position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
-          background: mensaje.startsWith("✅") ? "#065F46" : "#3B0A0A",
-          border: `1px solid ${mensaje.startsWith("✅") ? "#10B981" : "#EF4444"}`,
-          color: "white", borderRadius: "8px", padding: "12px 20px", fontSize: "13px"
-        }}>{mensaje}</div>
-      )}
+      <Toast mensaje={mensaje} />
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "1.5rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Proveedores
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>
-            {proveedores.length} proveedores · {ordenes.filter(o=>o.estado!=="recibida"&&o.estado!=="cancelada").length} órdenes activas
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button onClick={() => { setModalOC(true); setFormOC({ proveedor:"", notas:"", fecha_esperada:"" }) }}
-            style={{ background: "#1E3A5F", border: "1px solid #3B82F6", color: "#3B82F6",
-              borderRadius: "8px", padding: "8px 14px", fontSize: "13px", cursor: "pointer" }}>
-            + Orden de compra
-          </button>
-          <button className="btn btn-primary" onClick={() => {
-            setModalProv({})
-            setFormProv({ nombre:"", telefono:"", correo:"", ciudad:"", activo:true })
-          }}>+ Proveedor</button>
-        </div>
-      </div>
+      <PageHeader titulo="Proveedores"
+        sub={`${proveedores.length} proveedores · ${ordenes.filter(o=>o.estado!=="recibida"&&o.estado!=="cancelada").length} órdenes activas`}>
+        <button onClick={() => { setModalOC(true); setFormOC({ proveedor:"", notas:"", fecha_esperada:"" }) }}
+          className="btn btn-secondary">
+          + Orden de compra
+        </button>
+        <button className="btn btn-primary" onClick={() => {
+          setModalProv({})
+          setFormProv({ nombre:"", telefono:"", correo:"", ciudad:"", activo:true })
+        }}>+ Proveedor</button>
+      </PageHeader>
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "0", marginBottom: "1.5rem", borderBottom: "1px solid var(--border)" }}>

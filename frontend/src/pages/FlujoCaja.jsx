@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
+import { PageHeader, KPICard } from "../components/UI"
 
 const MESES = ["","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
 
@@ -28,22 +29,14 @@ export default function FlujoCaja() {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "1.5rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Contabilidad Avanzada
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>Flujo de caja, proyecciones y cuentas</p>
-        </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <select value={anio} onChange={e => setAnio(e.target.value)} style={{ width: "100px" }}>
-            {[2026,2025,2024].map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-          <button className="btn btn-primary" onClick={cargar}>↻ Actualizar</button>
-        </div>
-      </div>
+      <PageHeader titulo="Contabilidad Avanzada"
+        sub="Flujo de caja, proyecciones y cuentas">
+        <select value={anio} onChange={e => setAnio(e.target.value)}
+          style={{ width: "100px" }}>
+          {[2026,2025,2024].map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+        <button className="btn btn-secondary" onClick={cargar}>↻ Actualizar</button>
+      </PageHeader>
 
       {/* KPIs */}
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
