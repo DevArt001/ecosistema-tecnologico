@@ -1,33 +1,37 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
+import { PageHeader, Toast, EmptyState, KPICard, SearchBar, TableSkeleton } from "../components/UI"
 
 const ACCIONES = {
-  crear:    { color: "#10B981", bg: "#065F46", icon: "➕" },
-  editar:   { color: "#3B82F6", bg: "#1E3A5F", icon: "✏️" },
-  eliminar: { color: "#EF4444", bg: "#3B0A0A", icon: "🗑️" },
-  ver:      { color: "#9CA3AF", bg: "#1F2937", icon: "👁️" },
-  login:    { color: "#8B5CF6", bg: "#2D1B69", icon: "🔐" },
-  logout:   { color: "#F59E0B", bg: "#451A03", icon: "🚪" },
-  export:   { color: "#06B6D4", bg: "#0C4A6E", icon: "📤" },
+  crear:    { color: "#00D4A0", bg: "#00D4A015", icon: "➕", label: "Crear" },
+  editar:   { color: "#1E5FD4", bg: "#1E5FD415", icon: "✏️", label: "Editar" },
+  eliminar: { color: "#E8213A", bg: "#E8213A15", icon: "🗑️", label: "Eliminar" },
+  ver:      { color: "#4A5A72", bg: "#4A5A7215", icon: "👁️", label: "Ver" },
+  login:    { color: "#8B5CF6", bg: "#8B5CF615", icon: "🔐", label: "Login" },
+  logout:   { color: "#F5A623", bg: "#F5A62315", icon: "🚪", label: "Logout" },
+  export:   { color: "#06C4E0", bg: "#06C4E015", icon: "📤", label: "Export" },
 }
 
 export default function Auditoria() {
-  const [logs, setLogs]         = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [buscar, setBuscar]     = useState("")
+  const [logs, setLogs]           = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [buscar, setBuscar]       = useState("")
   const [filtroAccion, setFiltroAccion] = useState("")
   const [filtroModulo, setFiltroModulo] = useState("")
+  const [mensaje, setMensaje]     = useState("")
 
   useEffect(() => { cargar() }, [])
 
   const cargar = async () => {
     setLoading(true)
     try {
-      const res = await API.get("/auditlog/")
-      setLogs(res.data.results || res.data)
+      const r = await API.get("/auditlog/")
+      setLogs(r.data.results || r.data)
     } catch { }
     setLoading(false)
   }
+
+  const mostrar = (msg) => { setMensaje(msg); setTimeout(() => setMensaje(""), 3000) }
 
   const logsFiltrados = logs.filter(l => {
     const matchBuscar = !buscar ||
@@ -39,137 +43,143 @@ export default function Auditoria() {
     return matchBuscar && matchAccion && matchModulo
   })
 
-  const modulos = [...new Set(logs.map(l => l.modulo))].filter(Boolean)
+  const modulos = [...new Set(logs.map(l => l.modulo))].filter(Boolean).sort()
+
+  const hoy = new Date().toDateString()
+  const logsHoy = logs.filter(l => new Date(l.fecha).toDateString() === hoy).length
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "1.5rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700",
-            color: "var(--text)", marginBottom: "4px" }}>Auditoría</h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>
-            Registro de todas las acciones del sistema
-          </p>
-        </div>
-        <button className="btn btn-primary" onClick={cargar}>↻ Actualizar</button>
+      <Toast mensaje={mensaje} />
+
+      <PageHeader titulo="Auditoría"
+        sub="Registro completo de todas las acciones del sistema">
+        <button className="btn btn-secondary" onClick={cargar}>↻ Actualizar</button>
+      </PageHeader>
+
+      {/* KPIs */}
+      <div className="stagger" style={{ display: "flex", gap: "1rem",
+        flexWrap: "wrap", marginBottom: "1.5rem" }}>
+        <KPICard titulo="Total logs" valor={logs.length}
+          color="#1E5FD4" icon="📋" delay={0} />
+        <KPICard titulo="Hoy" valor={logsHoy}
+          color="#00D4A0" icon="📅" delay={.04} />
+        <KPICard titulo="Creaciones" valor={logs.filter(l=>l.accion==="crear").length}
+          color="#00D4A0" icon="➕" delay={.08} />
+        <KPICard titulo="Eliminaciones" valor={logs.filter(l=>l.accion==="eliminar").length}
+          color="#E8213A" icon="🗑️" delay={.12} />
       </div>
 
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem", flexWrap: "wrap" }}>
-        <input value={buscar} onChange={e => setBuscar(e.target.value)}
-          placeholder="Buscar..." style={{ width: "220px" }} />
-        <select value={filtroAccion} onChange={e => setFiltroAccion(e.target.value)}
-          style={{ width: "140px" }}>
-          <option value="">Todas las acciones</option>
-          {Object.keys(ACCIONES).map(a => (
-            <option key={a} value={a}>{a}</option>
-          ))}
-        </select>
-        <select value={filtroModulo} onChange={e => setFiltroModulo(e.target.value)}
-          style={{ width: "140px" }}>
-          <option value="">Todos los módulos</option>
-          {modulos.map(m => <option key={m} value={m}>{m}</option>)}
-        </select>
-        {(buscar || filtroAccion || filtroModulo) && (
-          <button onClick={() => { setBuscar(""); setFiltroAccion(""); setFiltroModulo("") }}
-            style={{ background: "transparent", border: "1px solid var(--border)",
-              color: "var(--text3)", borderRadius: "8px", padding: "6px 12px",
-              fontSize: "12px", cursor: "pointer" }}>
-            ✕ Limpiar
-          </button>
-        )}
-      </div>
-
-      {/* Resumen */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+      {/* Filtros acciones */}
+      <div className="fade-in" style={{ display: "flex", gap: "6px",
+        flexWrap: "wrap", marginBottom: "1rem" }}>
+        <button onClick={() => setFiltroAccion("")} style={{
+          padding: "5px 14px", borderRadius: "20px", border: "none",
+          fontSize: "12px", fontWeight: "500", cursor: "pointer",
+          background: !filtroAccion ? "var(--red)" : "var(--bg3)",
+          color: !filtroAccion ? "white" : "var(--text3)",
+          transition: "all .15s",
+        }}>Todas ({logs.length})</button>
         {Object.entries(ACCIONES).map(([accion, config]) => {
           const count = logs.filter(l => l.accion === accion).length
           if (count === 0) return null
           return (
-            <div key={accion} onClick={() => setFiltroAccion(filtroAccion === accion ? "" : accion)}
+            <button key={accion}
+              onClick={() => setFiltroAccion(filtroAccion === accion ? "" : accion)}
               style={{
-                padding: "6px 14px", borderRadius: "20px", cursor: "pointer",
-                background: filtroAccion === accion ? config.color : config.bg,
-                border: `1px solid ${config.color}`,
-                color: filtroAccion === accion ? "white" : config.color,
-                fontSize: "12px", fontWeight: "600"
+                padding: "5px 14px", borderRadius: "20px", border: "none",
+                fontSize: "12px", fontWeight: "500", cursor: "pointer",
+                background: filtroAccion === accion ? config.bg : "var(--bg3)",
+                color: filtroAccion === accion ? config.color : "var(--text3)",
+                transition: "all .15s",
               }}>
-              {config.icon} {accion} ({count})
-            </div>
+              {config.icon} {config.label} ({count})
+            </button>
           )
         })}
       </div>
 
-      {/* Tabla */}
-      <div className="card">
-        {loading ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
-            Cargando logs...
-          </div>
-        ) : logsFiltrados.length === 0 ? (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
-            No hay registros de auditoría todavía.
-            Los logs aparecen automáticamente cuando se realizan acciones en el sistema.
-          </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Usuario</th>
-                <th>Acción</th>
-                <th>Módulo</th>
-                <th>Descripción</th>
-                <th>IP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logsFiltrados.map(log => {
-                const a = ACCIONES[log.accion] || ACCIONES.ver
-                return (
-                  <tr key={log.id}>
-                    <td style={{ fontSize: "11px", color: "var(--text3)", whiteSpace: "nowrap" }}>
-                      {new Date(log.fecha).toLocaleString("es-CO", {
-                        day: "2-digit", month: "2-digit", year: "2-digit",
-                        hour: "2-digit", minute: "2-digit"
-                      })}
-                    </td>
-                    <td style={{ fontWeight: "600", color: "var(--text)", fontSize: "13px" }}>
-                      @{log.usuario_nombre || "sistema"}
-                    </td>
-                    <td>
-                      <span style={{
-                        background: a.bg, color: a.color,
-                        padding: "3px 10px", borderRadius: "20px",
-                        fontSize: "11px", fontWeight: "600"
-                      }}>
-                        {a.icon} {log.accion}
-                      </span>
-                    </td>
-                    <td>
-                      <span style={{
-                        background: "var(--bg1)", color: "var(--text2)",
-                        padding: "2px 8px", borderRadius: "4px", fontSize: "11px"
-                      }}>
-                        {log.modulo}
-                      </span>
-                    </td>
-                    <td style={{ fontSize: "13px", color: "var(--text2)", maxWidth: "300px" }}>
-                      {log.descripcion}
-                    </td>
-                    <td style={{ fontSize: "11px", color: "var(--text3)", fontFamily: "monospace" }}>
-                      {log.ip || "—"}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
-        <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)",
-          fontSize: "12px", color: "var(--text3)" }}>
-          {logsFiltrados.length} registros {buscar || filtroAccion || filtroModulo ? "filtrados" : "totales"}
+      <div className="card fade-in">
+        <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid var(--border)",
+          display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <SearchBar value={buscar} onChange={setBuscar}
+            placeholder="Buscar usuario, módulo, acción..." />
+          <select value={filtroModulo} onChange={e => setFiltroModulo(e.target.value)}
+            style={{ width: "140px" }}>
+            <option value="">Todos los módulos</option>
+            {modulos.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          {(buscar || filtroAccion || filtroModulo) && (
+            <button onClick={() => { setBuscar(""); setFiltroAccion(""); setFiltroModulo("") }}
+              className="btn btn-ghost" style={{ padding: "8px 12px", fontSize: "12px" }}>
+              ✕ Limpiar
+            </button>
+          )}
+          <span style={{ marginLeft: "auto", fontSize: "12px", color: "var(--text3)" }}>
+            {logsFiltrados.length} registros
+          </span>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Fecha</th><th>Usuario</th><th>Acción</th>
+              <th>Módulo</th><th>Descripción</th><th>IP</th></tr>
+          </thead>
+          <tbody>
+            {loading ? <TableSkeleton rows={6} cols={6} /> :
+             logsFiltrados.length === 0 ? (
+              <tr><td colSpan="6">
+                <EmptyState icon="📋" titulo="Sin registros"
+                  sub="Las acciones del sistema aparecerán aquí automáticamente" />
+              </td></tr>
+            ) : logsFiltrados.map(log => {
+              const a = ACCIONES[log.accion] || ACCIONES.ver
+              return (
+                <tr key={log.id} className="fade-in">
+                  <td style={{ fontSize: "11px", color: "var(--text3)",
+                    whiteSpace: "nowrap", fontFamily: "var(--font-mono)" }}>
+                    {new Date(log.fecha).toLocaleString("es-CO", {
+                      day: "2-digit", month: "2-digit", year: "2-digit",
+                      hour: "2-digit", minute: "2-digit"
+                    })}
+                  </td>
+                  <td style={{ fontWeight: "600", color: "var(--text)", fontSize: "13px" }}>
+                    @{log.usuario_nombre || "sistema"}
+                  </td>
+                  <td>
+                    <span style={{ background: a.bg, color: a.color,
+                      padding: "3px 10px", borderRadius: "20px",
+                      fontSize: "11px", fontWeight: "600",
+                      display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                      {a.icon} {a.label}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ background: "var(--bg3)", color: "var(--text3)",
+                      padding: "2px 8px", borderRadius: "6px",
+                      fontSize: "11px", fontFamily: "var(--font-mono)" }}>
+                      {log.modulo}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: "12px", color: "var(--text2)",
+                    maxWidth: "280px", overflow: "hidden",
+                    textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {log.descripcion}
+                  </td>
+                  <td style={{ fontSize: "11px", color: "var(--text3)",
+                    fontFamily: "var(--font-mono)" }}>
+                    {log.ip || "—"}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+
+        <div style={{ padding: "10px 1.25rem", borderTop: "1px solid var(--border)",
+          fontSize: "11px", color: "var(--text3)" }}>
+          {logsFiltrados.length} registros mostrados
+          {(buscar || filtroAccion || filtroModulo) && ` de ${logs.length} totales`}
         </div>
       </div>
     </div>
