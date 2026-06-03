@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import ThemeToggle from "../components/ThemeToggle"
 
 const BASE = window.location.hostname === "app.armracing.com"
   ? "https://api.armracing.com/api" : "http://192.168.0.8:8000/api"
@@ -50,6 +51,7 @@ export default function Portal() {
     <div className="bg-texture" style={{ minHeight: "100vh",
       display: "flex", flexDirection: "column", position: "relative" }}>
       <div className="public-overlay"/>
+      <ThemeToggle />
 
       {/* Header */}
       <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255,255,255,.06)",

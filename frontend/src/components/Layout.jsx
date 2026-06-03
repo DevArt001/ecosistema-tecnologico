@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 import Sidebar from "./Sidebar"
 import BusquedaGlobal from "./BusquedaGlobal"
+import ThemeToggle from "./ThemeToggle"
+import { useTheme } from "../hooks/useTheme"
 
 export default function Layout({ onLogout }) {
   const [sidebarOpen, setSidebarOpen]       = useState(false)
+  useTheme() // Activa el sistema de temas
   const [isMobile, setIsMobile]             = useState(window.innerWidth <= 768)
   const [busquedaAbierta, setBusquedaAbierta] = useState(false)
   const [pageKey, setPageKey]               = useState(0)
@@ -123,6 +126,7 @@ export default function Layout({ onLogout }) {
         </div>
       )}
 
+      <ThemeToggle />
       {/* Main content */}
       <main key={pageKey} style={{
         marginLeft: isMobile ? 0 : "240px",

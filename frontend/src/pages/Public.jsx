@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import ThemeToggle from "../components/ThemeToggle"
 
 const SERVICIOS = [
   { icon: "🔧", titulo: "Mantenimiento preventivo", desc: "Revisión completa, cambio de aceite, filtros y ajustes generales para mantener tu moto en óptimas condiciones." },
@@ -23,6 +24,7 @@ export default function Public() {
   return (
     <div className="bg-texture" style={{ minHeight: "100vh", position: "relative" }}>
       <div className="public-overlay"/>
+      <ThemeToggle />
 
       {/* HERO */}
       <div style={{

@@ -1,7 +1,10 @@
 import { useState } from "react"
 import API from "../services/api"
+import ThemeToggle from "../components/ThemeToggle"
+import { useTheme } from "../hooks/useTheme"
 
 export default function Login({ onLogin }) {
+  useTheme()
   const [form, setForm]           = useState({ username: "", password: "" })
   const [error, setError]         = useState("")
   const [loading, setLoading]     = useState(false)
@@ -77,6 +80,7 @@ export default function Login({ onLogin }) {
       position: "relative",
       overflow: "hidden",
     }}>
+      <ThemeToggle />
       {/* Fondo decorativo */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
