@@ -1,261 +1,175 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
-const API_URL = window.location.hostname === "localhost" || window.location.hostname.startsWith("192.")
-  ? "http://192.168.0.8:8000/api"
-  : "https://api.armracing.com/api"
+const BASE = window.location.hostname === "app.armracing.com"
+  ? "https://api.armracing.com/api" : "http://192.168.0.8:8000/api"
+
+const inputStyle = {
+  background: "rgba(255,255,255,.05)",
+  border: "1px solid rgba(255,255,255,.12)",
+  color: "#EEF0FF", borderRadius: "10px",
+  padding: "12px 16px", fontSize: "15px",
+  width: "100%", fontFamily: "Inter, sans-serif",
+  transition: "all .2s", outline: "none",
+}
 
 export default function Registro() {
-  const [paso, setPaso]         = useState(1)
-  const [loading, setLoading]   = useState(false)
+  const [visible, setVisible]   = useState(false)
+  const [cargando, setCargando] = useState(false)
+  const [exito, setExito]       = useState(false)
   const [error, setError]       = useState("")
-  const [clienteId, setClienteId] = useState(null)
-  const [listo, setListo]       = useState(false)
-
-  const [cliente, setCliente] = useState({
-    nombre: "", documento: "", telefono: "", correo: ""
-  })
-  const [vehiculo, setVehiculo] = useState({
-    placa: "", marca: "", linea: "", modelo: "", tipo: "moto"
+  const [form, setForm] = useState({
+    nombre:"", documento:"", telefono:"",
+    whatsapp:"", correo:"", ciudad:"Bogotá"
   })
 
-  const registrarCliente = async () => {
-    if (!cliente.nombre || !cliente.documento || !cliente.telefono) {
-      setError("Nombre, documento y teléfono son obligatorios")
-      return
-    }
-    setLoading(true)
-    setError("")
-    try {
-      const res = await fetch(`${API_URL}/agendamiento/publico/registrar-cliente/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cliente)
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setClienteId(data.id)
-        setPaso(2)
-      } else {
-        setError(data.documento?.[0] || "Error al registrar cliente")
-      }
-    } catch {
-      setError("Error de conexión")
-    }
-    setLoading(false)
-  }
+  useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
 
-  const registrarVehiculo = async () => {
-    if (!vehiculo.placa || !vehiculo.marca || !vehiculo.modelo) {
-      setError("Placa, marca y modelo son obligatorios")
-      return
+  const handleSubmit = async () => {
+    if (!form.nombre || !form.documento || !form.telefono) {
+      setError("Nombre, cédula y teléfono son obligatorios"); return
     }
-    setLoading(true)
-    setError("")
+    setCargando(true); setError("")
     try {
-      const res = await fetch(`${API_URL}/agendamiento/publico/registrar-vehiculo/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...vehiculo, cliente_id: clienteId })
+      const r = await fetch(`${BASE}/agendamiento/publico/registrar-cliente/`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form)
       })
-      if (res.ok) {
-        setListo(true)
-      } else {
-        setError("Error al registrar vehículo")
-      }
-    } catch {
-      setError("Error de conexión")
-    }
-    setLoading(false)
+      const data = await r.json()
+      if (r.ok) setExito(true)
+      else setError(data.documento?.[0] || data.error || "Error al registrar")
+    } catch { setError("Error de conexión") }
+    setCargando(false)
   }
-
-  if (listo) return (
-    <div style={{
-      minHeight: "100vh", background: "#0A0E1A",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "1rem"
-    }}>
-      <div style={{
-        background: "#111827", border: "1px solid #065F46",
-        borderRadius: "16px", padding: "2rem",
-        maxWidth: "420px", width: "100%", textAlign: "center"
-      }}>
-        <div style={{ fontSize: "48px", marginBottom: "1rem" }}>✅</div>
-        <h2 style={{ color: "#10B981", fontSize: "22px", marginBottom: "8px" }}>
-          Registro exitoso
-        </h2>
-        <p style={{ color: "#9CA3AF", fontSize: "14px", marginBottom: "1.5rem" }}>
-          Tus datos han sido registrados correctamente en ARM Racing Performance.
-          Pronto nos pondremos en contacto contigo.
-        </p>
-        <p style={{ color: "#6B7280", fontSize: "12px" }}>
-          📞 323 233 8894
-        </p>
-      </div>
-    </div>
-  )
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#0A0E1A",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "1rem"
-    }}>
-      <div style={{
-        background: "#111827", border: "1px solid #1F2937",
-        borderRadius: "16px", overflow: "hidden",
-        maxWidth: "460px", width: "100%"
-      }}>
-        {/* Header */}
+    <div className="bg-texture" style={{ minHeight: "100vh",
+      display: "flex", flexDirection: "column", position: "relative" }}>
+      <div className="public-overlay"/>
+
+      {/* Header */}
+      <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255,255,255,.06)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: "relative", zIndex: 1 }}>
+        <a href="/public" style={{ display: "flex", alignItems: "center",
+          gap: "10px", textDecoration: "none" }}>
+          <img src="/logo_arm.png" alt="ARM Racing"
+            style={{ height: "36px", objectFit: "contain" }} />
+          <div>
+            <div style={{ fontSize: "14px", fontWeight: "800", color: "#EEF0FF" }}>ARM Racing</div>
+            <div style={{ fontSize: "10px", color: "#E8213A", fontWeight: "700",
+              textTransform: "uppercase", letterSpacing: ".1em" }}>Performance</div>
+          </div>
+        </a>
+        <a href="/agendar" style={{ fontSize: "13px", color: "#6A7A92",
+          textDecoration: "none", transition: "color .15s" }}
+          onMouseEnter={e => e.currentTarget.style.color = "#E8213A"}
+          onMouseLeave={e => e.currentTarget.style.color = "#6A7A92"}>
+          Agendar cita →
+        </a>
+      </div>
+
+      {/* Contenido */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center",
+        justifyContent: "center", padding: "2rem",
+        position: "relative", zIndex: 1 }}>
         <div style={{
-          background: "#065F46", padding: "1.5rem",
-          textAlign: "center"
+          width: "100%", maxWidth: "480px",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(20px)",
+          transition: "all .5s cubic-bezier(.4,0,.2,1)",
         }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔧</div>
-          <h1 style={{ color: "#10B981", fontSize: "20px", fontWeight: "700" }}>
-            ARM Racing Performance
-          </h1>
-          <p style={{ color: "#9CA3AF", fontSize: "13px", marginTop: "4px" }}>
-            Registro de cliente y vehículo
-          </p>
-        </div>
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>✍️</div>
+            <div className="public-subtitle" style={{ marginBottom: "8px" }}>
+              ARM Racing Performance
+            </div>
+            <h1 style={{ fontSize: "32px", fontWeight: "900", color: "#EEF0FF",
+              letterSpacing: "-.5px", marginBottom: "8px" }}>
+              {exito ? "¡Registro exitoso!" : "Regístrate"}
+            </h1>
+            {!exito && <p style={{ color: "#6A7A92", fontSize: "14px" }}>
+              Crea tu perfil en ARM Racing Performance
+            </p>}
+          </div>
 
-        {/* Pasos */}
-        <div style={{
-          display: "flex", borderBottom: "1px solid #1F2937"
-        }}>
-          {["Datos personales", "Tu vehículo"].map((label, i) => (
-            <div key={i} style={{
-              flex: 1, padding: "12px",
-              textAlign: "center", fontSize: "13px",
-              fontWeight: paso === i + 1 ? "600" : "400",
-              color: paso === i + 1 ? "#10B981" : "#6B7280",
-              borderBottom: paso === i + 1 ? "2px solid #10B981" : "2px solid transparent",
-            }}>{i + 1}. {label}</div>
-          ))}
-        </div>
-
-        <div style={{ padding: "1.5rem" }}>
-          {error && (
-            <div style={{
-              background: "#3B0A0A", border: "1px solid #EF4444",
-              borderRadius: "8px", padding: "10px 14px",
-              marginBottom: "1rem", fontSize: "13px", color: "#FCA5A5"
-            }}>{error}</div>
-          )}
-
-          {/* Paso 1 — Cliente */}
-          {paso === 1 && (
-            <>
-              {[
-                { name: "nombre",    label: "Nombre completo *", placeholder: "Juan Pérez" },
-                { name: "documento", label: "Cédula / NIT *",    placeholder: "123456789" },
-                { name: "telefono",  label: "WhatsApp / Teléfono *", placeholder: "3001234567" },
-                { name: "correo",    label: "Correo electrónico", placeholder: "juan@email.com", type: "email" },
-              ].map(f => (
-                <div key={f.name} style={{ marginBottom: "1rem" }}>
-                  <label style={{
-                    display: "block", fontSize: "12px", fontWeight: "600",
-                    color: "#9CA3AF", marginBottom: "6px", textTransform: "uppercase"
-                  }}>{f.label}</label>
-                  <input
-                    type={f.type || "text"}
-                    value={cliente[f.name]}
-                    onChange={e => setCliente({...cliente, [f.name]: e.target.value})}
-                    placeholder={f.placeholder}
-                    style={{
-                      width: "100%", background: "#1F2937",
-                      border: "1px solid #374151", color: "#F9FAFB",
-                      borderRadius: "8px", padding: "10px 12px",
-                      fontSize: "14px", outline: "none",
-                      boxSizing: "border-box"
-                    }}
-                  />
+          {exito ? (
+            <div style={{ background: "rgba(255,255,255,.03)",
+              border: "1px solid rgba(255,255,255,.08)",
+              borderRadius: "20px", padding: "2.5rem",
+              textAlign: "center" }}>
+              <div style={{ fontSize: "56px", marginBottom: "1rem" }}>🎉</div>
+              <div style={{ fontSize: "18px", fontWeight: "700", color: "#00D4A0",
+                marginBottom: "10px" }}>¡Bienvenido a ARM Racing!</div>
+              <div style={{ fontSize: "14px", color: "#6A7A92", lineHeight: 1.7,
+                marginBottom: "1.5rem" }}>
+                Tu perfil fue creado exitosamente.<br/>
+                Ya puedes agendar tu primera cita.
+              </div>
+              <a href="/agendar" style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                padding: "13px 28px", borderRadius: "12px", textDecoration: "none",
+                background: "linear-gradient(135deg, #E8213A, #C41830)",
+                color: "white", fontWeight: "700", fontSize: "15px",
+                boxShadow: "0 6px 24px rgba(232,33,58,.35)",
+              }}>📅 Agendar mi primera cita</a>
+            </div>
+          ) : (
+            <div style={{ background: "rgba(255,255,255,.03)",
+              border: "1px solid rgba(255,255,255,.08)",
+              borderRadius: "20px", padding: "2rem",
+              backdropFilter: "blur(10px)" }}>
+              {error && (
+                <div style={{ background: "rgba(232,33,58,.1)",
+                  border: "1px solid rgba(232,33,58,.3)",
+                  borderRadius: "10px", padding: "12px 16px",
+                  color: "#FF8080", fontSize: "13px", marginBottom: "1.25rem" }}>
+                  ⚠️ {error}
                 </div>
-              ))}
-              <button onClick={registrarCliente} disabled={loading} style={{
-                width: "100%", background: "#10B981", border: "none",
-                color: "white", borderRadius: "8px", padding: "12px",
-                fontSize: "14px", fontWeight: "600", cursor: "pointer",
-                marginTop: "0.5rem"
-              }}>
-                {loading ? "Registrando..." : "Continuar →"}
-              </button>
-            </>
-          )}
-
-          {/* Paso 2 — Vehículo */}
-          {paso === 2 && (
-            <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 {[
-                  { name: "placa",  label: "Placa *",  placeholder: "ABC123" },
-                  { name: "marca",  label: "Marca *",  placeholder: "Honda" },
-                  { name: "linea",  label: "Línea",    placeholder: "CB190R" },
-                  { name: "modelo", label: "Año *",    placeholder: "2022" },
+                  { label: "Nombre completo *", key: "nombre", placeholder: "Felipe Rodríguez" },
+                  { label: "Cédula / NIT *", key: "documento", placeholder: "1000594748" },
+                  { label: "Teléfono *", key: "telefono", placeholder: "3001234567" },
+                  { label: "WhatsApp", key: "whatsapp", placeholder: "3001234567" },
+                  { label: "Correo electrónico", key: "correo", placeholder: "correo@ejemplo.com" },
+                  { label: "Ciudad", key: "ciudad", placeholder: "Bogotá" },
                 ].map(f => (
-                  <div key={f.name}>
-                    <label style={{
-                      display: "block", fontSize: "12px", fontWeight: "600",
-                      color: "#9CA3AF", marginBottom: "6px", textTransform: "uppercase"
-                    }}>{f.label}</label>
-                    <input
-                      value={vehiculo[f.name]}
-                      onChange={e => setVehiculo({...vehiculo, [f.name]: e.target.value})}
+                  <div key={f.key}>
+                    <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                      color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                      marginBottom: "6px" }}>{f.label}</label>
+                    <input value={form[f.key]}
+                      onChange={e => setForm({...form, [f.key]: e.target.value})}
                       placeholder={f.placeholder}
-                      style={{
-                        width: "100%", background: "#1F2937",
-                        border: "1px solid #374151", color: "#F9FAFB",
-                        borderRadius: "8px", padding: "10px 12px",
-                        fontSize: "14px", outline: "none",
-                        boxSizing: "border-box"
-                      }}
-                    />
+                      style={inputStyle}
+                      onFocus={e => { e.target.style.borderColor = "rgba(232,33,58,.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(232,33,58,.1)" }}
+                      onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,.12)"; e.target.style.boxShadow = "none" }} />
                   </div>
                 ))}
-              </div>
-              <div style={{ marginTop: "1rem", marginBottom: "1.5rem" }}>
-                <label style={{
-                  display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "#9CA3AF", marginBottom: "6px", textTransform: "uppercase"
-                }}>Tipo de vehículo</label>
-                <select
-                  value={vehiculo.tipo}
-                  onChange={e => setVehiculo({...vehiculo, tipo: e.target.value})}
-                  style={{
-                    width: "100%", background: "#1F2937",
-                    border: "1px solid #374151", color: "#F9FAFB",
-                    borderRadius: "8px", padding: "10px 12px",
-                    fontSize: "14px", outline: "none",
-                  }}>
-                  <option value="moto">Moto</option>
-                  <option value="auto">Auto</option>
-                  <option value="bicicleta">Bicicleta eléctrica</option>
-                  <option value="otro">Otro</option>
-                </select>
-              </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button onClick={() => setPaso(1)} style={{
-                  background: "#1F2937", border: "1px solid #374151",
-                  color: "#9CA3AF", borderRadius: "8px", padding: "12px",
-                  fontSize: "14px", cursor: "pointer", flex: 1
-                }}>← Atrás</button>
-                <button onClick={registrarVehiculo} disabled={loading} style={{
-                  background: "#10B981", border: "none",
-                  color: "white", borderRadius: "8px", padding: "12px",
-                  fontSize: "14px", fontWeight: "600", cursor: "pointer", flex: 2
-                }}>
-                  {loading ? "Registrando..." : "Finalizar registro"}
+                <button onClick={handleSubmit} disabled={cargando} style={{
+                  marginTop: "8px", padding: "13px", borderRadius: "12px",
+                  background: "linear-gradient(135deg, #E8213A, #C41830)",
+                  border: "none", color: "white", fontSize: "15px", fontWeight: "700",
+                  cursor: cargando ? "not-allowed" : "pointer",
+                  fontFamily: "Inter, sans-serif", opacity: cargando ? .7 : 1,
+                  boxShadow: "0 6px 24px rgba(232,33,58,.35)",
+                  transition: "all .2s",
+                }}
+                onMouseEnter={e => { if (!cargando) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 32px rgba(232,33,58,.45)" } }}
+                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(232,33,58,.35)" }}>
+                  {cargando ? "Registrando..." : "Crear mi perfil →"}
                 </button>
+                <p style={{ textAlign: "center", fontSize: "13px", color: "#4A5A72" }}>
+                  ¿Ya tienes cuenta?{" "}
+                  <a href="/agendar" style={{ color: "#E8213A",
+                    textDecoration: "none", fontWeight: "600" }}>
+                    Agenda tu cita →
+                  </a>
+                </p>
               </div>
-            </>
+            </div>
           )}
-        </div>
-
-        <div style={{
-          padding: "1rem", borderTop: "1px solid #1F2937",
-          textAlign: "center", fontSize: "12px", color: "#6B7280"
-        }}>
-          ARM Racing Performance · Carrera 54b #50-09 sur, Venecia, Bogotá
         </div>
       </div>
     </div>

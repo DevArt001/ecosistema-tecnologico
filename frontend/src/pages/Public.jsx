@@ -1,376 +1,222 @@
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState, useEffect } from "react"
 
 const SERVICIOS = [
-  {
-    cat: "Mecánica General — Automóviles",
-    items: [
-      "Diagnóstico general mecánico",
-      "Mantenimiento preventivo y correctivo",
-      "Cambio de aceite y filtros",
-      "Afinación de motor",
-      "Reparación general de motor",
-      "Reparación de culata",
-      "Cambio de empaques y retenedores",
-      "Cambio de kit de distribución",
-      "Reparación de transmisión",
-      "Servicio de frenos",
-    ]
-  },
-  {
-    cat: "Mecánica General — Motocicletas",
-    items: [
-      "Diagnóstico mecánico general",
-      "Mantenimiento preventivo",
-      "Cambio de aceite",
-      "Afinación de moto",
-      "Reparación de motor",
-      "Reparación de clutch",
-      "Sincronización",
-      "Reparación de suspensión",
-      "Reparación de frenos",
-      "Restauración completa",
-    ]
-  },
-  {
-    cat: "Electricidad Automotriz",
-    items: [
-      "Diagnóstico eléctrico completo",
-      "Reparación de cortos eléctricos",
-      "Reparación de cableado",
-      "Fabricación de ramales eléctricos",
-      "Escaneo eléctrico",
-    ]
-  },
-  {
-    cat: "Preparación & Accesorios",
-    items: [
-      "Preparación y modificación de motor",
-      "Instalación de accesorios",
-      "Instalación de sliders",
-      "Instalación de luces LED",
-      "Instalación de exploradoras",
-      "Venta de repuestos y accesorios",
-    ]
-  },
+  { icon: "🔧", titulo: "Mantenimiento preventivo", desc: "Revisión completa, cambio de aceite, filtros y ajustes generales para mantener tu moto en óptimas condiciones." },
+  { icon: "⚡", titulo: "Diagnóstico electrónico", desc: "Identificamos fallas eléctricas y electrónicas con equipos de última tecnología." },
+  { icon: "🔩", titulo: "Reparación de motor", desc: "Reconstrucción y reparación de motores con piezas originales y de alta calidad." },
+  { icon: "🛡️", titulo: "Sistema de frenos", desc: "Revisión, cambio y ajuste de frenos para garantizar tu seguridad en la vía." },
+  { icon: "💧", titulo: "Sistema de refrigeración", desc: "Mantenimiento y reparación del sistema de refrigeración de tu moto." },
+  { icon: "🏎️", titulo: "Performance & Tuning", desc: "Optimización de rendimiento para sacar el máximo potencial de tu moto." },
 ]
 
-const TESTIMONIOS = [
-  {
-    nombre: "Carlos M.",
-    moto: "Yamaha YZF-R6",
-    texto: "Excelente servicio. Mi moto quedó como nueva. Muy profesionales.",
-    calificacion: 5,
-  },
-  {
-    nombre: "Ana G.",
-    moto: "Toyota Corolla",
-    texto: "Confiable, rápido y con buen precio. Recomendado 100%.",
-    calificacion: 5,
-  },
-  {
-    nombre: "Juan P.",
-    moto: "Kawasaki Ninja",
-    texto: "Personal muy capacitado. Diagnóstico precisó y solución efectiva.",
-    calificacion: 5,
-  },
+const CONTACTO = [
+  { icon: "📍", titulo: "Dirección", valor: "Carrera 54b #50-09 sur, Venecia, Bogotá" },
+  { icon: "📞", titulo: "Teléfono", valor: "323 233 8894" },
+  { icon: "📸", titulo: "Instagram", valor: "@arm_racing.performance" },
+  { icon: "🕐", titulo: "Horario", valor: "Lun — Sáb: 8:00 AM – 7:30 PM" },
 ]
 
 export default function Public() {
-  const navigate = useNavigate()
-
-  const irAAgendar = () => navigate("/agendar")
+  const [visible, setVisible] = useState(false)
+  useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
 
   return (
-    <div style={{ background: "#0D1117", color: "#F9FAFB", minHeight: "100vh" }}>
-      {/* ── NAVBAR ── */}
-      <nav style={{
-        background: "#111827",
-        borderBottom: "1px solid #374151",
-        padding: "1rem 2rem",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ fontSize: "28px" }}>🔧</div>
-          <span style={{ fontSize: "16px", fontWeight: "700", color: "#EF4444" }}>ARM Racing</span>
-        </div>
-        <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-          <a href="#inicio" style={{ cursor: "pointer", color: "#D1D5DB", fontSize: "14px" }}>Inicio</a>
-          <a href="#servicios" style={{ cursor: "pointer", color: "#D1D5DB", fontSize: "14px" }}>Servicios</a>
-          <a href="#tienda" style={{ cursor: "pointer", color: "#D1D5DB", fontSize: "14px" }}>Tienda</a>
-          <a href="#contacto" style={{ cursor: "pointer", color: "#D1D5DB", fontSize: "14px" }}>Contacto</a>
-          <button onClick={irAAgendar}
-            style={{
-              background: "#EF4444",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "8px 20px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: "pointer",
-            }}>
-            📅 Agendar
-          </button>
-        </div>
-      </nav>
+    <div className="bg-texture" style={{ minHeight: "100vh", position: "relative" }}>
+      <div className="public-overlay"/>
 
-      {/* ── HERO ── */}
-      <section id="inicio" style={{
-        background: "linear-gradient(135deg, #111827 0%, #1F2937 100%)",
-        padding: "6rem 2rem",
-        textAlign: "center",
-        borderBottom: "2px solid #EF4444",
+      {/* HERO */}
+      <div style={{
+        minHeight: "100vh", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        padding: "4rem 2rem", textAlign: "center",
+        position: "relative", zIndex: 1,
       }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <div style={{ fontSize: "100px", marginBottom: "1rem" }}>🏍️</div>
-          <h1 style={{ fontSize: "48px", fontWeight: "900", color: "#F9FAFB", marginBottom: "1rem" }}>
-            ARM Racing Performance
-          </h1>
-          <p style={{ fontSize: "20px", color: "#EF4444", marginBottom: "2rem", fontStyle: "italic", fontWeight: "700" }}>
-            "Potencia, confianza y calidad en cada servicio"
-          </p>
-          <p style={{ fontSize: "16px", color: "#D1D5DB", lineHeight: "1.8", marginBottom: "2rem" }}>
-            Especialistas en soluciones integrales para motocicletas y vehículos.
-            Personal técnico capacitado, tecnología especializada, y compromiso con la excelencia.
-          </p>
-          <button onClick={irAAgendar}
-            style={{
-              background: "#10B981",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "14px 40px",
-              fontSize: "18px",
-              fontWeight: "700",
-              cursor: "pointer",
-              marginRight: "12px",
-            }}>
-            📅 Agendar Cita
-          </button>
-          <a href="https://wa.me/573232338894?text=Hola%20ARM%20Racing%2C%20quiero%20conocer%20m%C3%A1s%20sobre%20sus%20servicios"
-            target="_blank" rel="noopener noreferrer"
-            style={{
-              display: "inline-block",
-              background: "#25D366",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "14px 40px",
-              fontSize: "18px",
-              fontWeight: "700",
-              cursor: "pointer",
-              textDecoration: "none",
-            }}>
-            💬 WhatsApp
+        {/* Logo */}
+        <div style={{
+          width: "110px", height: "110px", borderRadius: "24px",
+          background: "#050505",
+          border: "2px solid rgba(232,33,58,.4)",
+          boxShadow: "0 0 40px rgba(232,33,58,.25), 0 0 80px rgba(232,33,58,.08)",
+          padding: "12px", marginBottom: "2rem",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1)" : "scale(.8)",
+          transition: "all .6s cubic-bezier(.4,0,.2,1)",
+        }}>
+          <img src="/logo_arm.png" alt="ARM Racing"
+            style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        </div>
+
+        {/* Subtítulo */}
+        <div className="public-subtitle" style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(12px)",
+          transition: "all .5s cubic-bezier(.4,0,.2,1)",
+          transitionDelay: ".15s",
+          marginBottom: "1rem",
+        }}>
+          Bogotá · Colombia
+        </div>
+
+        {/* Título */}
+        <h1 className="public-title" style={{
+          fontSize: "clamp(2.5rem, 7vw, 5rem)",
+          lineHeight: 1.05,
+          marginBottom: "1rem",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(16px)",
+          transition: "all .5s cubic-bezier(.4,0,.2,1)",
+          transitionDelay: ".25s",
+        }}>
+          ARM Racing<br/>
+          <span style={{
+            background: "linear-gradient(135deg, #E8213A 0%, #FF6B6B 50%, #1E5FD4 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+          }}>Performance</span>
+        </h1>
+
+        {/* Tagline */}
+        <p style={{
+          fontSize: "18px", color: "#8A9AB8", maxWidth: "500px",
+          lineHeight: 1.7, marginBottom: "3rem",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(12px)",
+          transition: "all .5s cubic-bezier(.4,0,.2,1)",
+          transitionDelay: ".35s",
+        }}>
+          Especialistas en motocicletas. Diagnóstico, mantenimiento
+          y rendimiento al siguiente nivel.
+        </p>
+
+        {/* CTAs */}
+        <div style={{
+          display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(12px)",
+          transition: "all .5s cubic-bezier(.4,0,.2,1)",
+          transitionDelay: ".45s",
+        }}>
+          <a href="/agendar" style={{
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            padding: "14px 32px", borderRadius: "12px", textDecoration: "none",
+            background: "linear-gradient(135deg, #E8213A, #C41830)",
+            color: "white", fontWeight: "700", fontSize: "15px",
+            boxShadow: "0 8px 32px rgba(232,33,58,.35)",
+            transition: "all .2s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 14px 40px rgba(232,33,58,.45)" }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(232,33,58,.35)" }}>
+            📅 Agendar cita
+          </a>
+          <a href="/registro" style={{
+            display: "inline-flex", alignItems: "center", gap: "8px",
+            padding: "14px 32px", borderRadius: "12px", textDecoration: "none",
+            background: "rgba(255,255,255,.05)",
+            border: "1.5px solid rgba(255,255,255,.15)",
+            color: "#D0D8F0", fontWeight: "600", fontSize: "15px",
+            transition: "all .2s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.3)" }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.15)" }}>
+            ✍️ Registrarme
           </a>
         </div>
-      </section>
 
-      {/* ── INFORMACIÓN ── */}
-      <section style={{ padding: "3rem 2rem", background: "#111827", borderBottom: "1px solid #374151" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem" }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "32px", marginBottom: "8px" }}>📍</div>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px" }}>Ubicación</h3>
-              <p style={{ color: "#9CA3AF", fontSize: "14px" }}>
-                Carrera 54b # 50 -09 sur<br />
-                Venecia, Bogotá
-              </p>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "32px", marginBottom: "8px" }}>⏰</div>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px" }}>Horarios</h3>
-              <p style={{ color: "#9CA3AF", fontSize: "14px" }}>
-                Lunes - Sábado<br />
-                8:00 AM - 7:30 PM
-              </p>
-            </div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "32px", marginBottom: "8px" }}>📞</div>
-              <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "8px" }}>Contacto</h3>
-              <p style={{ color: "#9CA3AF", fontSize: "14px" }}>
-                <a href="tel:3232338894" style={{ color: "#10B981", textDecoration: "none" }}>+57 323 233 8894</a><br />
-                <a href="mailto:armracingpeformance@gmail.com" style={{ color: "#10B981", textDecoration: "none", fontSize: "12px" }}>armracingpeformance@gmail.com</a>
-              </p>
-            </div>
-          </div>
+        {/* Scroll hint */}
+        <div style={{ position: "absolute", bottom: "2rem",
+          display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
+          color: "#3A4A62", fontSize: "12px",
+          animation: "pulse 2s infinite",
+        }}>
+          <span>Scroll</span>
+          <span style={{ fontSize: "18px" }}>↓</span>
         </div>
-      </section>
+      </div>
 
-      {/* ── SERVICIOS ── */}
-      <section id="servicios" style={{ padding: "4rem 2rem", background: "#0D1117" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <h2 style={{ fontSize: "36px", fontWeight: "900", textAlign: "center", marginBottom: "3rem", color: "#F9FAFB" }}>
-            Nuestros Servicios
+      {/* SERVICIOS */}
+      <div style={{ padding: "5rem 2rem", maxWidth: "1100px", margin: "0 auto",
+        position: "relative", zIndex: 1 }}>
+        <div className="accent-line" style={{ marginBottom: "3rem" }}/>
+        <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+          <div className="public-subtitle" style={{ marginBottom: "12px" }}>
+            Lo que hacemos
+          </div>
+          <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", fontWeight: "800",
+            color: "#EEF0FF", letterSpacing: "-.5px" }}>
+            Nuestros servicios
           </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem" }}>
-            {SERVICIOS.map((servicio, i) => (
-              <div key={i} style={{
-                background: "#111827",
-                border: "2px solid #374151",
-                borderRadius: "12px",
-                padding: "1.5rem",
-              }}>
-                <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#EF4444", marginBottom: "1rem" }}>
-                  {servicio.cat}
-                </h3>
-                <ul style={{ listStyle: "none", padding: 0 }}>
-                  {servicio.items.map((item, j) => (
-                    <li key={j} style={{
-                      color: "#D1D5DB",
-                      fontSize: "13px",
-                      padding: "6px 0",
-                      borderBottom: "1px solid #374151",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}>
-                      <span style={{ color: "#10B981" }}>✓</span> {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
         </div>
-      </section>
 
-      {/* ── TIENDA ── */}
-      <section id="tienda" style={{ padding: "4rem 2rem", background: "#111827", borderTop: "1px solid #374151" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ fontSize: "36px", fontWeight: "900", marginBottom: "1rem" }}>🛒 Tienda Online</h2>
-          <p style={{ color: "#9CA3AF", fontSize: "16px", marginBottom: "2rem" }}>
-            Repuestos, accesorios y lubricantes de las mejores marcas
-          </p>
-          <div style={{
-            background: "#1F2937",
-            border: "2px dashed #374151",
-            borderRadius: "12px",
-            padding: "3rem",
-            color: "#9CA3AF",
-          }}>
-            <p style={{ fontSize: "18px" }}>Tienda en construcción</p>
-            <p style={{ fontSize: "14px", marginTop: "8px" }}>Productos disponibles próximamente</p>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gap: "1.5rem" }}>
+          {SERVICIOS.map((s, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,.03)",
+              border: "1px solid rgba(255,255,255,.08)",
+              borderRadius: "16px", padding: "1.75rem",
+              transition: "all .2s",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = "rgba(232,33,58,.06)"
+              e.currentTarget.style.borderColor = "rgba(232,33,58,.2)"
+              e.currentTarget.style.transform = "translateY(-4px)"
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = "rgba(255,255,255,.03)"
+              e.currentTarget.style.borderColor = "rgba(255,255,255,.08)"
+              e.currentTarget.style.transform = "translateY(0)"
+            }}>
+              <div style={{ fontSize: "36px", marginBottom: "14px" }}>{s.icon}</div>
+              <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#EEF0FF",
+                marginBottom: "8px" }}>{s.titulo}</h3>
+              <p style={{ fontSize: "14px", color: "#6A7A92", lineHeight: 1.7 }}>{s.desc}</p>
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* ── TESTIMONIOS ── */}
-      <section style={{ padding: "4rem 2rem", background: "#0D1117" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
-          <h2 style={{ fontSize: "36px", fontWeight: "900", textAlign: "center", marginBottom: "3rem" }}>
-            Qué dicen nuestros clientes
-          </h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem" }}>
-            {TESTIMONIOS.map((test, i) => (
-              <div key={i} style={{
-                background: "#111827",
-                border: "1px solid #374151",
-                borderRadius: "12px",
-                padding: "1.5rem",
-              }}>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem", fontSize: "18px" }}>
-                  {"⭐".repeat(test.calificacion)}
-                </div>
-                <p style={{ color: "#D1D5DB", fontSize: "14px", fontStyle: "italic", marginBottom: "1rem" }}>
-                  "{test.texto}"
-                </p>
-                <p style={{ color: "#EF4444", fontWeight: "600", fontSize: "14px" }}>
-                  {test.nombre} — {test.moto}
-                </p>
-              </div>
-            ))}
-          </div>
+      {/* CONTACTO */}
+      <div style={{ padding: "5rem 2rem", maxWidth: "900px", margin: "0 auto",
+        position: "relative", zIndex: 1 }}>
+        <div className="accent-line" style={{ marginBottom: "3rem" }}/>
+        <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+          <div className="public-subtitle" style={{ marginBottom: "12px" }}>Encuéntranos</div>
+          <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", fontWeight: "800",
+            color: "#EEF0FF", letterSpacing: "-.5px" }}>Contacto</h2>
         </div>
-      </section>
 
-      {/* ── CONTACTO ── */}
-      <section id="contacto" style={{ padding: "4rem 2rem", background: "#111827", borderTop: "1px solid #374151" }}>
-        <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
-          <h2 style={{ fontSize: "36px", fontWeight: "900", marginBottom: "2rem" }}>Contáctanos</h2>
-          <p style={{ color: "#9CA3AF", fontSize: "16px", marginBottom: "2rem" }}>
-            ¿Tienes preguntas? Nos encantaría escucharte.
-          </p>
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="tel:3232338894"
-              style={{
-                background: "#3B82F6",
-                color: "white",
-                padding: "12px 30px",
-                borderRadius: "8px",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}>
-              📞 Llamar
-            </a>
-            <a href="https://wa.me/573232338894"
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                background: "#25D366",
-                color: "white",
-                padding: "12px 30px",
-                borderRadius: "8px",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}>
-              💬 WhatsApp
-            </a>
-            <a href="mailto:armracingpeformance@gmail.com"
-              style={{
-                background: "#EF4444",
-                color: "white",
-                padding: "12px 30px",
-                borderRadius: "8px",
-                textDecoration: "none",
-                fontWeight: "600",
-              }}>
-              📧 Email
-            </a>
-            <button onClick={irAAgendar}
-              style={{
-                background: "#10B981",
-                color: "white",
-                border: "none",
-                padding: "12px 30px",
-                borderRadius: "8px",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}>
-              📅 Agendar
-            </button>
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: "1.25rem" }}>
+          {CONTACTO.map((c, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,.03)",
+              border: "1px solid rgba(255,255,255,.07)",
+              borderRadius: "14px", padding: "1.5rem",
+              textAlign: "center",
+            }}>
+              <div style={{ fontSize: "28px", marginBottom: "10px" }}>{c.icon}</div>
+              <div style={{ fontSize: "11px", fontWeight: "700", color: "#E8213A",
+                textTransform: "uppercase", letterSpacing: ".1em",
+                marginBottom: "6px" }}>{c.titulo}</div>
+              <div style={{ fontSize: "14px", color: "#9AAAC0",
+                lineHeight: 1.5 }}>{c.valor}</div>
+            </div>
+          ))}
         </div>
-      </section>
+      </div>
 
-      {/* ── REDES SOCIALES ── */}
-      <section style={{ padding: "2rem", background: "#0D1117", borderTop: "1px solid #374151", textAlign: "center" }}>
-        <p style={{ color: "#9CA3AF", fontSize: "14px", marginBottom: "1rem" }}>Síguenos en redes sociales</p>
-        <div style={{ display: "flex", justifyContent: "center", gap: "20px" }}>
-          <a href="https://instagram.com/arm_racing.performance" target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: "24px", textDecoration: "none", color: "#E1306C" }}>📸</a>
-          <a href="https://wa.me/573232338894" target="_blank" rel="noopener noreferrer"
-            style={{ fontSize: "24px", textDecoration: "none", color: "#25D366" }}>💬</a>
+      {/* FOOTER */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,.06)",
+        padding: "2rem", textAlign: "center", position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: "12px" }}>
+          <img src="/logo_arm.png" alt="ARM Racing"
+            style={{ height: "30px", opacity: .6, objectFit: "contain" }} />
         </div>
-      </section>
-
-      {/* ── PIE DE PÁGINA ── */}
-      <footer style={{
-        background: "#111827",
-        borderTop: "1px solid #374151",
-        padding: "2rem",
-        textAlign: "center",
-        color: "#6B7280",
-        fontSize: "12px",
-      }}>
-        <p>© 2026 ARM Racing Performance — Powered by TallerOS</p>
-      </footer>
+        <div style={{ fontSize: "12px", color: "#3A4A62" }}>
+          © {new Date().getFullYear()} ARM Racing Performance · Bogotá, Colombia
+        </div>
+      </div>
     </div>
   )
 }

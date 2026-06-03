@@ -472,3 +472,48 @@ a:hover { color: #FF4D66; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================
+   FONDO TEXTURIZADO - ESTILO PADDOCK
+============================================ */
+
+/* Textura rugosa negra para páginas públicas */
+.bg-texture {
+  background-color: #080A0E;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Overlay para páginas públicas */
+.public-overlay {
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(232,33,58,.12) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(30,95,212,.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Línea decorativa */
+.accent-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #E8213A, transparent);
+}
+
+/* Texto elegante público */
+.public-title {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: #F0F4FF;
+}
+
+.public-subtitle {
+  font-size: 13px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #E8213A;
+  font-weight: 700;
+}

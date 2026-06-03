@@ -1,512 +1,403 @@
-import { useState } from "react"
-import { agendamientoAPI } from "../services/api"
+import { useState, useEffect } from "react"
 
-const PASOS = ["Identificación", "Vehículo", "Fecha", "Hora", "Confirmación"]
-
-const estiloBtn = (activo) => ({
-  background: activo ? "#10B981" : "#1F2937",
-  color: activo ? "white" : "#6B7280",
-  border: `1px solid ${activo ? "#10B981" : "#374151"}`,
-  borderRadius: "8px", padding: "10px 20px",
-  fontSize: "14px", cursor: "pointer", fontWeight: "500",
-})
+const BASE = window.location.hostname === "app.armracing.com"
+  ? "https://api.armracing.com/api" : "http://192.168.0.8:8000/api"
 
 export default function Agendar() {
-  const [paso, setPaso]               = useState(0)
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState("")
-  const [documento, setDocumento]     = useState("")
-  const [cliente, setCliente]         = useState(null)
-  const [vehiculos, setVehiculos]     = useState([])
-  const [vehiculoSel, setVehiculoSel] = useState(null)
-  const [nuevoVeh, setNuevoVeh]       = useState(false)
-  const [nuevoCliente, setNuevoCliente] = useState(false)
-  const [formCliente, setFormCliente] = useState({ nombre:"", documento:"", telefono:"", correo:"", ciudad:"" })
-  const [formVeh, setFormVeh]         = useState({ placa:"", marca:"", linea:"", modelo:"", tipo:"moto" })
-  const [disponibilidad, setDisponibilidad] = useState(null)
-  const [mesVista, setMesVista]       = useState(new Date().getMonth() + 1)
-  const [anioVista, setAnioVista]     = useState(new Date().getFullYear())
-  const [fechaSel, setFechaSel]       = useState(null)
-  const [horas, setHoras]             = useState([])
-  const [horaSel, setHoraSel]         = useState(null)
-  const [descripcion, setDescripcion] = useState("")
-  const [citaCreada, setCitaCreada]   = useState(null)
-  const [citaEspecial, setCitaEspecial] = useState(false)
+  const [paso, setPaso]           = useState(1)
+  const [visible, setVisible]     = useState(false)
+  const [cargando, setCargando]   = useState(false)
+  const [mensaje, setMensaje]     = useState("")
+  const [error, setError]         = useState("")
+  const [diasDisp, setDiasDisp]   = useState([])
+  const [horasDisp, setHorasDisp] = useState([])
+  const [form, setForm] = useState({
+    nombre:"", documento:"", telefono:"", correo:"",
+    placa:"", marca:"", linea:"", modelo: new Date().getFullYear(),
+    tipo_servicio:"mantenimiento", descripcion:"",
+    fecha:"", hora:""
+  })
 
-  const meses = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
-  const diasSemana = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]
+  useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
+  useEffect(() => {
+    if (form.fecha) cargarHoras(form.fecha)
+  }, [form.fecha])
 
-  // ── PASO 1 — Buscar cliente ──────────────────────────────────────────────
-  const buscarCliente = async () => {
-    setError(""); setLoading(true)
+  const cargarHoras = async (fecha) => {
     try {
-      const res = await agendamientoAPI.buscarCliente(documento)
-      if (res.data.existe) {
-        setCliente(res.data.cliente)
-        setVehiculos(res.data.vehiculos)
-        setNuevoCliente(false)
-        setPaso(1)
-      } else {
-        setNuevoCliente(true)
-        setFormCliente(f => ({ ...f, documento }))
-      }
-    } catch { setError("Error buscando cliente") }
-    setLoading(false)
+      const r = await fetch(`${BASE}/agendamiento/publico/horas-disponibles/?fecha=${fecha}`)
+      const data = await r.json()
+      setHorasDisp(data.horas || [])
+    } catch { setHorasDisp([]) }
   }
 
-  const registrarCliente = async () => {
-    if (!formCliente.nombre || !formCliente.documento || !formCliente.telefono) {
+  const siguientePaso = () => {
+    if (paso === 1 && (!form.nombre || !form.documento || !form.telefono)) {
       setError("Nombre, documento y teléfono son obligatorios"); return
     }
-    setLoading(true); setError("")
-    try {
-      const res = await agendamientoAPI.registrarCliente(formCliente)
-      setCliente(res.data.cliente)
-      setVehiculos([])
-      setNuevoCliente(false)
-      setPaso(1)
-    } catch { setError("Error registrando cliente") }
-    setLoading(false)
-  }
-
-  // ── PASO 2 — Vehículo ───────────────────────────────────────────────────
-  const registrarVehiculo = async () => {
-    if (!formVeh.placa || !formVeh.marca || !formVeh.linea || !formVeh.modelo) {
-      setError("Placa, marca, línea y modelo son obligatorios"); return
+    if (paso === 2 && (!form.placa || !form.marca || !form.linea)) {
+      setError("Placa, marca y línea son obligatorios"); return
     }
-    setLoading(true); setError("")
-    try {
-      const res = await agendamientoAPI.registrarVehiculo({ ...formVeh, cliente: cliente.id })
-      setVehiculoSel(res.data.vehiculo)
-      setNuevoVeh(false)
-      await cargarDisponibilidad(mesVista, anioVista)
-      setPaso(2)
-    } catch { setError("Error registrando vehículo") }
-    setLoading(false)
-  }
-
-  const seleccionarVehiculo = async (v) => {
-    setVehiculoSel(v)
-    await cargarDisponibilidad(mesVista, anioVista)
-    setPaso(2)
-  }
-
-  // ── PASO 3 — Calendario ─────────────────────────────────────────────────
-  const cargarDisponibilidad = async (mes, anio) => {
-    setLoading(true)
-    try {
-      const res = await agendamientoAPI.disponibilidadMes(mes, anio)
-      setDisponibilidad(res.data)
-    } catch { setError("Error cargando disponibilidad") }
-    setLoading(false)
-  }
-
-  const cambiarMes = async (dir) => {
-    let m = mesVista + dir, a = anioVista
-    if (m > 12) { m = 1; a++ }
-    if (m < 1)  { m = 12; a-- }
-    setMesVista(m); setAnioVista(a)
-    await cargarDisponibilidad(m, a)
-  }
-
-  const seleccionarFecha = async (fecha) => {
-    setFechaSel(fecha); setHoraSel(null)
-    setLoading(true)
-    try {
-      const res = await agendamientoAPI.horasDisponibles(fecha)
-      setHoras(res.data.horas)
-      setPaso(3)
-    } catch { setError("Error cargando horas") }
-    setLoading(false)
-  }
-
-  const getDiasCalendario = () => {
-    const primerDia = new Date(anioVista, mesVista - 1, 1).getDay()
-    const diasMes   = new Date(anioVista, mesVista, 0).getDate()
-    const dias = []
-    for (let i = 0; i < primerDia; i++) dias.push(null)
-    for (let d = 1; d <= diasMes; d++) {
-      const fecha = `${anioVista}-${String(mesVista).padStart(2,'0')}-${String(d).padStart(2,'0')}`
-      const hoy   = new Date()
-      const fDate = new Date(fecha)
-      const esDomingo   = fDate.getDay() === 0
-      const esPasado    = fDate < new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
-      const esBloqueado = disponibilidad?.bloqueados?.includes(fecha)
-      const ocupacion   = disponibilidad?.ocupacion?.[fecha] || {}
-      const maxHora     = disponibilidad?.max_citas_hora || 4
-      const horasDisp   = disponibilidad?.config
-        ? calcularHorasDisp(fDate, ocupacion, maxHora)
-        : 0
-      dias.push({ dia: d, fecha, esDomingo, esPasado, esBloqueado, horasDisp })
+    if (paso === 3 && (!form.fecha || !form.hora)) {
+      setError("Selecciona fecha y hora"); return
     }
-    return dias
+    setError("")
+    setPaso(p => p + 1)
   }
 
-  const calcularHorasDisp = (fDate, ocupacion, maxHora) => {
-    let count = 0
-    const esSabado = fDate.getDay() === 6
-    const ap = esSabado ? disponibilidad.config.sabado_apertura : disponibilidad.config.hora_apertura
-    const ci = esSabado ? disponibilidad.config.sabado_cierre   : disponibilidad.config.hora_cierre
-    if (!ap || !ci) return 0
-    const [hAp] = ap.split(':').map(Number)
-    const [hCi] = ci.split(':').map(Number)
-    for (let h = hAp; h < hCi; h++) {
-      const key = `${String(h).padStart(2,'0')}:00:00`
-      const ocupadas = ocupacion[key] || 0
-      if (ocupadas < maxHora) count++
-    }
-    return count
-  }
-
-  // ── PASO 5 — Confirmar cita ─────────────────────────────────────────────
-  const confirmarCita = async () => {
-    setLoading(true); setError("")
-    const horaCompleta = horaSel + ":00"
-    const data = {
-      cliente:     cliente.id,
-      vehiculo:    vehiculoSel.id,
-      fecha:       fechaSel,
-      hora:        horaCompleta,
-      descripcion,
-      tipo:        citaEspecial ? "especial" : "normal",
-    }
+  const enviarCita = async () => {
+    setCargando(true)
+    setError("")
     try {
-      const fn  = citaEspecial ? agendamientoAPI.citaEspecial : agendamientoAPI.crearCita
-      const res = await fn(data)
-      setCitaCreada(res.data.cita)
-      setPaso(4)
-    } catch (e) {
-      setError(e.response?.data?.non_field_errors?.[0] || "Error al agendar la cita")
-    }
-    setLoading(false)
+      // Registrar cliente
+      const cRes = await fetch(`${BASE}/agendamiento/publico/registrar-cliente/`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: form.nombre, documento: form.documento,
+          telefono: form.telefono, correo: form.correo,
+        })
+      })
+      const cliente = await cRes.json()
+
+      // Crear cita
+      const citaRes = await fetch(`${BASE}/agendamiento/publico/crear-cita/`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cliente_id: cliente.id,
+          placa: form.placa, marca: form.marca, linea: form.linea,
+          modelo: form.modelo,
+          tipo_servicio: form.tipo_servicio,
+          descripcion: form.descripcion,
+          fecha: form.fecha, hora: form.hora,
+        })
+      })
+      const cita = await citaRes.json()
+      if (citaRes.ok) {
+        setMensaje(`✅ Cita confirmada para el ${form.fecha} a las ${form.hora}`)
+        setPaso(5)
+      } else {
+        setError(cita.error || "Error al agendar")
+      }
+    } catch { setError("Error de conexión") }
+    setCargando(false)
   }
 
-  const inputStyle = { width: "100%", marginBottom: "0.75rem" }
-  const cardStyle  = { background: "#1F2937", borderRadius: "12px", padding: "1.5rem", border: "1px solid #374151" }
+  const inputStyle = {
+    background: "rgba(255,255,255,.05)",
+    border: "1px solid rgba(255,255,255,.12)",
+    color: "#EEF0FF", borderRadius: "10px",
+    padding: "12px 16px", fontSize: "15px",
+    width: "100%", fontFamily: "Inter, sans-serif",
+    transition: "all .2s",
+    outline: "none",
+  }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#111827", padding: "2rem 1rem" }}>
-      <div style={{ maxWidth: "640px", margin: "0 auto" }}>
+    <div className="bg-texture" style={{ minHeight: "100vh",
+      display: "flex", flexDirection: "column", position: "relative" }}>
+      <div className="public-overlay"/>
 
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔧</div>
-          <h1 style={{ color: "#F9FAFB", fontSize: "24px", fontWeight: "700", marginBottom: "4px" }}>
-            TallerOS — Agendar Cita
-          </h1>
-          <p style={{ color: "#6B7280", fontSize: "13px" }}>
-            Agenda tu cita de mantenimiento en minutos
-          </p>
-        </div>
-
-        {/* Pasos */}
-        <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginBottom: "2rem", flexWrap: "wrap" }}>
-          {PASOS.map((p, i) => (
-            <div key={i} style={{
-              padding: "4px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "600",
-              background: paso === i ? "#10B981" : paso > i ? "#065F46" : "#1F2937",
-              color: paso >= i ? "white" : "#6B7280",
-              border: `1px solid ${paso === i ? "#10B981" : paso > i ? "#065F46" : "#374151"}`,
-            }}>{i + 1}. {p}</div>
-          ))}
-        </div>
-
-        {error && (
-          <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
-            padding: "10px 14px", marginBottom: "1rem", fontSize: "13px", color: "#EF4444" }}>
-            {error}
-          </div>
-        )}
-
-        {/* ── PASO 0 — Identificación ── */}
-        {paso === 0 && !nuevoCliente && (
-          <div style={cardStyle}>
-            <h2 style={{ color: "#F9FAFB", fontSize: "16px", fontWeight: "600", marginBottom: "1rem" }}>
-              ¿Ya eres cliente del taller?
-            </h2>
-            <p style={{ color: "#9CA3AF", fontSize: "13px", marginBottom: "1rem" }}>
-              Ingresa tu número de documento para identificarte
-            </p>
-            <input value={documento} onChange={e => setDocumento(e.target.value)}
-              placeholder="Número de documento" style={inputStyle}
-              onKeyDown={e => e.key === "Enter" && buscarCliente()} />
-            <button onClick={buscarCliente} disabled={loading || !documento}
-              style={{ ...estiloBtn(true), width: "100%" }}>
-              {loading ? "Buscando..." : "Continuar →"}
-            </button>
-          </div>
-        )}
-
-        {paso === 0 && nuevoCliente && (
-          <div style={cardStyle}>
-            <h2 style={{ color: "#F9FAFB", fontSize: "16px", fontWeight: "600", marginBottom: "4px" }}>
-              Cliente nuevo — Completa tus datos
-            </h2>
-            <p style={{ color: "#9CA3AF", fontSize: "13px", marginBottom: "1rem" }}>
-              No encontramos tu documento. Regístrate para continuar.
-            </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 1rem" }}>
-              <input placeholder="Nombre completo *" value={formCliente.nombre}
-                onChange={e => setFormCliente({...formCliente, nombre: e.target.value})} style={inputStyle} />
-              <input placeholder="Documento *" value={formCliente.documento}
-                onChange={e => setFormCliente({...formCliente, documento: e.target.value})} style={inputStyle} />
-              <input placeholder="Teléfono *" value={formCliente.telefono}
-                onChange={e => setFormCliente({...formCliente, telefono: e.target.value})} style={inputStyle} />
-              <input placeholder="Correo" value={formCliente.correo}
-                onChange={e => setFormCliente({...formCliente, correo: e.target.value})} style={inputStyle} />
+      {/* Header */}
+      <div style={{ padding: "1.5rem 2rem", borderBottom: "1px solid rgba(255,255,255,.06)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: "relative", zIndex: 1 }}>
+        <a href="/public" style={{ display: "flex", alignItems: "center",
+          gap: "10px", textDecoration: "none" }}>
+          <img src="/logo_arm.png" alt="ARM Racing"
+            style={{ height: "36px", objectFit: "contain" }} />
+          <div>
+            <div style={{ fontSize: "14px", fontWeight: "800", color: "#EEF0FF" }}>
+              ARM Racing
             </div>
-            <input placeholder="Ciudad" value={formCliente.ciudad}
-              onChange={e => setFormCliente({...formCliente, ciudad: e.target.value})} style={inputStyle} />
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => setNuevoCliente(false)} style={{ ...estiloBtn(false), flex: 1 }}>
-                ← Volver
-              </button>
-              <button onClick={registrarCliente} disabled={loading} style={{ ...estiloBtn(true), flex: 2 }}>
-                {loading ? "Registrando..." : "Registrarme y continuar →"}
-              </button>
-            </div>
+            <div style={{ fontSize: "10px", color: "#E8213A", fontWeight: "700",
+              textTransform: "uppercase", letterSpacing: ".1em" }}>Performance</div>
           </div>
-        )}
+        </a>
+        <a href="/portal" style={{ fontSize: "13px", color: "#6A7A92",
+          textDecoration: "none", transition: "color .15s" }}
+        onMouseEnter={e => e.currentTarget.style.color = "#E8213A"}
+        onMouseLeave={e => e.currentTarget.style.color = "#6A7A92"}>
+          Ver mi cita →
+        </a>
+      </div>
 
-        {/* ── PASO 1 — Vehículo ── */}
-        {paso === 1 && (
-          <div style={cardStyle}>
-            <h2 style={{ color: "#F9FAFB", fontSize: "16px", fontWeight: "600", marginBottom: "4px" }}>
-              Hola, {cliente?.nombre} 👋
-            </h2>
-            <p style={{ color: "#9CA3AF", fontSize: "13px", marginBottom: "1.25rem" }}>
-              Selecciona el vehículo para la cita
-            </p>
-
-            {vehiculos.map(v => (
-              <div key={v.id} onClick={() => seleccionarVehiculo(v)}
-                style={{ ...cardStyle, cursor: "pointer", marginBottom: "8px", padding: "1rem",
-                  border: vehiculoSel?.id === v.id ? "1px solid #10B981" : "1px solid #374151" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div>
-                    <div style={{ color: "#F9FAFB", fontWeight: "600", fontFamily: "monospace" }}>{v.placa}</div>
-                    <div style={{ color: "#9CA3AF", fontSize: "12px" }}>{v.marca} {v.linea} {v.modelo}</div>
-                  </div>
-                  <span style={{ fontSize: "24px" }}>{v.tipo === "moto" ? "🏍️" : "🚗"}</span>
-                </div>
-              </div>
-            ))}
-
-            <button onClick={() => setNuevoVeh(!nuevoVeh)} style={{ ...estiloBtn(false), width: "100%", marginBottom: "1rem" }}>
-              + Agregar nuevo vehículo
-            </button>
-
-            {nuevoVeh && (
-              <div style={{ marginTop: "1rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 1rem" }}>
-                  <input placeholder="Placa *" value={formVeh.placa}
-                    onChange={e => setFormVeh({...formVeh, placa: e.target.value.toUpperCase()})} style={inputStyle} />
-                  <input placeholder="Marca *" value={formVeh.marca}
-                    onChange={e => setFormVeh({...formVeh, marca: e.target.value})} style={inputStyle} />
-                  <input placeholder="Línea *" value={formVeh.linea}
-                    onChange={e => setFormVeh({...formVeh, linea: e.target.value})} style={inputStyle} />
-                  <input placeholder="Modelo (año) *" value={formVeh.modelo} type="number"
-                    onChange={e => setFormVeh({...formVeh, modelo: e.target.value})} style={inputStyle} />
-                </div>
-                <select value={formVeh.tipo} onChange={e => setFormVeh({...formVeh, tipo: e.target.value})}
-                  style={{ ...inputStyle }}>
-                  <option value="moto">Motocicleta</option>
-                  <option value="carro">Automóvil</option>
-                  <option value="bicicleta">Bicicleta eléctrica</option>
-                </select>
-                <button onClick={registrarVehiculo} disabled={loading} style={{ ...estiloBtn(true), width: "100%" }}>
-                  {loading ? "Guardando..." : "Guardar vehículo →"}
-                </button>
-              </div>
+      {/* Contenido */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center",
+        justifyContent: "center", padding: "2rem",
+        position: "relative", zIndex: 1 }}>
+        <div style={{
+          width: "100%", maxWidth: "540px",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(20px)",
+          transition: "all .5s cubic-bezier(.4,0,.2,1)",
+        }}>
+          {/* Título */}
+          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
+            <div className="public-subtitle" style={{ marginBottom: "8px" }}>
+              Taller ARM Racing Performance
+            </div>
+            <h1 style={{ fontSize: "32px", fontWeight: "900", color: "#EEF0FF",
+              letterSpacing: "-.5px", marginBottom: "8px" }}>
+              {paso < 5 ? "Agenda tu cita" : "¡Cita confirmada!"}
+            </h1>
+            {paso < 5 && (
+              <p style={{ color: "#6A7A92", fontSize: "14px" }}>
+                Paso {paso} de 4 — {["", "Tus datos", "Tu moto", "Fecha y hora", "Confirmación"][paso]}
+              </p>
             )}
           </div>
-        )}
 
-        {/* ── PASO 2 — Calendario ── */}
-        {paso === 2 && (
-          <div style={cardStyle}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <button onClick={() => cambiarMes(-1)} style={{ ...estiloBtn(false), padding: "6px 14px" }}>←</button>
-              <h2 style={{ color: "#F9FAFB", fontSize: "16px", fontWeight: "600" }}>
-                {meses[mesVista]} {anioVista}
-              </h2>
-              <button onClick={() => cambiarMes(1)} style={{ ...estiloBtn(false), padding: "6px 14px" }}>→</button>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px", marginBottom: "8px" }}>
-              {diasSemana.map(d => (
-                <div key={d} style={{ textAlign: "center", fontSize: "11px", color: "#6B7280", fontWeight: "600", padding: "4px" }}>{d}</div>
+          {/* Progreso */}
+          {paso < 5 && (
+            <div style={{ display: "flex", gap: "4px", marginBottom: "2rem" }}>
+              {[1,2,3,4].map(s => (
+                <div key={s} style={{
+                  flex: 1, height: "4px", borderRadius: "2px",
+                  background: s <= paso ? "#E8213A" : "rgba(255,255,255,.1)",
+                  transition: "background .3s",
+                  boxShadow: s <= paso ? "0 0 8px rgba(232,33,58,.4)" : "none",
+                }}/>
               ))}
             </div>
+          )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "4px" }}>
-              {getDiasCalendario().map((d, i) => {
-                if (!d) return <div key={i} />
-                const noDisp = d.esDomingo || d.esPasado || d.esBloqueado || d.horasDisp === 0
-                const seleccionado = fechaSel === d.fecha
-                return (
-                  <div key={i} onClick={() => !noDisp && seleccionarFecha(d.fecha)}
-                    style={{
-                      textAlign: "center", padding: "8px 4px", borderRadius: "8px",
-                      fontSize: "13px", fontWeight: "500", cursor: noDisp ? "not-allowed" : "pointer",
-                      background: seleccionado ? "#10B981" : noDisp ? "#111827" : "#374151",
-                      color: seleccionado ? "white" : noDisp ? "#374151" : "#F9FAFB",
-                      border: seleccionado ? "1px solid #10B981" : "1px solid transparent",
-                      opacity: noDisp ? 0.4 : 1,
-                    }}>
-                    {d.dia}
-                    {!noDisp && (
-                      <div style={{ fontSize: "9px", color: seleccionado ? "white" : "#10B981" }}>
-                        {d.horasDisp}h
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+          {error && (
+            <div style={{ background: "rgba(232,33,58,.1)",
+              border: "1px solid rgba(232,33,58,.3)",
+              borderRadius: "10px", padding: "12px 16px",
+              color: "#FF8080", fontSize: "13px", marginBottom: "1.25rem" }}>
+              ⚠️ {error}
             </div>
+          )}
 
-            <div style={{ marginTop: "1rem", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "11px", color: "#6B7280" }}>● Disponible</span>
-              <span style={{ fontSize: "11px", color: "#374151" }}>● No disponible</span>
-              <span style={{ fontSize: "11px", color: "#10B981" }}>● Seleccionado</span>
-            </div>
-
-            <div style={{ marginTop: "1rem", borderTop: "1px solid #374151", paddingTop: "1rem" }}>
-              <p style={{ color: "#9CA3AF", fontSize: "12px", marginBottom: "8px" }}>
-                ¿Necesitas una cita en domingo, festivo o fuera de horario?
-              </p>
-              <button onClick={() => { setCitaEspecial(true); setPaso(3) }}
-                style={{ ...estiloBtn(false), width: "100%", fontSize: "12px" }}>
-                Solicitar cita especial →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── PASO 3 — Hora ── */}
-        {paso === 3 && (
-          <div style={cardStyle}>
-            <h2 style={{ color: "#F9FAFB", fontSize: "16px", fontWeight: "600", marginBottom: "4px" }}>
-              {citaEspecial ? "Cita especial" : `Horas disponibles — ${fechaSel}`}
-            </h2>
-            <p style={{ color: "#9CA3AF", fontSize: "13px", marginBottom: "1.25rem" }}>
-              {citaEspecial
-                ? "Indica la fecha y hora que necesitas. El taller la aprobará."
-                : "Selecciona la hora de tu cita"}
-            </p>
-
-            {citaEspecial ? (
-              <div>
-                <input type="date" value={fechaSel || ""} onChange={e => setFechaSel(e.target.value)} style={inputStyle} />
-                <input type="time" value={horaSel || ""} onChange={e => setHoraSel(e.target.value)} style={inputStyle} />
-              </div>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "1rem" }}>
-                {horas.map(h => (
-                  <div key={h.hora} onClick={() => h.disponibles > 0 && setHoraSel(h.hora)}
-                    style={{
-                      textAlign: "center", padding: "12px 8px", borderRadius: "8px", cursor: h.disponibles > 0 ? "pointer" : "not-allowed",
-                      background: horaSel === h.hora ? "#10B981" : h.disponibles > 0 ? "#374151" : "#1F2937",
-                      color: horaSel === h.hora ? "white" : h.disponibles > 0 ? "#F9FAFB" : "#4B5563",
-                      border: `1px solid ${horaSel === h.hora ? "#10B981" : "transparent"}`,
-                      opacity: h.disponibles === 0 ? 0.4 : 1,
-                    }}>
-                    <div style={{ fontWeight: "600", fontSize: "14px" }}>{h.hora}</div>
-                    <div style={{ fontSize: "10px", color: horaSel === h.hora ? "white" : "#9CA3AF" }}>
-                      {h.disponibles > 0 ? `${h.disponibles} cupos` : "Sin cupos"}
-                    </div>
+          {/* Card form */}
+          <div style={{
+            background: "rgba(255,255,255,.03)",
+            border: "1px solid rgba(255,255,255,.08)",
+            borderRadius: "20px", padding: "2rem",
+            backdropFilter: "blur(10px)",
+          }}>
+            {/* Paso 1 — Datos personales */}
+            {paso === 1 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#EEF0FF",
+                  marginBottom: "4px" }}>👤 Tus datos</div>
+                {[
+                  { label: "Nombre completo *", key: "nombre", placeholder: "Felipe Rodríguez" },
+                  { label: "Cédula *", key: "documento", placeholder: "1000594748" },
+                  { label: "Teléfono / WhatsApp *", key: "telefono", placeholder: "3001234567" },
+                  { label: "Correo electrónico", key: "correo", placeholder: "correo@ejemplo.com" },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                      color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                      marginBottom: "6px" }}>{f.label}</label>
+                    <input value={form[f.key]}
+                      onChange={e => setForm({...form, [f.key]: e.target.value})}
+                      placeholder={f.placeholder}
+                      style={inputStyle}
+                      onFocus={e => { e.target.style.borderColor = "rgba(232,33,58,.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(232,33,58,.1)" }}
+                      onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,.12)"; e.target.style.boxShadow = "none" }} />
                   </div>
                 ))}
               </div>
             )}
 
-            <textarea value={descripcion} onChange={e => setDescripcion(e.target.value)}
-              placeholder="¿Qué necesitas revisar? (opcional)" rows={3}
-              style={{ width: "100%", marginBottom: "1rem", resize: "vertical" }} />
-
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={() => { setPaso(citaEspecial ? 2 : 2); setCitaEspecial(false) }}
-                style={{ ...estiloBtn(false), flex: 1 }}>← Volver</button>
-              <button onClick={() => setPaso(4)} disabled={!horaSel || !fechaSel}
-                style={{ ...estiloBtn(!!(horaSel && fechaSel)), flex: 2 }}>
-                Revisar cita →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── PASO 4 — Resumen antes de confirmar ── */}
-        {paso === 4 && !citaCreada && (
-          <div style={cardStyle}>
-            <h2 style={{ color: "#F9FAFB", fontSize: "16px", fontWeight: "600", marginBottom: "1.25rem" }}>
-              Confirma tu cita
-            </h2>
-            {[
-              ["Cliente",   cliente?.nombre],
-              ["Documento", cliente?.documento],
-              ["Vehículo",  `${vehiculoSel?.placa} — ${vehiculoSel?.marca} ${vehiculoSel?.linea}`],
-              ["Fecha",     fechaSel],
-              ["Hora",      horaSel],
-              ["Tipo",      citaEspecial ? "⚡ Especial (requiere aprobación)" : "✅ Normal"],
-              ["Descripción", descripcion || "—"],
-            ].map(([k, v]) => (
-              <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0",
-                borderBottom: "1px solid #374151", fontSize: "13px" }}>
-                <span style={{ color: "#9CA3AF" }}>{k}</span>
-                <span style={{ color: "#F9FAFB", fontWeight: "500", textAlign: "right", maxWidth: "60%" }}>{v}</span>
-              </div>
-            ))}
-
-            <div style={{ marginTop: "1.25rem", display: "flex", gap: "8px" }}>
-              <button onClick={() => setPaso(3)} style={{ ...estiloBtn(false), flex: 1 }}>← Editar</button>
-              <button onClick={confirmarCita} disabled={loading} style={{ ...estiloBtn(true), flex: 2 }}>
-                {loading ? "Agendando..." : citaEspecial ? "Enviar solicitud →" : "Confirmar cita →"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── PASO 5 — Cita creada ── */}
-        {citaCreada && (
-          <div style={{ ...cardStyle, textAlign: "center" }}>
-            <div style={{ fontSize: "48px", marginBottom: "1rem" }}>
-              {citaCreada.tipo === "especial" ? "⏳" : "✅"}
-            </div>
-            <h2 style={{ color: "#F9FAFB", fontSize: "20px", fontWeight: "700", marginBottom: "8px" }}>
-              {citaCreada.tipo === "especial" ? "Solicitud enviada" : "¡Cita confirmada!"}
-            </h2>
-            <p style={{ color: "#9CA3AF", fontSize: "13px", marginBottom: "1.5rem" }}>
-              {citaCreada.tipo === "especial"
-                ? "Tu solicitud de cita especial fue recibida. El taller te contactará para confirmarla."
-                : "Tu cita fue agendada exitosamente. Te esperamos puntual."}
-            </p>
-            <div style={{ background: "#111827", borderRadius: "8px", padding: "1rem", marginBottom: "1.5rem", textAlign: "left" }}>
-              {[
-                ["Fecha",    citaCreada.fecha],
-                ["Hora",     citaCreada.hora?.slice(0,5)],
-                ["Vehículo", vehiculoSel?.placa],
-              ].map(([k,v]) => (
-                <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", padding: "4px 0" }}>
-                  <span style={{ color: "#6B7280" }}>{k}</span>
-                  <span style={{ color: "#F9FAFB", fontWeight: "600" }}>{v}</span>
+            {/* Paso 2 — Datos moto */}
+            {paso === 2 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#EEF0FF",
+                  marginBottom: "4px" }}>🏍 Tu moto</div>
+                {[
+                  { label: "Placa *", key: "placa", placeholder: "NHX14G" },
+                  { label: "Marca *", key: "marca", placeholder: "Bajaj, Honda, Yamaha..." },
+                  { label: "Línea / Modelo *", key: "linea", placeholder: "Pulsar NS200" },
+                  { label: "Año", key: "modelo", placeholder: "2024", type: "number" },
+                ].map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                      color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                      marginBottom: "6px" }}>{f.label}</label>
+                    <input type={f.type || "text"} value={form[f.key]}
+                      onChange={e => setForm({...form, [f.key]: e.target.value})}
+                      placeholder={f.placeholder}
+                      style={inputStyle}
+                      onFocus={e => { e.target.style.borderColor = "rgba(232,33,58,.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(232,33,58,.1)" }}
+                      onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,.12)"; e.target.style.boxShadow = "none" }} />
+                  </div>
+                ))}
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                    color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                    marginBottom: "6px" }}>Tipo de servicio</label>
+                  <select value={form.tipo_servicio}
+                    onChange={e => setForm({...form, tipo_servicio: e.target.value})}
+                    style={inputStyle}>
+                    <option value="mantenimiento">🔧 Mantenimiento preventivo</option>
+                    <option value="diagnostico">🔍 Diagnóstico</option>
+                    <option value="reparacion">🛠️ Reparación</option>
+                    <option value="frenos">🛡️ Sistema de frenos</option>
+                    <option value="electrico">⚡ Sistema eléctrico</option>
+                    <option value="otro">📋 Otro</option>
+                  </select>
                 </div>
-              ))}
-            </div>
-            <div style={{ background: "#065F46", borderRadius: "8px", padding: "1rem", fontSize: "12px", color: "#D1FAE5", textAlign: "left" }}>
-              <strong>Recomendaciones para tu cita:</strong>
-              <ul style={{ marginTop: "6px", paddingLeft: "16px", lineHeight: "1.8" }}>
-                <li>Llega 5 minutos antes de tu hora</li>
-                <li>Trae el vehículo limpio</li>
-                <li>Tanque al menos a la mitad</li>
-                <li>Trae los documentos del vehículo</li>
-              </ul>
-            </div>
-            <button onClick={() => window.location.reload()}
-              style={{ ...estiloBtn(false), marginTop: "1rem", width: "100%" }}>
-              Agendar otra cita
-            </button>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                    color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                    marginBottom: "6px" }}>Descripción del problema</label>
+                  <textarea value={form.descripcion}
+                    onChange={e => setForm({...form, descripcion: e.target.value})}
+                    placeholder="Cuéntanos qué le pasa a tu moto..."
+                    style={{ ...inputStyle, minHeight: "80px", resize: "vertical" }}
+                    onFocus={e => { e.target.style.borderColor = "rgba(232,33,58,.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(232,33,58,.1)" }}
+                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,.12)"; e.target.style.boxShadow = "none" }} />
+                </div>
+              </div>
+            )}
+
+            {/* Paso 3 — Fecha y hora */}
+            {paso === 3 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#EEF0FF",
+                  marginBottom: "4px" }}>📅 Fecha y hora</div>
+                <div>
+                  <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                    color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                    marginBottom: "6px" }}>Selecciona la fecha *</label>
+                  <input type="date" value={form.fecha}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={e => setForm({...form, fecha: e.target.value, hora: ""})}
+                    style={inputStyle}
+                    onFocus={e => { e.target.style.borderColor = "rgba(232,33,58,.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(232,33,58,.1)" }}
+                    onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,.12)"; e.target.style.boxShadow = "none" }} />
+                </div>
+                {form.fecha && (
+                  <div>
+                    <label style={{ display: "block", fontSize: "11px", fontWeight: "700",
+                      color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
+                      marginBottom: "10px" }}>Selecciona la hora *</label>
+                    {horasDisp.length === 0 ? (
+                      <div style={{ color: "#6A7A92", fontSize: "14px",
+                        textAlign: "center", padding: "1rem" }}>
+                        No hay horas disponibles para esta fecha
+                      </div>
+                    ) : (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                        {horasDisp.map(h => (
+                          <button key={h} onClick={() => setForm({...form, hora: h})} style={{
+                            padding: "10px", borderRadius: "10px", border: "none",
+                            cursor: "pointer", fontSize: "14px", fontWeight: "600",
+                            fontFamily: "Inter, sans-serif",
+                            background: form.hora === h ? "linear-gradient(135deg, #E8213A, #C41830)" : "rgba(255,255,255,.06)",
+                            color: form.hora === h ? "white" : "#9AAAC0",
+                            boxShadow: form.hora === h ? "0 4px 16px rgba(232,33,58,.35)" : "none",
+                            transition: "all .15s",
+                          }}>{h}</button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Paso 4 — Confirmación */}
+            {paso === 4 && (
+              <div>
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#EEF0FF",
+                  marginBottom: "1.25rem" }}>✅ Confirma tu cita</div>
+                {[
+                  { label: "Nombre", valor: form.nombre },
+                  { label: "Teléfono", valor: form.telefono },
+                  { label: "Moto", valor: `${form.marca} ${form.linea} (${form.placa})` },
+                  { label: "Servicio", valor: form.tipo_servicio },
+                  { label: "Fecha", valor: form.fecha },
+                  { label: "Hora", valor: form.hora },
+                ].map(item => (
+                  <div key={item.label} style={{ display: "flex", justifyContent: "space-between",
+                    padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
+                    <span style={{ fontSize: "13px", color: "#6A7A92",
+                      textTransform: "uppercase", letterSpacing: ".08em",
+                      fontWeight: "600" }}>{item.label}</span>
+                    <span style={{ fontSize: "14px", color: "#EEF0FF",
+                      fontWeight: "600" }}>{item.valor}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Paso 5 — Éxito */}
+            {paso === 5 && (
+              <div style={{ textAlign: "center", padding: "1rem 0" }}>
+                <div style={{ fontSize: "64px", marginBottom: "1rem",
+                  animation: "pulse 2s infinite" }}>🎉</div>
+                <div style={{ fontSize: "20px", fontWeight: "700",
+                  color: "#00D4A0", marginBottom: "10px" }}>¡Cita agendada!</div>
+                <div style={{ fontSize: "14px", color: "#6A7A92",
+                  lineHeight: 1.7, marginBottom: "1.5rem" }}>
+                  Tu cita fue confirmada para el<br/>
+                  <strong style={{ color: "#EEF0FF" }}>{form.fecha} a las {form.hora}</strong>
+                </div>
+                <div style={{ background: "rgba(0,212,160,.08)",
+                  border: "1px solid rgba(0,212,160,.2)",
+                  borderRadius: "12px", padding: "1rem",
+                  fontSize: "13px", color: "#00D4A0" }}>
+                  📞 Te contactaremos al {form.telefono} para confirmar
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Botones */}
+          <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
+            {paso > 1 && paso < 5 && (
+              <button onClick={() => { setPaso(p => p-1); setError("") }} style={{
+                flex: 1, padding: "13px", borderRadius: "12px",
+                background: "rgba(255,255,255,.05)",
+                border: "1px solid rgba(255,255,255,.12)",
+                color: "#9AAAC0", fontSize: "15px", fontWeight: "600",
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+              }}>← Atrás</button>
+            )}
+            {paso < 4 && (
+              <button onClick={siguientePaso} style={{
+                flex: 2, padding: "13px", borderRadius: "12px",
+                background: "linear-gradient(135deg, #E8213A, #C41830)",
+                border: "none", color: "white", fontSize: "15px", fontWeight: "700",
+                cursor: "pointer", fontFamily: "Inter, sans-serif",
+                boxShadow: "0 6px 24px rgba(232,33,58,.35)",
+                transition: "all .2s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 32px rgba(232,33,58,.45)" }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(232,33,58,.35)" }}>
+                Siguiente →
+              </button>
+            )}
+            {paso === 4 && (
+              <button onClick={enviarCita} disabled={cargando} style={{
+                flex: 2, padding: "13px", borderRadius: "12px",
+                background: "linear-gradient(135deg, #E8213A, #C41830)",
+                border: "none", color: "white", fontSize: "15px", fontWeight: "700",
+                cursor: cargando ? "not-allowed" : "pointer",
+                fontFamily: "Inter, sans-serif",
+                opacity: cargando ? .7 : 1,
+                boxShadow: "0 6px 24px rgba(232,33,58,.35)",
+              }}>
+                {cargando ? "Agendando..." : "✅ Confirmar cita"}
+              </button>
+            )}
+            {paso === 5 && (
+              <a href="/public" style={{
+                flex: 1, padding: "13px", borderRadius: "12px",
+                background: "rgba(255,255,255,.05)",
+                border: "1px solid rgba(255,255,255,.12)",
+                color: "#9AAAC0", fontSize: "15px", fontWeight: "600",
+                cursor: "pointer", textDecoration: "none",
+                textAlign: "center",
+              }}>← Volver al inicio</a>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
