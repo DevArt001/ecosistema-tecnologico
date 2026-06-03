@@ -541,9 +541,59 @@ a:hover { color: #FF4D66; }
 }
 
 [data-tema="claro"] .bg-texture {
-  background-color: #F0F2F8;
+  background-color: #F8F4EF;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
 }
+
+/* Páginas públicas tema claro */
+[data-tema="claro"] .public-overlay {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(232,33,58,.06) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(30,95,212,.04) 0%, transparent 50%);
+}
+
+[data-tema="claro"] .public-subtitle {
+  color: #C41830;
+}
+
+[data-tema="claro"] .public-title {
+  color: #0D1226;
+}
+
+/* Textos en páginas públicas tema claro */
+[data-tema="claro"] .bg-texture h1,
+[data-tema="claro"] .bg-texture h2,
+[data-tema="claro"] .bg-texture h3 {
+  color: #0D1226;
+}
+
+[data-tema="claro"] .bg-texture p {
+  color: #4A5570;
+}
+
+/* Cards en páginas públicas tema claro */
+[data-tema="claro"] .bg-texture > div > div[style*="rgba(255,255,255,.03)"] {
+  background: rgba(255,255,255,.85) !important;
+  border-color: rgba(0,0,0,.1) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Inputs en páginas públicas tema claro */
+[data-tema="claro"] .bg-texture input,
+[data-tema="claro"] .bg-texture select,
+[data-tema="claro"] .bg-texture textarea {
+  background: rgba(255,255,255,.9) !important;
+  border-color: rgba(0,0,0,.15) !important;
+  color: #0D1226 !important;
+}
+
+[data-tema="claro"] .bg-texture input::placeholder,
+[data-tema="claro"] .bg-texture textarea::placeholder {
+  color: #8A9AB8 !important;
+}
+
+/* Sidebar tema claro */
+[data-tema="claro"] .bg-texture ~ * { color: #0D1226; }
 
 [data-tema="claro"] input,
 [data-tema="claro"] select,
@@ -581,4 +631,31 @@ a:hover { color: #FF4D66; }
   background: linear-gradient(90deg, #EEF0F8 25%, #F5F7FF 50%, #EEF0F8 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* Sidebar tema claro */
+[data-tema="claro"] nav a,
+[data-tema="claro"] nav a span {
+  color: #4A5570 !important;
+}
+
+[data-tema="claro"] #sidebar-root,
+[data-tema="claro"] [style*="background: #07090F"] {
+  background: #FFFFFF !important;
+  border-right-color: #DDE2F0 !important;
+}
+
+/* Header mobile tema claro */
+[data-tema="claro"] [style*="background: rgba(8,12,24,.95)"] {
+  background: rgba(255,255,255,.95) !important;
+  border-bottom-color: #DDE2F0 !important;
+}
+
+/* Tablas tema claro */
+[data-tema="claro"] td {
+  color: #2A3558;
+}
+
+[data-tema="claro"] th {
+  color: #7A86A4;
 }

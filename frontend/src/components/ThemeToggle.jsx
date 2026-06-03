@@ -13,7 +13,7 @@ export default function ThemeToggle({ position = "fixed" }) {
         top:   position === "fixed" ? "1rem" : "auto",
         right: position === "fixed" ? "1.25rem" : "auto",
         zIndex: 9998,
-        width: "44px", height: "44px",
+        width: "34px", height: "34px",
         borderRadius: "50%",
         background: isDark
           ? "rgba(255,255,255,.08)"
@@ -23,7 +23,7 @@ export default function ThemeToggle({ position = "fixed" }) {
           : "1.5px solid rgba(0,0,0,.12)",
         cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "18px",
+        fontSize: "14px",
         transition: "all .25s cubic-bezier(.4,0,.2,1)",
         backdropFilter: "blur(8px)",
         boxShadow: isDark
