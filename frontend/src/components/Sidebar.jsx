@@ -87,8 +87,8 @@ export default function Sidebar({ onLogout, onClose }) {
   return (
     <div style={{
       width: "240px", height: "100%",
-      background: "#07090F",
-      borderRight: "1px solid #181E2E",
+      background: "var(--bg2)",
+      borderRight: "1px solid var(--border)",
       display: "flex", flexDirection: "column",
       overflowY: "auto",
     }}>
@@ -98,7 +98,7 @@ export default function Sidebar({ onLogout, onClose }) {
         borderBottom: "1px solid #181E2E",
         display: "flex", alignItems: "center", gap: "10px",
         flexShrink: 0,
-        background: "linear-gradient(135deg, rgba(232,33,58,.06) 0%, rgba(30,95,212,.04) 100%)",
+        background: "linear-gradient(135deg, rgba(232,33,58,.04) 0%, rgba(30,95,212,.02) 100%)",
       }}>
         <div style={{
           width: "40px", height: "40px", borderRadius: "10px",
@@ -143,7 +143,7 @@ export default function Sidebar({ onLogout, onClose }) {
             <div key={cat.titulo}>
               {/* Título categoría */}
               <div style={{
-                fontSize: "9px", fontWeight: "800", color: "#2A3A52",
+                fontSize: "9px", fontWeight: "800", color: "var(--text3)",
                 textTransform: "uppercase", letterSpacing: ".16em",
                 padding: "10px 16px 4px",
               }}>{cat.titulo}</div>
@@ -157,7 +157,7 @@ export default function Sidebar({ onLogout, onClose }) {
                     padding: "7px 16px", textDecoration: "none",
                     fontSize: "14px",
                     fontWeight: isActive ? "600" : "400",
-                    color: isActive ? item.color : "#8A9AB8",
+                    color: isActive ? item.color : "var(--text3)",
                     background: isActive
                       ? `linear-gradient(90deg, ${item.color}14 0%, transparent 80%)`
                       : "transparent",
@@ -166,7 +166,7 @@ export default function Sidebar({ onLogout, onClose }) {
                   })}
                   onMouseEnter={e => {
                     if (!e.currentTarget.style.borderLeftColor || e.currentTarget.style.borderLeftColor === "transparent") {
-                      e.currentTarget.style.color = "#C8D4E8"
+                      e.currentTarget.style.color = "var(--text2)"
                       e.currentTarget.style.background = "rgba(255,255,255,.03)"
                     }
                   }}
@@ -200,7 +200,7 @@ export default function Sidebar({ onLogout, onClose }) {
             style={{
               display: "flex", alignItems: "center", gap: "10px",
               padding: "7px 16px", textDecoration: "none",
-              fontSize: "14px", color: "#5A6A82",
+              fontSize: "14px", color: "var(--text3)",
               transition: "color .12s",
             }}
             onMouseEnter={e => e.currentTarget.style.color = link.color}
@@ -218,7 +218,7 @@ export default function Sidebar({ onLogout, onClose }) {
       <div style={{
         padding: "12px 16px",
         borderTop: "1px solid #181E2E",
-        background: "rgba(0,0,0,.25)",
+        background: "var(--bg3)",
         flexShrink: 0,
       }}>
         <div style={{ display: "flex", alignItems: "center",
