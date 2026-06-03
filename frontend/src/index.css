@@ -60,7 +60,7 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -299,12 +299,12 @@ textarea { min-height: 90px; resize: vertical; }
 /* ============================================
    TABLA
 ============================================ */
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
 thead tr { background: var(--bg3); border-bottom: 1.5px solid var(--border); }
 th {
-  padding: 10px 16px;
+  padding: 11px 16px;
   text-align: left;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -312,7 +312,7 @@ th {
   white-space: nowrap;
 }
 td {
-  padding: 11px 16px;
+  padding: 12px 16px;
   color: var(--text2);
   border-bottom: 1px solid var(--border2);
   vertical-align: middle;
