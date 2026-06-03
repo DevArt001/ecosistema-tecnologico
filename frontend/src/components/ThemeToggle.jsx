@@ -10,8 +10,8 @@ export default function ThemeToggle({ position = "fixed" }) {
       title={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
       style={{
         position,
-        bottom: position === "fixed" ? "1.5rem" : "auto",
-        right:  position === "fixed" ? "1.5rem" : "auto",
+        top:   position === "fixed" ? "1rem" : "auto",
+        right: position === "fixed" ? "1.25rem" : "auto",
         zIndex: 9998,
         width: "44px", height: "44px",
         borderRadius: "50%",
