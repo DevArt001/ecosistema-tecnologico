@@ -1,70 +1,69 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
-import { PageHeader, Toast, KPICard, EmptyState, SearchBar, TableSkeleton } from "../components/UI"
+import { PageHeader, Toast, KPICard, EmptyState, SearchBar,
+         TableSkeleton, ModalForm, Field, ConfirmModal } from "../components/UI"
+
+const ESTADO_CONFIG = {
+  borrador:  { color: "#6A7A92", bg: "#6A7A9215", icon: "📝", label: "Borrador" },
+  enviada:   { color: "#1E5FD4", bg: "#1E5FD415", icon: "📤", label: "Enviada" },
+  aprobada:  { color: "#00D4A0", bg: "#00D4A015", icon: "✅", label: "Aprobada" },
+  rechazada: { color: "#E8213A", bg: "#E8213A15", icon: "❌", label: "Rechazada" },
+}
 
 export default function Cotizaciones() {
   const [cotizaciones, setCotizaciones] = useState([])
   const [ordenes, setOrdenes]           = useState([])
   const [modal, setModal]               = useState(null)
   const [cotActual, setCotActual]       = useState(null)
-  const [form, setForm]                 = useState({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" })
-  const [lineaForm, setLineaForm]       = useState({ tipo: "servicio", descripcion: "", cantidad: 1, precio_costo: 0, precio_unit: 0 })
-  const [loading, setLoading]           = useState(false)
-  const [error, setError]               = useState(null)
+  const [form, setForm]                 = useState({ orden:"", descuento:0, vigencia_dias:15, notas:"", aplica_iva:false })
+  const [lineaForm, setLineaForm]       = useState({ tipo:"servicio", descripcion:"", cantidad:1, precio_costo:0, precio_unit:0 })
+  const [loading, setLoading]           = useState(true)
+  const [guardando, setGuardando]       = useState(false)
   const [mensaje, setMensaje]           = useState("")
+  const [buscar, setBuscar]             = useState("")
+  const [confirmDel, setConfirmDel]     = useState(null)
 
   useEffect(() => { cargar() }, [])
 
   const cargar = async () => {
-    try {
-      const [c, o] = await Promise.all([
-        API.get("/cotizaciones/"),
-        API.get("/ordenes/")
-      ])
-      setCotizaciones(c.data.results || c.data)
-      setOrdenes(o.data.results || o.data)
-    } catch (err) {
-      setError(err.mensaje || "Error al cargar cotizaciones")
-    }
-  }
-
-  const mostrarMensaje = (msg) => {
-    setMensaje(msg)
-    setTimeout(() => setMensaje(""), 3000)
-  }
-
-  const crearCotizacion = async () => {
-    if (!form.orden) return mostrarMensaje("❌ Selecciona una orden")
     setLoading(true)
     try {
-      const orden = ordenes.find(o => o.id == form.orden)
-      const res = await API.post("/cotizaciones/", {
-        orden: form.orden,
-        cliente: orden.cliente,
-        descuento: form.descuento,
-        vigencia_dias: form.vigencia_dias,
-        notas: form.notas
-      })
-      setCotActual(res.data)
-      setModal("detalle")
-      cargar()
-    } catch (e) {
-      mostrarMensaje("❌ Error al crear cotización")
-    }
+      const [c, o] = await Promise.all([API.get("/cotizaciones/"), API.get("/ordenes/")])
+      setCotizaciones(c.data.results || c.data)
+      setOrdenes(o.data.results || o.data)
+    } catch { mostrar("❌ Error al cargar") }
     setLoading(false)
   }
 
+  const mostrar = (msg) => { setMensaje(msg); setTimeout(() => setMensaje(""), 3000) }
+
+  const crearCotizacion = async () => {
+    if (!form.orden) return mostrar("❌ Selecciona una orden")
+    setGuardando(true)
+    try {
+      const orden = ordenes.find(o => o.id == form.orden)
+      const res = await API.post("/cotizaciones/", {
+        orden: form.orden, cliente: orden.cliente,
+        descuento: form.descuento, vigencia_dias: form.vigencia_dias,
+        notas: form.notas, aplica_iva: form.aplica_iva
+      })
+      setCotActual(res.data)
+      setModal("detalle")
+      mostrar("✅ Cotización creada")
+      cargar()
+    } catch { mostrar("❌ Error al crear cotización") }
+    setGuardando(false)
+  }
+
   const agregarLinea = async () => {
-    if (!lineaForm.descripcion) return mostrarMensaje("❌ Ingresa una descripción")
+    if (!lineaForm.descripcion) return mostrar("❌ Ingresa una descripción")
     try {
       await API.post(`/cotizaciones/${cotActual.id}/agregar_linea/`, lineaForm)
       const res = await API.get(`/cotizaciones/${cotActual.id}/`)
       setCotActual(res.data)
-      setLineaForm({ tipo: "servicio", descripcion: "", cantidad: 1, precio_costo: 0, precio_unit: 0 })
+      setLineaForm({ tipo:"servicio", descripcion:"", cantidad:1, precio_costo:0, precio_unit:0 })
       cargar()
-    } catch (e) {
-      mostrarMensaje("❌ Error al agregar línea")
-    }
+    } catch { mostrar("❌ Error al agregar línea") }
   }
 
   const eliminarLinea = async (lineaId) => {
@@ -73,21 +72,26 @@ export default function Cotizaciones() {
       const res = await API.get(`/cotizaciones/${cotActual.id}/`)
       setCotActual(res.data)
       cargar()
-    } catch (e) {
-      mostrarMensaje("❌ Error al eliminar línea")
-    }
+    } catch { mostrar("❌ Error al eliminar línea") }
   }
 
   const aprobar = async () => {
     if (!window.confirm("¿Aprobar cotización y generar factura?")) return
     try {
-      const res = await API.post(`/cotizaciones/${cotActual.id}/aprobar/`)
-      mostrarMensaje("✅ Factura generada correctamente")
+      await API.post(`/cotizaciones/${cotActual.id}/aprobar/`)
+      mostrar("✅ Factura generada correctamente")
       setModal(null)
       cargar()
-    } catch (e) {
-      mostrarMensaje("❌ Error al aprobar cotización")
-    }
+    } catch { mostrar("❌ Error al aprobar") }
+  }
+
+  const eliminarCot = async () => {
+    try {
+      await API.delete(`/cotizaciones/${confirmDel.id}/`)
+      mostrar("✅ Cotización eliminada")
+      setConfirmDel(null)
+      cargar()
+    } catch { mostrar("❌ Error al eliminar") }
   }
 
   const verPDF = () => {
@@ -95,54 +99,301 @@ export default function Cotizaciones() {
     window.open(`${API.defaults.baseURL}/cotizaciones/${cotActual.id}/pdf/?token=${token}`, "_blank")
   }
 
-  const estadoColor = {
-    borrador:  { bg: "#1F2937", color: "#9CA3AF" },
-    enviada:   { bg: "#1E3A5F", color: "#3B82F6" },
-    aprobada:  { bg: "#065F46", color: "#10B981" },
-    rechazada: { bg: "#3B0A0A", color: "#EF4444" },
-  }
+  const filtradas = cotizaciones.filter(c =>
+    !buscar ||
+    c.numero?.toLowerCase().includes(buscar.toLowerCase()) ||
+    c.cliente_nombre?.toLowerCase().includes(buscar.toLowerCase())
+  )
+
+  const totalAprobadas  = cotizaciones.filter(c => c.estado === "aprobada").reduce((s,c) => s + parseFloat(c.total||0), 0)
+  const totalBorradores = cotizaciones.filter(c => c.estado === "borrador").reduce((s,c) => s + parseFloat(c.total||0), 0)
 
   return (
     <div>
-      {mensaje && (
-        <div style={{
-          position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
-          background: mensaje.startsWith("✅") ? "#065F46" : "#3B0A0A",
-          border: `1px solid ${mensaje.startsWith("✅") ? "#10B981" : "#EF4444"}`,
-          color: "white", borderRadius: "8px", padding: "12px 20px",
-          fontSize: "13px", fontWeight: "500"
-        }}>{mensaje}</div>
+      <Toast mensaje={mensaje} />
+
+      {confirmDel && (
+        <ConfirmModal titulo="¿Eliminar cotización?"
+          texto={<>Se eliminará la cotización <strong style={{ color:"var(--text)" }}>{confirmDel.numero}</strong>.</>}
+          onConfirm={eliminarCot} onCancel={() => setConfirmDel(null)} />
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between",
-        alignItems: "flex-start", marginBottom: "2rem" }}>
-        <div>
-          <h1 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text)", marginBottom: "4px" }}>
-            Cotizaciones
-          </h1>
-          <p style={{ color: "var(--text3)", fontSize: "13px" }}>{cotizaciones.length} cotizaciones</p>
+      {/* Modal nueva cotización */}
+      {modal === "nueva" && (
+        <ModalForm titulo="Nueva cotización"
+          onClose={() => setModal(null)} onGuardar={crearCotizacion} loading={guardando}>
+          <Field label="Orden de trabajo *">
+            <select value={form.orden} onChange={e => setForm({...form, orden: e.target.value})}>
+              <option value="">Seleccionar orden...</option>
+              {ordenes.filter(o => o.estado !== "entregado").map(o => (
+                <option key={o.id} value={o.id}>
+                  {o.codigo} — {o.cliente_nombre} · {o.vehiculo_placa}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <Field label="Descuento ($)">
+              <input type="number" value={form.descuento}
+                onChange={e => setForm({...form, descuento: e.target.value})} />
+            </Field>
+            <Field label="Vigencia (días)">
+              <input type="number" value={form.vigencia_dias}
+                onChange={e => setForm({...form, vigencia_dias: e.target.value})} />
+            </Field>
+          </div>
+          <Field label="Notas">
+            <textarea value={form.notas}
+              onChange={e => setForm({...form, notas: e.target.value})}
+              style={{ minHeight: "70px" }} />
+          </Field>
+          <label style={{
+            display: "flex", alignItems: "center", gap: "10px",
+            padding: "10px 14px", borderRadius: "10px", cursor: "pointer",
+            background: form.aplica_iva ? "rgba(0,212,160,.08)" : "var(--bg3)",
+            border: `1px solid ${form.aplica_iva ? "rgba(0,212,160,.3)" : "var(--border)"}`,
+            transition: "all .15s",
+          }}>
+            <input type="checkbox" checked={form.aplica_iva}
+              onChange={e => setForm({...form, aplica_iva: e.target.checked})}
+              style={{ width:"auto", accentColor:"var(--green)" }} />
+            <div>
+              <div style={{ fontSize:"13px", color:"var(--text)", fontWeight:"500" }}>
+                Aplicar IVA (19%)
+              </div>
+              <div style={{ fontSize:"11px", color:"var(--text3)" }}>
+                El IVA se incluirá en el precio final
+              </div>
+            </div>
+          </label>
+        </ModalForm>
+      )}
+
+      {/* Modal detalle */}
+      {modal === "detalle" && cotActual && (
+        <div className="modal-overlay">
+          <div className="modal-box scale-in" style={{ maxWidth:"780px",
+            maxHeight:"90vh", overflowY:"auto" }}>
+
+            {/* Header */}
+            <div style={{ display:"flex", justifyContent:"space-between",
+              alignItems:"flex-start", marginBottom:"1.5rem" }}>
+              <div>
+                <div style={{ display:"flex", alignItems:"center", gap:"10px",
+                  marginBottom:"4px" }}>
+                  <span style={{ fontFamily:"var(--font-mono)", fontSize:"16px",
+                    fontWeight:"700", color:"#00D4A0" }}>{cotActual.numero}</span>
+                  {(() => {
+                    const est = ESTADO_CONFIG[cotActual.estado] || ESTADO_CONFIG.borrador
+                    return (
+                      <span style={{ background:est.bg, color:est.color,
+                        padding:"3px 10px", borderRadius:"20px",
+                        fontSize:"11px", fontWeight:"600" }}>
+                        {est.icon} {est.label}
+                      </span>
+                    )
+                  })()}
+                </div>
+                <div style={{ fontSize:"14px", color:"var(--text2)", fontWeight:"600" }}>
+                  {cotActual.cliente_nombre}
+                </div>
+                <div style={{ fontSize:"12px", color:"var(--text3)", marginTop:"2px" }}>
+                  {cotActual.vehiculo_info} · Orden: {cotActual.orden_codigo}
+                </div>
+              </div>
+              <div style={{ display:"flex", gap:"8px", flexWrap:"wrap",
+                alignItems:"center" }}>
+                <button onClick={verPDF} className="btn btn-secondary"
+                  style={{ padding:"6px 12px", fontSize:"12px" }}>
+                  🖨️ PDF
+                </button>
+                {cotActual.estado === "borrador" && (
+                  <button onClick={aprobar}
+                    className="btn btn-primary"
+                    style={{ padding:"6px 12px", fontSize:"12px" }}>
+                    ✅ Aprobar → Factura
+                  </button>
+                )}
+                <button onClick={() => setModal(null)} style={{
+                  background:"none", border:"none", color:"var(--text3)",
+                  cursor:"pointer", fontSize:"22px", lineHeight:1 }}>×</button>
+              </div>
+            </div>
+
+            {/* Agregar línea */}
+            {cotActual.estado === "borrador" && (
+              <div style={{ background:"var(--bg3)",
+                border:"1px solid var(--border)",
+                borderRadius:"12px", padding:"1rem", marginBottom:"1.25rem" }}>
+                <div style={{ fontSize:"12px", fontWeight:"700",
+                  color:"var(--text3)", textTransform:"uppercase",
+                  letterSpacing:".1em", marginBottom:"10px" }}>
+                  Agregar ítem
+                </div>
+                <div style={{ display:"grid",
+                  gridTemplateColumns:"110px 1fr 60px 100px 100px auto",
+                  gap:"8px", alignItems:"end" }}>
+                  <select value={lineaForm.tipo}
+                    onChange={e => setLineaForm({...lineaForm, tipo:e.target.value})}>
+                    <option value="servicio">🔧 Servicio</option>
+                    <option value="repuesto">🔩 Repuesto</option>
+                  </select>
+                  <input value={lineaForm.descripcion}
+                    onChange={e => setLineaForm({...lineaForm, descripcion:e.target.value})}
+                    placeholder="Descripción del ítem" />
+                  <input type="number" value={lineaForm.cantidad} min="1"
+                    onChange={e => setLineaForm({...lineaForm, cantidad:e.target.value})} />
+                  <div>
+                    <div style={{ fontSize:"10px", color:"var(--text3)",
+                      marginBottom:"3px", fontWeight:"600" }}>Costo interno</div>
+                    <input type="number" value={lineaForm.precio_costo}
+                      onChange={e => setLineaForm({...lineaForm, precio_costo:e.target.value})}
+                      placeholder="$0" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize:"10px", color:"var(--text3)",
+                      marginBottom:"3px", fontWeight:"600" }}>Precio cliente</div>
+                    <input type="number" value={lineaForm.precio_unit}
+                      onChange={e => setLineaForm({...lineaForm, precio_unit:e.target.value})}
+                      placeholder="$0" />
+                  </div>
+                  <button onClick={agregarLinea} className="btn btn-primary"
+                    style={{ padding:"9px 12px", fontSize:"12px",
+                      alignSelf:"flex-end", whiteSpace:"nowrap" }}>
+                    + Agregar
+                  </button>
+                </div>
+                {lineaForm.precio_unit > 0 && (
+                  <div style={{ marginTop:"8px", fontSize:"12px",
+                    color:"#00D4A0", textAlign:"right" }}>
+                    Subtotal: ${(lineaForm.cantidad * lineaForm.precio_unit).toLocaleString("es-CO")}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tabla líneas */}
+            <div className="card" style={{ marginBottom:"1.25rem" }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tipo</th><th>Descripción</th><th>Cant.</th>
+                    <th>Costo</th><th>Precio</th><th>Subtotal</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!cotActual.lineas?.length ? (
+                    <tr><td colSpan="7">
+                      <EmptyState icon="📋" titulo="Sin ítems"
+                        sub="Agrega servicios o repuestos" />
+                    </td></tr>
+                  ) : cotActual.lineas.map(l => (
+                    <tr key={l.id}>
+                      <td>
+                        <span style={{ fontSize:"10px", padding:"2px 8px",
+                          borderRadius:"4px", fontWeight:"600",
+                          background: l.tipo==="servicio" ? "#00D4A015" : "#1E5FD415",
+                          color: l.tipo==="servicio" ? "#00D4A0" : "#1E5FD4" }}>
+                          {l.tipo==="servicio" ? "🔧" : "🔩"} {l.tipo}
+                        </span>
+                      </td>
+                      <td style={{ color:"var(--text)", fontWeight:"500" }}>{l.descripcion}</td>
+                      <td style={{ textAlign:"center" }}>{l.cantidad}</td>
+                      <td style={{ fontFamily:"var(--font-mono)", fontSize:"12px",
+                        color:"var(--text3)" }}>
+                        ${parseFloat(l.precio_costo||0).toLocaleString("es-CO")}
+                      </td>
+                      <td style={{ fontFamily:"var(--font-mono)", fontSize:"12px" }}>
+                        ${parseFloat(l.precio_unit).toLocaleString("es-CO")}
+                      </td>
+                      <td style={{ fontFamily:"var(--font-mono)", fontSize:"13px",
+                        fontWeight:"700", color:"#00D4A0" }}>
+                        ${parseFloat(l.subtotal).toLocaleString("es-CO")}
+                      </td>
+                      <td>
+                        {cotActual.estado === "borrador" && (
+                          <button onClick={() => eliminarLinea(l.id)}
+                            className="btn btn-danger"
+                            style={{ padding:"3px 8px", fontSize:"11px" }}>×</button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Totales */}
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <div style={{ width:"280px",
+                background:"var(--bg3)", borderRadius:"12px",
+                padding:"1rem" }}>
+                {[
+                  { label:"Subtotal", valor:cotActual.subtotal, color:"var(--text2)" },
+                  { label:"IVA (19%)", valor:cotActual.iva||0, color:"var(--text3)" },
+                  { label:"Descuento", valor:`-${cotActual.descuento}`, color:"#E8213A" },
+                ].map(item => (
+                  <div key={item.label} style={{ display:"flex",
+                    justifyContent:"space-between", padding:"6px 0",
+                    fontSize:"13px", color:item.color,
+                    borderBottom:"1px solid var(--border)" }}>
+                    <span>{item.label}</span>
+                    <span style={{ fontFamily:"var(--font-mono)" }}>
+                      ${parseFloat(item.valor||0).toLocaleString("es-CO")}
+                    </span>
+                  </div>
+                ))}
+                <div style={{ display:"flex", justifyContent:"space-between",
+                  padding:"12px 0 0", fontSize:"22px",
+                  fontWeight:"800", color:"#00D4A0" }}>
+                  <span>TOTAL</span>
+                  <span style={{ fontFamily:"var(--font-mono)" }}>
+                    ${parseFloat(cotActual.total).toLocaleString("es-CO")}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
+
+      <PageHeader titulo="Cotizaciones" sub={`${cotizaciones.length} cotizaciones`}>
         <button className="btn btn-primary" onClick={() => {
-          setForm({ orden: "", descuento: 0, vigencia_dias: 15, notas: "" })
+          setForm({ orden:"", descuento:0, vigencia_dias:15, notas:"", aplica_iva:false })
           setModal("nueva")
-        }}>
-          + Nueva Cotización
-        </button>
+        }}>+ Nueva cotización</button>
+      </PageHeader>
+
+      {/* KPIs */}
+      <div className="stagger" style={{ display:"flex", gap:"1rem",
+        flexWrap:"wrap", marginBottom:"1.5rem" }}>
+        <KPICard titulo="Total" valor={cotizaciones.length}
+          color="#1E5FD4" icon="📄" delay={0} />
+        <KPICard titulo="Aprobadas"
+          valor={cotizaciones.filter(c=>c.estado==="aprobada").length}
+          color="#00D4A0" icon="✅" delay={.04} />
+        <KPICard titulo="Borradores"
+          valor={cotizaciones.filter(c=>c.estado==="borrador").length}
+          color="#6A7A92" icon="📝" delay={.08} />
+        <KPICard titulo="Valor aprobado"
+          valor={`$${Math.round(totalAprobadas/1000)}K`}
+          color="#00D4A0" icon="💰" delay={.12} />
+        <KPICard titulo="En proceso"
+          valor={`$${Math.round(totalBorradores/1000)}K`}
+          color="#F5A623" icon="⏳" delay={.16} />
       </div>
 
-      {error && (
-        <div style={{ background: "#3B0A0A", border: "1px solid #EF4444", borderRadius: "8px",
-          padding: "12px 16px", marginBottom: "1rem", color: "#FCA5A5", fontSize: "13px",
-          display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          {error}
-          <button onClick={cargar} style={{ background: "none", border: "none",
-            color: "#FCA5A5", cursor: "pointer", fontSize: "12px", textDecoration: "underline" }}>
-            Reintentar
-          </button>
+      <div className="card fade-in">
+        <div style={{ padding:"1rem 1.25rem",
+          borderBottom:"1px solid var(--border)",
+          display:"flex", justifyContent:"space-between",
+          alignItems:"center", flexWrap:"wrap", gap:"8px" }}>
+          <SearchBar value={buscar} onChange={setBuscar}
+            placeholder="Buscar por número o cliente..." />
+          <span style={{ fontSize:"12px", color:"var(--text3)" }}>
+            {filtradas.length} cotizaciones
+          </span>
         </div>
-      )}
-
-      <div className="card">
         <table>
           <thead>
             <tr>
@@ -151,290 +402,65 @@ export default function Cotizaciones() {
             </tr>
           </thead>
           <tbody>
-            {cotizaciones.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: "3rem", textAlign: "center", color: "var(--text3)" }}>
-                No hay cotizaciones
+            {loading ? <TableSkeleton rows={5} cols={7} /> :
+             filtradas.length === 0 ? (
+              <tr><td colSpan="7">
+                <EmptyState icon="📄" titulo="Sin cotizaciones"
+                  sub="Crea la primera cotización"
+                  action={<button className="btn btn-primary" onClick={() => {
+                    setForm({ orden:"", descuento:0, vigencia_dias:15, notas:"", aplica_iva:false })
+                    setModal("nueva")
+                  }}>+ Nueva cotización</button>} />
               </td></tr>
-            ) : cotizaciones.map(c => (
-              <tr key={c.id}>
-                <td style={{ color: "#10B981", fontWeight: "600", fontFamily: "monospace", fontSize: "12px" }}>
-                  {c.numero}
-                </td>
-                <td style={{ color: "var(--text)" }}>{c.cliente_nombre}</td>
-                <td style={{ fontSize: "12px" }}>{c.vehiculo_info}</td>
-                <td style={{ color: "var(--green)", fontWeight: "600" }}>
-                  ${parseFloat(c.total).toLocaleString()}
-                </td>
-                <td>
-                  <span className="badge" style={{
-                    background: estadoColor[c.estado]?.bg || "#1F2937",
-                    color: estadoColor[c.estado]?.color || "#9CA3AF"
-                  }}>{c.estado}</span>
-                </td>
-                <td style={{ fontSize: "12px", color: "var(--text3)" }}>
-                  {new Date(c.fecha_emision).toLocaleDateString("es-CO")}
-                </td>
-                <td>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <button onClick={async () => {
-                      const res = await API.get(`/cotizaciones/${c.id}/`)
-                      setCotActual(res.data)
-                      setModal("detalle")
-                    }} style={{
-                      background: "#1E3A5F", border: "1px solid #3B82F6",
-                      color: "#3B82F6", borderRadius: "6px",
-                      padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                    }}>Ver</button>
-                    {c.estado === "borrador" && (
+            ) : filtradas.map(c => {
+              const est = ESTADO_CONFIG[c.estado] || ESTADO_CONFIG.borrador
+              return (
+                <tr key={c.id} className="fade-in">
+                  <td style={{ fontFamily:"var(--font-mono)", fontWeight:"700",
+                    color:"#00D4A0", fontSize:"12px" }}>{c.numero}</td>
+                  <td style={{ fontWeight:"600", color:"var(--text)" }}>
+                    {c.cliente_nombre}
+                  </td>
+                  <td style={{ fontSize:"12px", color:"var(--text3)" }}>
+                    {c.vehiculo_info}
+                  </td>
+                  <td style={{ fontFamily:"var(--font-mono)", fontWeight:"700",
+                    color:"var(--text)" }}>
+                    ${parseFloat(c.total||0).toLocaleString("es-CO")}
+                  </td>
+                  <td>
+                    <span style={{ background:est.bg, color:est.color,
+                      padding:"3px 10px", borderRadius:"20px",
+                      fontSize:"11px", fontWeight:"600" }}>
+                      {est.icon} {est.label}
+                    </span>
+                  </td>
+                  <td style={{ fontSize:"12px", color:"var(--text3)" }}>
+                    {new Date(c.fecha_emision).toLocaleDateString("es-CO")}
+                  </td>
+                  <td>
+                    <div style={{ display:"flex", gap:"6px" }}>
                       <button onClick={async () => {
-                        if (!window.confirm(`¿Eliminar cotización ${c.numero}?`)) return
-                        try {
-                          await API.delete(`/cotizaciones/${c.id}/`)
-                          cargar()
-                        } catch { mostrarMensaje("❌ Error al eliminar") }
-                      }} style={{
-                        background: "#3B0A0A", border: "1px solid #EF4444",
-                        color: "#EF4444", borderRadius: "6px",
-                        padding: "4px 10px", fontSize: "12px", cursor: "pointer"
-                      }}>🗑️</button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
+                        const res = await API.get(`/cotizaciones/${c.id}/`)
+                        setCotActual(res.data)
+                        setModal("detalle")
+                      }} className="btn btn-secondary"
+                        style={{ padding:"4px 10px", fontSize:"12px" }}>
+                        📝 Ver
+                      </button>
+                      {c.estado === "borrador" && (
+                        <button onClick={() => setConfirmDel(c)}
+                          className="btn btn-danger"
+                          style={{ padding:"4px 10px", fontSize:"12px" }}>🗑️</button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
-
-      {/* Modal Nueva Cotización */}
-      {modal === "nueva" && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000, padding: "1rem" }}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)", padding: "1.5rem",
-            width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
-            <h2 style={{ marginBottom: "1.5rem", color: "var(--text)", fontSize: "18px" }}>
-              Nueva Cotización
-            </h2>
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
-                Orden de Trabajo
-              </label>
-              <select value={form.orden} onChange={e => setForm({...form, orden: e.target.value})}
-                style={{ width: "100%" }}>
-                <option value="">Seleccionar orden...</option>
-                {ordenes.filter(o => o.estado !== 'entregado').map(o => (
-                  <option key={o.id} value={o.id}>
-                    {o.codigo} — {o.cliente_nombre} · {o.vehiculo_placa}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
-                  Descuento ($)
-                </label>
-                <input type="number" value={form.descuento}
-                  onChange={e => setForm({...form, descuento: e.target.value})}
-                  style={{ width: "100%" }} />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
-                  Vigencia (días)
-                </label>
-                <input type="number" value={form.vigencia_dias}
-                  onChange={e => setForm({...form, vigencia_dias: e.target.value})}
-                  style={{ width: "100%" }} />
-              </div>
-            </div>
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                color: "var(--text2)", marginBottom: "6px", textTransform: "uppercase" }}>
-                Notas
-              </label>
-              <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                style={{ width: "100%", minHeight: "80px" }} />
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px",
-              marginBottom: "1.5rem", padding: "10px 12px",
-              background: "var(--bg1)", borderRadius: "8px",
-              border: "1px solid var(--border)" }}>
-              <input type="checkbox" id="aplica_iva" checked={form.aplica_iva}
-                onChange={e => setForm({...form, aplica_iva: e.target.checked})}
-                style={{ width: "16px", height: "16px", cursor: "pointer" }} />
-              <label htmlFor="aplica_iva" style={{ fontSize: "13px",
-                color: "var(--text)", cursor: "pointer", fontWeight: "500" }}>
-                Aplicar IVA (19% incluido en el precio)
-              </label>
-            </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button className="btn btn-primary" onClick={crearCotizacion}
-                disabled={loading} style={{ flex: 1 }}>
-                {loading ? "Creando..." : "Crear Cotización"}
-              </button>
-              <button className="btn btn-secondary" onClick={() => setModal(null)}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Detalle */}
-      {modal === "detalle" && cotActual && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 1000, padding: "1rem" }}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)", padding: "1.5rem",
-            width: "100%", maxWidth: "750px", maxHeight: "90vh", overflowY: "auto" }}>
-
-            <div style={{ display: "flex", justifyContent: "space-between",
-              alignItems: "flex-start", marginBottom: "1.5rem" }}>
-              <div>
-                <h2 style={{ color: "#10B981", fontSize: "20px", fontFamily: "monospace" }}>
-                  {cotActual.numero}
-                </h2>
-                <p style={{ color: "var(--text3)", fontSize: "13px", marginTop: "4px" }}>
-                  {cotActual.cliente_nombre} · {cotActual.vehiculo_info}
-                </p>
-                <p style={{ color: "var(--text3)", fontSize: "12px", marginTop: "2px" }}>
-                  Orden: {cotActual.orden_codigo}
-                </p>
-              </div>
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <button onClick={verPDF} style={{
-                  background: "#1F2937", border: "1px solid #374151",
-                  color: "#D1D5DB", padding: "6px 12px",
-                  borderRadius: "6px", cursor: "pointer", fontSize: "12px"
-                }}>📄 PDF</button>
-                {cotActual.estado === "borrador" && (
-                  <button onClick={aprobar} style={{
-                    background: "#065F46", border: "1px solid #10B981",
-                    color: "#10B981", padding: "6px 12px",
-                    borderRadius: "6px", cursor: "pointer", fontSize: "12px"
-                  }}>✅ Aprobar → Factura</button>
-                )}
-                <button onClick={() => setModal(null)} style={{
-                  background: "none", border: "none",
-                  color: "var(--text3)", cursor: "pointer", fontSize: "20px"
-                }}>×</button>
-              </div>
-            </div>
-
-            {/* Agregar línea */}
-            {cotActual.estado === "borrador" && (
-              <div style={{ background: "var(--bg1)", border: "1px solid var(--border)",
-                borderRadius: "8px", padding: "1rem", marginBottom: "1rem" }}>
-                <div style={{ fontSize: "12px", fontWeight: "600", color: "var(--text2)",
-                  marginBottom: "8px", textTransform: "uppercase" }}>Agregar línea</div>
-                <div style={{ display: "grid", gridTemplateColumns: "110px 1fr 60px 90px 90px auto",
-                  gap: "8px", alignItems: "end" }}>
-                  <select value={lineaForm.tipo}
-                    onChange={e => setLineaForm({...lineaForm, tipo: e.target.value})}
-                    style={{ width: "100%" }}>
-                    <option value="servicio">🔧 Servicio</option>
-                    <option value="repuesto">🔩 Repuesto</option>
-                  </select>
-                  <input value={lineaForm.descripcion}
-                    onChange={e => setLineaForm({...lineaForm, descripcion: e.target.value})}
-                    placeholder="Descripción" style={{ width: "100%" }} />
-                  <input type="number" value={lineaForm.cantidad}
-                    onChange={e => setLineaForm({...lineaForm, cantidad: e.target.value})}
-                    style={{ width: "100%" }} />
-                  <div>
-                    <label style={{ fontSize: "10px", color: "var(--text3)", display: "block", marginBottom: "2px" }}>
-                      Costo interno
-                    </label>
-                    <input type="number" value={lineaForm.precio_costo}
-                      onChange={e => setLineaForm({...lineaForm, precio_costo: e.target.value})}
-                      placeholder="$0" style={{ width: "100%" }} />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "10px", color: "var(--text3)", display: "block", marginBottom: "2px" }}>
-                      Precio cliente
-                    </label>
-                    <input type="number" value={lineaForm.precio_unit}
-                      onChange={e => setLineaForm({...lineaForm, precio_unit: e.target.value})}
-                      placeholder="$0" style={{ width: "100%" }} />
-                  </div>
-                  <button onClick={agregarLinea} style={{
-                    background: "#10B981", border: "none", color: "white",
-                    padding: "8px 12px", borderRadius: "6px",
-                    cursor: "pointer", whiteSpace: "nowrap", fontSize: "12px",
-                    alignSelf: "flex-end"
-                  }}>+ Agregar</button>
-                </div>
-              </div>
-            )}
-
-            {/* Líneas */}
-            <table style={{ marginBottom: "1rem" }}>
-              <thead>
-                <tr>
-                  <th>Tipo</th><th>Descripción</th><th>Cant.</th>
-                  <th>Costo</th><th>Precio</th><th>Margen</th><th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {!cotActual.lineas?.length ? (
-                  <tr><td colSpan={6} style={{ padding: "1.5rem", textAlign: "center",
-                    color: "var(--text3)", fontSize: "13px" }}>
-                    Sin líneas — agrega servicios o repuestos
-                  </td></tr>
-                ) : cotActual.lineas.map(l => (
-                  <tr key={l.id}>
-                    <td>{l.tipo === "servicio" ? "🔧" : "🔩"}</td>
-                    <td style={{ color: "var(--text)" }}>{l.descripcion}</td>
-                    <td style={{ textAlign: "center" }}>{l.cantidad}</td>
-                    <td style={{ textAlign: "right" }}>${parseFloat(l.precio_unit).toLocaleString()}</td>
-                    <td style={{ textAlign: "right", fontWeight: "600", color: "var(--green)" }}>
-                      ${parseFloat(l.subtotal).toLocaleString()}
-                    </td>
-                    <td>
-                      {cotActual.estado === "borrador" && (
-                        <button onClick={() => eliminarLinea(l.id)} style={{
-                          background: "none", border: "none",
-                          color: "#EF4444", cursor: "pointer", fontSize: "16px"
-                        }}>✕</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Totales */}
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <div style={{ width: "260px" }}>
-                {[
-                  ["Subtotal", cotActual.subtotal, "var(--text2)"],
-                  ["IVA (19%)", cotActual.iva, "var(--text2)"],
-                  ["Descuento", `-${cotActual.descuento}`, "#EF4444"],
-                ].map(([label, val, color]) => (
-                  <div key={label} style={{ display: "flex", justifyContent: "space-between",
-                    padding: "6px 0", fontSize: "13px",
-                    borderBottom: "1px solid var(--border)", color }}>
-                    <span>{label}</span>
-                    <span>${parseFloat(val).toLocaleString()}</span>
-                  </div>
-                ))}
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  padding: "12px 0 0", fontSize: "20px",
-                  fontWeight: "700", color: "#10B981" }}>
-                  <span>TOTAL</span>
-                  <span>${parseFloat(cotActual.total).toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
