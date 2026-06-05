@@ -129,7 +129,7 @@ export function SearchBar({ value, onChange, placeholder = "Buscar...", width = 
 
 // ============ STATUS BADGE ============
 export function StatusBadge({ estado, config }) {
-  const s = config[estado] || { color: "#6A7A92", label: estado, icon: "●" }
+  const s = config[estado] || { color: "var(--text3)", label: estado, icon: "●" }
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: "4px",

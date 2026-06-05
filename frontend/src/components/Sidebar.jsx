@@ -125,11 +125,11 @@ export default function Sidebar({ onLogout, onClose }) {
         </div>
         {onClose && (
           <button onClick={onClose} style={{
-            background: "none", border: "none", color: "#3A4A62",
+            background: "none", border: "none", color: "var(--text3)",
             fontSize: "18px", cursor: "pointer", padding: "4px", lineHeight: 1,
           }}
           onMouseEnter={e => e.currentTarget.style.color = "#E8213A"}
-          onMouseLeave={e => e.currentTarget.style.color = "#3A4A62"}>×</button>
+          onMouseLeave={e => e.currentTarget.style.color = "var(--text3)"}>×</button>
         )}
       </div>
 

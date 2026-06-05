@@ -7,7 +7,7 @@ const DIAS_SEM = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"]
 
 const estadoBadge = {
   pendiente:   { bg: "#451A03", color: "#F59E0B" },
-  confirmada:  { bg: "#065F46", color: "#10B981" },
+  confirmada: { bg: "rgba(0,212,160,.12)", color: "var(--green)" },
   completada:  { bg: "#1E3A5F", color: "#3B82F6" },
   cancelada:   { bg: "#3B0A0A", color: "#EF4444" },
   no_cumplida: { bg: "#1F2937", color: "#6B7280" },
@@ -114,7 +114,7 @@ export default function Agendamiento() {
       {mensajeExito && (
         <div style={{
           position: "fixed", top: "1rem", right: "1rem", zIndex: 9999,
-          background: mensajeExito.startsWith("✅") ? "#065F46" : "#3B0A0A",
+          background: mensajeExito.startsWith("✅") ? "rgba(0,212,160,.12)" : "rgba(232,33,58,.1)",
           border: `1px solid ${mensajeExito.startsWith("✅") ? "#10B981" : "#EF4444"}`,
           color: "white", borderRadius: "8px", padding: "12px 20px", fontSize: "13px", fontWeight: "500"
         }}>{mensajeExito}</div>
@@ -128,7 +128,7 @@ export default function Agendamiento() {
           <p style={{ color: "var(--text3)", fontSize: "13px" }}>
             {citas.length} citas en {MESES[mes]} {anio}
             {citasEspecialesPendientes.length > 0 && (
-              <span style={{ marginLeft: "12px", background: "#451A03", color: "#F59E0B",
+              <span style={{ marginLeft: "12px", background: "rgba(245,166,35,.12)", color: "var(--amber)",
                 padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "600" }}>
                 ⚡ {citasEspecialesPendientes.length} especial(es) pendiente(s)
               </span>
@@ -137,12 +137,12 @@ export default function Agendamiento() {
         </div>
         <div style={{ display: "flex", gap: "8px" }}>
           <button onClick={() => setVista(vista === "calendario" ? "lista" : "calendario")}
-            style={{ background: "#1F2937", border: "1px solid #374151", color: "#D1D5DB",
+            style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)",
               borderRadius: "8px", padding: "8px 14px", fontSize: "12px", cursor: "pointer" }}>
             {vista === "calendario" ? "📋 Lista" : "📅 Calendario"}
           </button>
           <button onClick={() => setShowFestivo(true)}
-            style={{ background: "#1F2937", border: "1px solid #374151", color: "#D1D5DB",
+            style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)",
               borderRadius: "8px", padding: "8px 14px", fontSize: "12px", cursor: "pointer" }}>
             + Día especial
           </button>
@@ -150,7 +150,7 @@ export default function Agendamiento() {
       </div>
 
       {citasEspecialesPendientes.length > 0 && (
-        <div style={{ background: "#451A03", border: "1px solid #F59E0B", borderRadius: "12px",
+        <div style={{ background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.35)", borderRadius: "12px",
           padding: "1rem 1.25rem", marginBottom: "1.5rem" }}>
           <div style={{ fontWeight: "600", color: "#F59E0B", marginBottom: "8px", fontSize: "13px" }}>
             ⚡ Solicitudes de cita especial pendientes de aprobación
@@ -165,12 +165,12 @@ export default function Agendamiento() {
               </div>
               <div style={{ display: "flex", gap: "6px" }}>
                 <button onClick={() => cambiarEstadoCita(c.id, "completada")}
-                  style={{ background: "#1E3A5F", border: "1px solid #3B82F6", color: "#3B82F6",
+                  style={{ background: "rgba(30,95,212,.12)", border: "1px solid rgba(30,95,212,.4)", color: "var(--blue)",
                     borderRadius: "6px", padding: "4px 10px", fontSize: "11px", cursor: "pointer" }}>
                   ✓ Completada
                 </button>
                 <button onClick={() => cambiarEstadoCita(c.id, "cancelada")}
-                  style={{ background: "#3B0A0A", border: "1px solid #EF4444", color: "#EF4444",
+                  style={{ background: "rgba(232,33,58,.1)", border: "1px solid rgba(232,33,58,.3)", color: "var(--red)",
                     borderRadius: "6px", padding: "4px 10px", fontSize: "11px", cursor: "pointer" }}>
                   ✗ Rechazar
                 </button>
@@ -185,13 +185,13 @@ export default function Agendamiento() {
           <div className="card" style={{ padding: "1.5rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
               <button onClick={() => cambiarMes(-1)}
-                style={{ background: "#1F2937", border: "1px solid #374151", color: "#D1D5DB",
+                style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)",
                   borderRadius: "8px", padding: "6px 14px", cursor: "pointer" }}>←</button>
               <h2 style={{ color: "var(--text)", fontSize: "16px", fontWeight: "600" }}>
                 {MESES[mes]} {anio}
               </h2>
               <button onClick={() => cambiarMes(1)}
-                style={{ background: "#1F2937", border: "1px solid #374151", color: "#D1D5DB",
+                style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)",
                   borderRadius: "8px", padding: "6px 14px", cursor: "pointer" }}>→</button>
             </div>
 
@@ -211,8 +211,8 @@ export default function Agendamiento() {
                   <div key={i} onClick={() => seleccionarDia(d.fecha)}
                     style={{
                       minHeight: "56px", padding: "4px", borderRadius: "8px", cursor: "pointer",
-                      background: selec ? "#1E3A5F" : noLaboral ? "#0D1117" : "#1F2937",
-                      border: `1px solid ${selec ? "#3B82F6" : noLaboral ? "#111827" : "#374151"}`,
+                      background: selec ? "rgba(30,95,212,.15)" : noLaboral ? "var(--bg)" : "var(--bg3)",
+                      border: `1px solid ${selec ? "var(--blue)" : noLaboral ? "var(--border2)" : "var(--border)"}`,
                       opacity: noLaboral ? 0.5 : 1,
                     }}>
                     <div style={{ fontSize: "12px", fontWeight: "600",
@@ -244,7 +244,7 @@ export default function Agendamiento() {
                 <p style={{ color: "var(--text3)", fontSize: "13px" }}>No hay citas este día</p>
               ) : (
                 citasDia.map(c => (
-                  <div key={c.id} style={{ background: "#111827", borderRadius: "8px",
+                  <div key={c.id} style={{ background: "var(--bg2)", borderRadius: "8px",
                     padding: "12px", marginBottom: "10px", border: "1px solid #1F2937" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
                       <span style={{ color: "var(--text)", fontWeight: "600", fontSize: "13px" }}>
@@ -261,7 +261,7 @@ export default function Agendamiento() {
                         fontSize: "10px"
                       }}>{c.estado}</span>
                       <select value={c.estado} onChange={e => cambiarEstadoCita(c.id, e.target.value)}
-                        style={{ background: "#1F2937", border: "1px solid #374151", color: "#D1D5DB",
+                        style={{ background: "var(--bg3)", border: "1px solid var(--border)", color: "var(--text)",
                           borderRadius: "6px", padding: "3px 6px", fontSize: "11px", cursor: "pointer" }}>
                         <option value="pendiente">Pendiente</option>
                         <option value="confirmada">Confirmada</option>
@@ -277,7 +277,7 @@ export default function Agendamiento() {
                         disabled={convirtiendo === c.id}
                         style={{
                           width: "100%",
-                          background: "#065F46",
+                          background: "rgba(0,212,160,.12)",
                           border: "1px solid #10B981",
                           color: "#10B981",
                           borderRadius: "8px",
@@ -346,7 +346,7 @@ export default function Agendamiento() {
                       {c.estado === "completada" && !c.orden ? (
                         <button onClick={() => handleConvertirOrden(c.id)}
                           disabled={convirtiendo === c.id}
-                          style={{ background: "#065F46", border: "1px solid #10B981",
+                          style={{ background: "rgba(0,212,160,.12)", border: "1px solid rgba(0,212,160,.4)",
                             color: "#10B981", borderRadius: "6px", padding: "4px 10px",
                             fontSize: "11px", cursor: "pointer", whiteSpace: "nowrap" }}>
                           {convirtiendo === c.id ? "..." : "🔧 Crear orden"}

@@ -74,18 +74,18 @@ export default function Layout({ onLogout }) {
           padding: "0 1rem", zIndex: 997,
         }}>
           <button onClick={() => setSidebarOpen(p => !p)} style={{
-            background: "none", border: "none", color: "#E0E8FF",
+            background: "none", border: "none", color: "var(--text)",
             fontSize: "20px", cursor: "pointer", padding: "8px",
             lineHeight: 1,
           }}>☰</button>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <img src="/logo_arm.png" alt="ARM" style={{ width: "24px", height: "24px",
-              borderRadius: "6px", border: "1px solid rgba(0,229,160,.3)" }} />
-            <span style={{ fontWeight: "700", color: "#00E5A0", fontSize: "14px",
+              borderRadius: "6px", border: "1px solid rgba(232,33,58,.3)" }} />
+            <span style={{ fontWeight: "700", color: "var(--red)", fontSize: "14px",
               letterSpacing: "-.2px" }}>ARM Racing</span>
           </div>
           <button onClick={() => setBusquedaAbierta(p => !p)} style={{
-            background: "none", border: "none", color: "#6A7A92",
+            background: "none", border: "none", color: "var(--text3)",
             fontSize: "16px", cursor: "pointer", padding: "8px"
           }}>🔍</button>
         </div>
@@ -105,7 +105,7 @@ export default function Layout({ onLogout }) {
         }}>
           <BusquedaGlobal onClose={() => setBusquedaAbierta(false)} />
           <button onClick={() => setBusquedaAbierta(false)} style={{
-            background: "none", border: "none", color: "#3A4A62",
+            background: "none", border: "none", color: "var(--text3)",
             fontSize: "20px", cursor: "pointer", padding: "8px", marginLeft: "8px"
           }}>×</button>
         </div>
@@ -115,7 +115,7 @@ export default function Layout({ onLogout }) {
       {isMobile && busquedaAbierta && (
         <div style={{
           position: "fixed", top: "54px", left: 0, right: 0,
-          background: "rgba(8,12,24,.98)",
+          background: "var(--bg2)",
           backdropFilter: "blur(16px)",
           borderBottom: "1px solid var(--border)",
           padding: "10px 1rem",

@@ -5,14 +5,14 @@ const BASE = window.location.hostname === "app.armracing.com"
   ? "https://api.armracing.com/api" : "http://192.168.0.8:8000/api"
 
 const ESTADO_CONFIG = {
-  recibido:    { color: "#6A7A92", icon: "📋", label: "Recibido",    desc: "Tu moto fue recibida en el taller" },
+  recibido:    { color: "var(--text3)", icon: "📋", label: "Recibido",    desc: "Tu moto fue recibida en el taller" },
   diagnostico: { color: "#F5A623", icon: "🔍", label: "Diagnóstico", desc: "Estamos revisando tu moto" },
   aprobado:    { color: "#1E5FD4", icon: "✅", label: "Aprobado",    desc: "El presupuesto fue aprobado" },
   en_proceso:  { color: "#00D4A0", icon: "⚙️", label: "En proceso",  desc: "Estamos trabajando en tu moto" },
   esperando_repuestos: { color: "#8B5CF6", icon: "⏳", label: "Esperando repuestos", desc: "Pedimos los repuestos necesarios" },
   en_pruebas:  { color: "#F5A623", icon: "🧪", label: "En pruebas",  desc: "Probando que todo funcione bien" },
   finalizado:  { color: "#00D4A0", icon: "🏁", label: "Finalizado",  desc: "Tu moto está lista para recoger" },
-  entregado:   { color: "#3A4A62", icon: "✔️", label: "Entregado",   desc: "Moto entregada al cliente" },
+  entregado:   { color: "var(--text3)", icon: "✔️", label: "Entregado",   desc: "Moto entregada al cliente" },
 }
 
 const PASOS_ORDEN = ["recibido","diagnostico","aprobado","en_proceso","esperando_repuestos","en_pruebas","finalizado","entregado"]
@@ -67,10 +67,10 @@ export default function Portal() {
               textTransform: "uppercase", letterSpacing: ".1em" }}>Performance</div>
           </div>
         </a>
-        <a href="/agendar" style={{ fontSize: "13px", color: "#6A7A92",
+        <a href="/agendar" style={{ fontSize: "13px", color: "var(--text3)",
           textDecoration: "none", transition: "color .15s" }}
           onMouseEnter={e => e.currentTarget.style.color = "#E8213A"}
-          onMouseLeave={e => e.currentTarget.style.color = "#6A7A92"}>
+          onMouseLeave={e => e.currentTarget.style.color = "var(--text3)"}>
           Nueva cita →
         </a>
       </div>
@@ -94,14 +94,14 @@ export default function Portal() {
             letterSpacing: "-.5px", marginBottom: "8px" }}>
             Estado de tu moto
           </h1>
-          <p style={{ color: "#6A7A92", fontSize: "14px" }}>
+          <p style={{ color: "var(--text3)", fontSize: "14px" }}>
             Consulta el estado de tu moto con tu placa o cédula
           </p>
         </div>
 
         {/* Buscador */}
         <div style={{
-          background: "rgba(255,255,255,.03)",
+          background: "var(--bg3)",
           border: "1px solid rgba(255,255,255,.08)",
           borderRadius: "20px", padding: "1.75rem",
           marginBottom: "1.5rem",
@@ -118,7 +118,7 @@ export default function Portal() {
               onKeyDown={e => e.key === "Enter" && consultar()}
               placeholder="Ej: NHX14G o tu número de cédula"
               style={{
-                flex: 1, background: "rgba(255,255,255,.05)",
+                flex: 1, background: "var(--bg3)",
                 border: "1px solid rgba(255,255,255,.12)",
                 color: "#EEF0FF", borderRadius: "10px",
                 padding: "13px 16px", fontSize: "15px",
@@ -156,7 +156,7 @@ export default function Portal() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             {cliente && (
               <div style={{
-                background: "rgba(255,255,255,.03)",
+                background: "var(--bg3)",
                 border: "1px solid rgba(255,255,255,.07)",
                 borderRadius: "14px", padding: "1.25rem",
                 display: "flex", alignItems: "center", gap: "14px",
@@ -173,7 +173,7 @@ export default function Portal() {
                   <div style={{ fontSize: "16px", fontWeight: "700", color: "#EEF0FF" }}>
                     {cliente.nombre}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#6A7A92" }}>
+                  <div style={{ fontSize: "12px", color: "var(--text3)" }}>
                     {cliente.telefono} · {ordenes.length} orden{ordenes.length > 1 ? "es" : ""}
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function Portal() {
 
               return (
                 <div key={orden.id} style={{
-                  background: "rgba(255,255,255,.03)",
+                  background: "var(--bg3)",
                   border: `1px solid ${est.color}25`,
                   borderRadius: "20px", overflow: "hidden",
                   animation: "fadeIn .4s ease both",
@@ -209,7 +209,7 @@ export default function Portal() {
                         color: "#EEF0FF", marginTop: "2px" }}>
                         {orden.vehiculo_marca} {orden.vehiculo_linea}
                         <span style={{ fontFamily: "monospace", fontSize: "13px",
-                          color: "#6A7A92", marginLeft: "8px" }}>{orden.vehiculo_placa}</span>
+                          color: "var(--text3)", marginLeft: "8px" }}>{orden.vehiculo_placa}</span>
                       </div>
                     </div>
                     <span style={{
@@ -230,7 +230,7 @@ export default function Portal() {
                       {est.desc}
                     </div>
                     {orden.descripcion && (
-                      <div style={{ fontSize: "13px", color: "#6A7A92",
+                      <div style={{ fontSize: "13px", color: "var(--text3)",
                         marginTop: "6px", fontStyle: "italic" }}>
                         "{orden.descripcion}"
                       </div>
@@ -281,7 +281,7 @@ export default function Portal() {
                     <div style={{ padding: "10px 1.5rem",
                       borderTop: `1px solid ${est.color}10`,
                       display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "13px", color: "#6A7A92" }}>Costo estimado</span>
+                      <span style={{ fontSize: "13px", color: "var(--text3)" }}>Costo estimado</span>
                       <span style={{ fontSize: "15px", fontWeight: "700",
                         color: "#00D4A0", fontFamily: "monospace" }}>
                         ${Number(orden.costo_final).toLocaleString("es-CO")}
@@ -297,7 +297,7 @@ export default function Portal() {
         {/* Footer */}
         <div style={{ textAlign: "center", marginTop: "3rem",
           padding: "1.5rem 0", borderTop: "1px solid rgba(255,255,255,.05)" }}>
-          <div style={{ fontSize: "13px", color: "#3A4A62" }}>
+          <div style={{ fontSize: "13px", color: "var(--text3)" }}>
             ¿Necesitas ayuda? Llámanos al{" "}
             <a href="tel:3232338894" style={{ color: "#E8213A",
               textDecoration: "none", fontWeight: "600" }}>

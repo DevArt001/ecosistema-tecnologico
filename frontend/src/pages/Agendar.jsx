@@ -115,10 +115,10 @@ export default function Agendar() {
               textTransform: "uppercase", letterSpacing: ".1em" }}>Performance</div>
           </div>
         </a>
-        <a href="/portal" style={{ fontSize: "13px", color: "#6A7A92",
+        <a href="/portal" style={{ fontSize: "13px", color: "var(--text3)",
           textDecoration: "none", transition: "color .15s" }}
         onMouseEnter={e => e.currentTarget.style.color = "#E8213A"}
-        onMouseLeave={e => e.currentTarget.style.color = "#6A7A92"}>
+        onMouseLeave={e => e.currentTarget.style.color = "var(--text3)"}>
           Ver mi cita →
         </a>
       </div>
@@ -143,7 +143,7 @@ export default function Agendar() {
               {paso < 5 ? "Agenda tu cita" : "¡Cita confirmada!"}
             </h1>
             {paso < 5 && (
-              <p style={{ color: "#6A7A92", fontSize: "14px" }}>
+              <p style={{ color: "var(--text3)", fontSize: "14px" }}>
                 Paso {paso} de 4 — {["", "Tus datos", "Tu moto", "Fecha y hora", "Confirmación"][paso]}
               </p>
             )}
@@ -279,7 +279,7 @@ export default function Agendar() {
                       color: "#E8213A", textTransform: "uppercase", letterSpacing: ".1em",
                       marginBottom: "10px" }}>Selecciona la hora *</label>
                     {horasDisp.length === 0 ? (
-                      <div style={{ color: "#6A7A92", fontSize: "14px",
+                      <div style={{ color: "var(--text3)", fontSize: "14px",
                         textAlign: "center", padding: "1rem" }}>
                         No hay horas disponibles para esta fecha
                       </div>
@@ -318,7 +318,7 @@ export default function Agendar() {
                 ].map(item => (
                   <div key={item.label} style={{ display: "flex", justifyContent: "space-between",
                     padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.06)" }}>
-                    <span style={{ fontSize: "13px", color: "#6A7A92",
+                    <span style={{ fontSize: "13px", color: "var(--text3)",
                       textTransform: "uppercase", letterSpacing: ".08em",
                       fontWeight: "600" }}>{item.label}</span>
                     <span style={{ fontSize: "14px", color: "#EEF0FF",
@@ -335,7 +335,7 @@ export default function Agendar() {
                   animation: "pulse 2s infinite" }}>🎉</div>
                 <div style={{ fontSize: "20px", fontWeight: "700",
                   color: "#00D4A0", marginBottom: "10px" }}>¡Cita agendada!</div>
-                <div style={{ fontSize: "14px", color: "#6A7A92",
+                <div style={{ fontSize: "14px", color: "var(--text3)",
                   lineHeight: 1.7, marginBottom: "1.5rem" }}>
                   Tu cita fue confirmada para el<br/>
                   <strong style={{ color: "#EEF0FF" }}>{form.fecha} a las {form.hora}</strong>

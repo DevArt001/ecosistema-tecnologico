@@ -62,10 +62,10 @@ export default function Registro() {
               textTransform: "uppercase", letterSpacing: ".1em" }}>Performance</div>
           </div>
         </a>
-        <a href="/agendar" style={{ fontSize: "13px", color: "#6A7A92",
+        <a href="/agendar" style={{ fontSize: "13px", color: "var(--text3)",
           textDecoration: "none", transition: "color .15s" }}
           onMouseEnter={e => e.currentTarget.style.color = "#E8213A"}
-          onMouseLeave={e => e.currentTarget.style.color = "#6A7A92"}>
+          onMouseLeave={e => e.currentTarget.style.color = "var(--text3)"}>
           Agendar cita →
         </a>
       </div>
@@ -89,7 +89,7 @@ export default function Registro() {
               letterSpacing: "-.5px", marginBottom: "8px" }}>
               {exito ? "¡Registro exitoso!" : "Regístrate"}
             </h1>
-            {!exito && <p style={{ color: "#6A7A92", fontSize: "14px" }}>
+            {!exito && <p style={{ color: "var(--text3)", fontSize: "14px" }}>
               Crea tu perfil en ARM Racing Performance
             </p>}
           </div>
@@ -102,7 +102,7 @@ export default function Registro() {
               <div style={{ fontSize: "56px", marginBottom: "1rem" }}>🎉</div>
               <div style={{ fontSize: "18px", fontWeight: "700", color: "#00D4A0",
                 marginBottom: "10px" }}>¡Bienvenido a ARM Racing!</div>
-              <div style={{ fontSize: "14px", color: "#6A7A92", lineHeight: 1.7,
+              <div style={{ fontSize: "14px", color: "var(--text3)", lineHeight: 1.7,
                 marginBottom: "1.5rem" }}>
                 Tu perfil fue creado exitosamente.<br/>
                 Ya puedes agendar tu primera cita.

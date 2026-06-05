@@ -80,7 +80,7 @@ export default function Public() {
 
         {/* Tagline */}
         <p style={{
-          fontSize: "18px", color: "#8A9AB8", maxWidth: "500px",
+          fontSize: "18px", color: "var(--text2)", maxWidth: "500px",
           lineHeight: 1.7, marginBottom: "3rem",
           opacity: visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(12px)",
@@ -114,13 +114,13 @@ export default function Public() {
           <a href="/registro" style={{
             display: "inline-flex", alignItems: "center", gap: "8px",
             padding: "14px 32px", borderRadius: "12px", textDecoration: "none",
-            background: "rgba(255,255,255,.05)",
-            border: "1.5px solid rgba(255,255,255,.15)",
-            color: "#D0D8F0", fontWeight: "600", fontSize: "15px",
+            background: "var(--bg3)",
+            border: "1.5px solid var(--border)",
+            color: "var(--text)", fontWeight: "600", fontSize: "15px",
             transition: "all .2s",
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,.1)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.3)" }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,.15)" }}>
+          onMouseEnter={e => { e.currentTarget.style.background = "var(--bg4)"; e.currentTarget.style.borderColor = "var(--border2)" }}
+          onMouseLeave={e => { e.currentTarget.style.background = "var(--bg3)"; e.currentTarget.style.borderColor = "var(--border)" }}>
             ✍️ Registrarme
           </a>
         </div>
@@ -128,7 +128,7 @@ export default function Public() {
         {/* Scroll hint */}
         <div style={{ position: "absolute", bottom: "2rem",
           display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
-          color: "#3A4A62", fontSize: "12px",
+          color: "var(--text3)", fontSize: "12px",
           animation: "pulse 2s infinite",
         }}>
           <span>Scroll</span>
@@ -145,7 +145,7 @@ export default function Public() {
             Lo que hacemos
           </div>
           <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", fontWeight: "800",
-            color: "#EEF0FF", letterSpacing: "-.5px" }}>
+            color: "var(--text)", letterSpacing: "-.5px" }}>
             Nuestros servicios
           </h2>
         </div>
@@ -154,8 +154,8 @@ export default function Public() {
           gap: "1.5rem" }}>
           {SERVICIOS.map((s, i) => (
             <div key={i} style={{
-              background: "rgba(255,255,255,.03)",
-              border: "1px solid rgba(255,255,255,.08)",
+              background: "var(--bg3)",
+              border: "1px solid var(--border)",
               borderRadius: "16px", padding: "1.75rem",
               transition: "all .2s",
             }}
@@ -165,14 +165,14 @@ export default function Public() {
               e.currentTarget.style.transform = "translateY(-4px)"
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = "rgba(255,255,255,.03)"
-              e.currentTarget.style.borderColor = "rgba(255,255,255,.08)"
+              e.currentTarget.style.background = "var(--bg3)"
+              e.currentTarget.style.borderColor = "var(--border)"
               e.currentTarget.style.transform = "translateY(0)"
             }}>
               <div style={{ fontSize: "36px", marginBottom: "14px" }}>{s.icon}</div>
-              <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#EEF0FF",
+              <h3 style={{ fontSize: "17px", fontWeight: "700", color: "var(--text)",
                 marginBottom: "8px" }}>{s.titulo}</h3>
-              <p style={{ fontSize: "14px", color: "#6A7A92", lineHeight: 1.7 }}>{s.desc}</p>
+              <p style={{ fontSize: "14px", color: "var(--text3)", lineHeight: 1.7 }}>{s.desc}</p>
             </div>
           ))}
         </div>
@@ -185,15 +185,15 @@ export default function Public() {
         <div style={{ textAlign: "center", marginBottom: "3rem" }}>
           <div className="public-subtitle" style={{ marginBottom: "12px" }}>Encuéntranos</div>
           <h2 style={{ fontSize: "clamp(1.8rem, 4vw, 2.8rem)", fontWeight: "800",
-            color: "#EEF0FF", letterSpacing: "-.5px" }}>Contacto</h2>
+            color: "var(--text)", letterSpacing: "-.5px" }}>Contacto</h2>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
           gap: "1.25rem" }}>
           {CONTACTO.map((c, i) => (
             <div key={i} style={{
-              background: "rgba(255,255,255,.03)",
-              border: "1px solid rgba(255,255,255,.07)",
+              background: "var(--bg3)",
+              border: "1px solid var(--border)",
               borderRadius: "14px", padding: "1.5rem",
               textAlign: "center",
             }}>
@@ -201,7 +201,7 @@ export default function Public() {
               <div style={{ fontSize: "11px", fontWeight: "700", color: "#E8213A",
                 textTransform: "uppercase", letterSpacing: ".1em",
                 marginBottom: "6px" }}>{c.titulo}</div>
-              <div style={{ fontSize: "14px", color: "#9AAAC0",
+              <div style={{ fontSize: "14px", color: "var(--text2)",
                 lineHeight: 1.5 }}>{c.valor}</div>
             </div>
           ))}
@@ -209,13 +209,13 @@ export default function Public() {
       </div>
 
       {/* FOOTER */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,.06)",
+      <div style={{ borderTop: "1px solid var(--border)",
         padding: "2rem", textAlign: "center", position: "relative", zIndex: 1 }}>
         <div style={{ marginBottom: "12px" }}>
           <img src="/logo_arm.png" alt="ARM Racing"
             style={{ height: "30px", opacity: .6, objectFit: "contain" }} />
         </div>
-        <div style={{ fontSize: "12px", color: "#3A4A62" }}>
+        <div style={{ fontSize: "12px", color: "var(--text3)" }}>
           © {new Date().getFullYear()} ARM Racing Performance · Bogotá, Colombia
         </div>
       </div>

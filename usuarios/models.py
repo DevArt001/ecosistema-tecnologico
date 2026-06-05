@@ -48,6 +48,7 @@ class PerfilUsuario(models.Model):
         return f"{self.usuario.username} — {self.rol}"
 
     class Meta:
+        ordering = [['user__username']]
         verbose_name = 'Perfil de usuario'
         verbose_name_plural = 'Perfiles de usuario'
 

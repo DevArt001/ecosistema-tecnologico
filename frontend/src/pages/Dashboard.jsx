@@ -5,14 +5,14 @@ import { TableSkeleton } from "../components/UI"
 import API from "../services/api"
 
 const ESTADOS = {
-  recibido:    { color: "#6A7A92", label: "Recibido",    icon: "📋" },
+  recibido:    { color: "var(--text3)", label: "Recibido",    icon: "📋" },
   diagnostico: { color: "#F5A623", label: "Diagnóstico", icon: "🔍" },
   aprobado:    { color: "#1E5FD4", label: "Aprobado",    icon: "✅" },
   en_proceso:  { color: "#00D4A0", label: "En proceso",  icon: "⚙️" },
   esperando_repuestos: { color: "#8B5CF6", label: "Repuestos", icon: "⏳" },
   en_pruebas:  { color: "#F5A623", label: "En pruebas",  icon: "🧪" },
   finalizado:  { color: "#1E5FD4", label: "Finalizado",  icon: "🏁" },
-  entregado:   { color: "#3A4A62", label: "Entregado",   icon: "✔️" },
+  entregado:   { color: "var(--text3)", label: "Entregado",   icon: "✔️" },
 }
 
 // Componente de número animado
@@ -167,7 +167,7 @@ export default function Dashboard() {
     <div>
       {/* Hero Banner */}
       <div style={{
-        background: "linear-gradient(135deg, #0D1622 0%, #09101C 60%, #0B0A18 100%)",
+        background: "var(--bg2)",
         border: "1.5px solid #1E2A3A",
         borderRadius: "20px",
         padding: "2rem 2.5rem",
@@ -200,7 +200,7 @@ export default function Dashboard() {
           <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
             <div style={{
               width: "68px", height: "68px", borderRadius: "16px",
-              background: "#080808",
+              background: "var(--bg3)",
               border: "2px solid rgba(232,33,58,.4)",
               boxShadow: "0 0 24px rgba(232,33,58,.2), 0 0 50px rgba(232,33,58,.07)",
               padding: "8px", flexShrink: 0,
@@ -213,7 +213,7 @@ export default function Dashboard() {
               <div style={{
                 fontSize: "12px", fontWeight: "700", letterSpacing: ".16em",
                 textTransform: "uppercase", marginBottom: "6px",
-                background: "linear-gradient(90deg, #E8213A 0%, #FF6B6B 50%, #1E5FD4 100%)",
+                background: "linear-gradient(90deg, var(--red) 0%, #FF6B6B 50%, var(--blue) 100%)",
                 WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
               }}>ARM Racing Performance · TallerOS</div>
@@ -221,7 +221,7 @@ export default function Dashboard() {
                 color: "#EEF0FF", letterSpacing: "-.6px", lineHeight: 1.2 }}>
                 {saludo}, {" "}
                 <span style={{
-                  background: "linear-gradient(135deg, #E8213A 0%, #FF8080 100%)",
+                  background: "linear-gradient(135deg, var(--red) 0%, #FF8080 100%)",
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
                   backgroundClip: "text",
                 }}>{username}</span> {emoji}

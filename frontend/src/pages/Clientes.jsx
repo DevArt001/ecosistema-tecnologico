@@ -68,7 +68,7 @@ export default function Clientes() {
     regular:   { color: "#4A5A72", label: "Regular" },
     frecuente: { color: "#1E5FD4", label: "Frecuente" },
     premium:   { color: "#F5A623", label: "Premium" },
-    inactivo:  { color: "#3A4A62", label: "Inactivo" },
+    inactivo:  { color: "var(--text3)", label: "Inactivo" },
   }
 
   const filtrados = clientes.filter(c =>

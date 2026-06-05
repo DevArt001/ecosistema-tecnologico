@@ -4,7 +4,7 @@ import { PageHeader, Toast, KPICard, EmptyState, SearchBar,
          TableSkeleton, ModalForm, Field, ConfirmModal } from "../components/UI"
 
 const ESTADO_CONFIG = {
-  borrador:  { color: "#6A7A92", bg: "#6A7A9215", icon: "📝", label: "Borrador" },
+  borrador:  { color: "var(--text3)", bg: "rgba(106,122,144,.08)", icon: "📝", label: "Borrador" },
   enviada:   { color: "#1E5FD4", bg: "#1E5FD415", icon: "📤", label: "Enviada" },
   aprobada:  { color: "#00D4A0", bg: "#00D4A015", icon: "✅", label: "Aprobada" },
   rechazada: { color: "#E8213A", bg: "#E8213A15", icon: "❌", label: "Rechazada" },
@@ -275,7 +275,7 @@ export default function Cotizaciones() {
       <div className="stagger" style={{ display:"flex", gap:"1rem", flexWrap:"wrap", marginBottom:"1.5rem" }}>
         <KPICard titulo="Total" valor={cotizaciones.length} color="#1E5FD4" icon="📄" delay={0} />
         <KPICard titulo="Aprobadas" valor={cotizaciones.filter(c=>c.estado==="aprobada").length} color="#00D4A0" icon="✅" delay={.04} />
-        <KPICard titulo="Borradores" valor={cotizaciones.filter(c=>c.estado==="borrador").length} color="#6A7A92" icon="📝" delay={.08} />
+        <KPICard titulo="Borradores" valor={cotizaciones.filter(c=>c.estado==="borrador").length} color="var(--text3)" icon="📝" delay={.08} />
         <KPICard titulo="Valor aprobado" valor={`$${Math.round(totalAprobadas/1000)}K`} color="#00D4A0" icon="💰" delay={.12} />
         <KPICard titulo="En proceso" valor={`$${Math.round(totalBorradores/1000)}K`} color="#F5A623" icon="⏳" delay={.16} />
       </div>
