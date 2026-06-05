@@ -395,7 +395,45 @@ export default function Nomina() {
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
                   color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>% mano de obra</label>
-                <input type="number" value={formEmpleado.porcentaje_mano_obra} onChange={e => setFormEmpleado({...formEmpleado, porcentaje_mano_obra: e.target.value})}
+                <input type="number" value={formEmpleado.porcentaje_mano_obra}
+                  onChange={e => setFormEmpleado({...formEmpleado, porcentaje_mano_obra: e.target.value})}
+                  style={{ width: "100%" }} />
+              </div>
+            </div>
+
+            {/* Comisiones */}
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px",
+                padding: "10px 14px", borderRadius: "10px", cursor: "pointer",
+                background: formEmpleado.aplica_comision ? "rgba(245,166,35,.08)" : "var(--bg3)",
+                border: `1px solid ${formEmpleado.aplica_comision ? "rgba(245,166,35,.3)" : "var(--border)"}`,
+                transition: "all .15s" }}>
+                <input type="checkbox" checked={formEmpleado.aplica_comision || false}
+                  onChange={e => setFormEmpleado({...formEmpleado, aplica_comision: e.target.checked})}
+                  style={{ width: "auto", accentColor: "#F5A623" }} />
+                <div>
+                  <div style={{ fontSize: "13px", color: "var(--text)", fontWeight: "600" }}>
+                    Aplica comisión adicional
+                  </div>
+                  <div style={{ fontSize: "11px", color: "var(--text3)" }}>
+                    Porcentaje extra sobre el total de cada orden
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {formEmpleado.aplica_comision && (
+              <div style={{ marginBottom: "12px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
+                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>
+                  % Comisión adicional
+                </label>
+                <input type="number" value={formEmpleado.porcentaje_comision || 10}
+                  onChange={e => setFormEmpleado({...formEmpleado, porcentaje_comision: e.target.value})}
+                  style={{ width: "100%" }} min="0" max="100" />
+              </div>
+            )}
+
                   style={{ width: "100%" }} />
               </div>
             </div>
