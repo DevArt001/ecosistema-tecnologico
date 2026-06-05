@@ -385,7 +385,7 @@ export default function Nomina() {
                 </select>
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "1.5rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
                   color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>Salario base</label>
