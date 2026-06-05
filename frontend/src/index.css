@@ -711,8 +711,6 @@ a:hover { color: #FF4D66; }
   color: #9AA0C0 !important;
 }
 
-}
-
 /* Textos grises públicos claro */
 /* Textos específicos públicos claro */
 [data-tema="claro"] .bg-texture .text-muted { color: #4A5570 !important; }
