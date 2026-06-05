@@ -340,34 +340,37 @@ export default function Nomina() {
 
       {/* Modal Empleado */}
       {modalEmpleado !== null && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.7)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
-          <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
-            borderRadius: "var(--radius-lg)", padding: "1.5rem", width: "100%", maxWidth: "500px",
-            maxHeight: "92vh", overflowY: "auto", overflowX: "hidden" }}>
-            <h2 style={{ marginBottom: "1.5rem", color: "var(--text)", fontSize: "18px" }}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,.7)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          zIndex:1000, padding:"1rem" }}>
+          <div style={{ background:"var(--bg2)", border:"1px solid var(--border)",
+            borderRadius:"var(--radius-lg)", padding:"1.5rem", width:"100%",
+            maxWidth:"500px", maxHeight:"92vh", overflowY:"auto" }}>
+            <h2 style={{ marginBottom:"1.5rem", color:"var(--text)", fontSize:"18px" }}>
               {modalEmpleado?.id ? "Editar empleado" : "Nuevo empleado"}
             </h2>
             {[
-              { label: "Nombre completo", key: "nombre" },
-              { label: "Documento", key: "documento" },
-              { label: "Teléfono", key: "telefono" },
-              { label: "Correo", key: "correo" },
-              { label: "Cargo", key: "cargo" },
+              { label:"Nombre completo", key:"nombre" },
+              { label:"Documento", key:"documento" },
+              { label:"Teléfono", key:"telefono" },
+              { label:"Correo", key:"correo" },
+              { label:"Cargo", key:"cargo" },
             ].map(f => (
-              <div key={f.key} style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>{f.label}</label>
-                <input value={formEmpleado[f.key] || ""} onChange={e => setFormEmpleado({...formEmpleado, [f.key]: e.target.value})}
-                  style={{ width: "100%" }} />
+              <div key={f.key} style={{ marginBottom:"12px" }}>
+                <label style={{ display:"block", fontSize:"12px", fontWeight:"600",
+                  color:"var(--text2)", marginBottom:"4px", textTransform:"uppercase" }}>{f.label}</label>
+                <input value={formEmpleado[f.key] || ""}
+                  onChange={e => setFormEmpleado({...formEmpleado, [f.key]: e.target.value})}
+                  style={{ width:"100%" }} />
               </div>
             ))}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"12px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>Tipo</label>
-                <select value={formEmpleado.tipo} onChange={e => setFormEmpleado({...formEmpleado, tipo: e.target.value})}
-                  style={{ width: "100%" }}>
+                <label style={{ display:"block", fontSize:"12px", fontWeight:"600",
+                  color:"var(--text2)", marginBottom:"4px", textTransform:"uppercase" }}>Tipo</label>
+                <select value={formEmpleado.tipo}
+                  onChange={e => setFormEmpleado({...formEmpleado, tipo: e.target.value})}
+                  style={{ width:"100%" }}>
                   <option value="tecnico">Técnico</option>
                   <option value="contabilidad">Contabilidad</option>
                   <option value="admin">Admin</option>
@@ -375,68 +378,68 @@ export default function Nomina() {
                 </select>
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>Tipo pago</label>
-                <select value={formEmpleado.tipo_pago} onChange={e => setFormEmpleado({...formEmpleado, tipo_pago: e.target.value})}
-                  style={{ width: "100%" }}>
+                <label style={{ display:"block", fontSize:"12px", fontWeight:"600",
+                  color:"var(--text2)", marginBottom:"4px", textTransform:"uppercase" }}>Tipo pago</label>
+                <select value={formEmpleado.tipo_pago}
+                  onChange={e => setFormEmpleado({...formEmpleado, tipo_pago: e.target.value})}
+                  style={{ width:"100%" }}>
                   <option value="servicio">Por servicio</option>
                   <option value="fijo">Salario fijo</option>
                   <option value="mixto">Mixto</option>
                 </select>
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"12px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>Salario base</label>
-                <input type="number" value={formEmpleado.salario_base} onChange={e => setFormEmpleado({...formEmpleado, salario_base: e.target.value})}
-                  style={{ width: "100%" }} />
+                <label style={{ display:"block", fontSize:"12px", fontWeight:"600",
+                  color:"var(--text2)", marginBottom:"4px", textTransform:"uppercase" }}>Salario base</label>
+                <input type="number" value={formEmpleado.salario_base}
+                  onChange={e => setFormEmpleado({...formEmpleado, salario_base: e.target.value})}
+                  style={{ width:"100%" }} />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>% mano de obra</label>
+                <label style={{ display:"block", fontSize:"12px", fontWeight:"600",
+                  color:"var(--text2)", marginBottom:"4px", textTransform:"uppercase" }}>% mano de obra</label>
                 <input type="number" value={formEmpleado.porcentaje_mano_obra}
                   onChange={e => setFormEmpleado({...formEmpleado, porcentaje_mano_obra: e.target.value})}
-                  style={{ width: "100%" }} />
+                  style={{ width:"100%" }} />
               </div>
             </div>
 
             {/* Comisiones */}
-            <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "10px",
-                padding: "10px 14px", borderRadius: "10px", cursor: "pointer",
+            <div style={{ marginBottom:"12px" }}>
+              <label style={{ display:"flex", alignItems:"center", gap:"10px",
+                padding:"10px 14px", borderRadius:"10px", cursor:"pointer",
                 background: formEmpleado.aplica_comision ? "rgba(245,166,35,.08)" : "var(--bg3)",
                 border: `1px solid ${formEmpleado.aplica_comision ? "rgba(245,166,35,.3)" : "var(--border)"}`,
-                transition: "all .15s" }}>
+                transition:"all .15s" }}>
                 <input type="checkbox" checked={formEmpleado.aplica_comision || false}
                   onChange={e => setFormEmpleado({...formEmpleado, aplica_comision: e.target.checked})}
-                  style={{ width: "auto", accentColor: "#F5A623" }} />
+                  style={{ width:"auto", accentColor:"#F5A623" }} />
                 <div>
-                  <div style={{ fontSize: "13px", color: "var(--text)", fontWeight: "600" }}>
+                  <div style={{ fontSize:"13px", color:"var(--text)", fontWeight:"600" }}>
                     Aplica comisión adicional
                   </div>
-                  <div style={{ fontSize: "11px", color: "var(--text3)" }}>
+                  <div style={{ fontSize:"11px", color:"var(--text3)" }}>
                     Porcentaje extra sobre el total de cada orden
                   </div>
                 </div>
               </label>
             </div>
-
             {formEmpleado.aplica_comision && (
-              <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", fontSize: "12px", fontWeight: "600",
-                  color: "var(--text2)", marginBottom: "4px", textTransform: "uppercase" }}>
+              <div style={{ marginBottom:"12px" }}>
+                <label style={{ display:"block", fontSize:"12px", fontWeight:"600",
+                  color:"var(--text2)", marginBottom:"4px", textTransform:"uppercase" }}>
                   % Comisión adicional
                 </label>
                 <input type="number" value={formEmpleado.porcentaje_comision || 10}
                   onChange={e => setFormEmpleado({...formEmpleado, porcentaje_comision: e.target.value})}
-                  style={{ width: "100%" }} min="0" max="100" />
+                  style={{ width:"100%" }} min="0" max="100" />
               </div>
             )}
 
-            </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button className="btn btn-primary" onClick={guardarEmpleado} style={{ flex: 1 }}>
+            <div style={{ display:"flex", gap:"8px", marginTop:"1.5rem" }}>
+              <button className="btn btn-primary" onClick={guardarEmpleado} style={{ flex:1 }}>
                 Guardar
               </button>
               <button className="btn btn-secondary" onClick={() => setModalEmpleado(null)}>Cancelar</button>
