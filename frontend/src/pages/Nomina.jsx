@@ -434,8 +434,6 @@ export default function Nomina() {
               </div>
             )}
 
-                  style={{ width: "100%" }} />
-              </div>
             </div>
             <div style={{ display: "flex", gap: "8px" }}>
               <button className="btn btn-primary" onClick={guardarEmpleado} style={{ flex: 1 }}>
