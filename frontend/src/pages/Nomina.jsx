@@ -344,7 +344,7 @@ export default function Nomina() {
           display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
           <div style={{ background: "var(--bg2)", border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)", padding: "1.5rem", width: "100%", maxWidth: "500px",
-            maxHeight: "90vh", overflowY: "auto" }}>
+            maxHeight: "92vh", overflowY: "auto", overflowX: "hidden" }}>
             <h2 style={{ marginBottom: "1.5rem", color: "var(--text)", fontSize: "18px" }}>
               {modalEmpleado?.id ? "Editar empleado" : "Nuevo empleado"}
             </h2>
