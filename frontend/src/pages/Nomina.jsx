@@ -16,10 +16,11 @@ export default function Nomina() {
   const [formEmpleado, setFormEmpleado] = useState({
     nombre: "", documento: "", telefono: "", correo: "",
     cargo: "", tipo: "tecnico", tipo_pago: "servicio",
-    salario_base: 0, porcentaje_mano_obra: 50, activo: true
+    salario_base: 0, porcentaje_mano_obra: 50, activo: true,
+    aplica_comision: false, porcentaje_comision: 10
   })
   const [formPago, setFormPago] = useState({
-    empleado: "", descripcion: "", monto_orden: 0, porcentaje: 50, notas: ""
+    empleado: "", descripcion: "", monto_orden: 0, porcentaje: 50, notas: "", aplica_comision: false
   })
   const [formNomina, setFormNomina] = useState({
     empleado: "", inicio: "", fin: "", deducciones: 0
@@ -64,9 +65,13 @@ export default function Nomina() {
 
   const guardarPago = async () => {
     try {
+      const emp = empleados.find(e => e.id == formPago.empleado)
+      const montoComision = formPago.aplica_comision ? formPago.monto_orden * (emp?.porcentaje_comision || 10) / 100 : 0
       await API.post("/pagos-servicio/", {
         ...formPago,
-        monto_pago: (formPago.monto_orden * formPago.porcentaje / 100).toFixed(0)
+        monto_pago: (formPago.monto_orden * formPago.porcentaje / 100).toFixed(0),
+        monto_comision: montoComision.toFixed(0),
+        monto_total: (formPago.monto_orden * formPago.porcentaje / 100 + montoComision).toFixed(0)
       })
       mostrarMensaje("✅ Pago registrado")
       setModalPago(false)
@@ -129,7 +134,8 @@ export default function Nomina() {
             setModalEmpleado({})
             setFormEmpleado({ nombre: "", documento: "", telefono: "", correo: "",
               cargo: "", tipo: "tecnico", tipo_pago: "servicio",
-              salario_base: 0, porcentaje_mano_obra: 50, activo: true })
+              salario_base: 0, porcentaje_mano_obra: 50, activo: true,
+    aplica_comision: false, porcentaje_comision: 10 })
           }}>+ Empleado</button>
         </div>
       </div>
@@ -441,11 +447,60 @@ export default function Nomina() {
                   style={{ width: "100%" }} />
               </div>
             </div>
-            <div style={{ background: "#065F4622", border: "1px solid #10B981", borderRadius: "8px",
-              padding: "12px", marginBottom: "1.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: "11px", color: "var(--text3)", marginBottom: "4px" }}>A pagar al técnico</div>
-              <div style={{ fontSize: "24px", fontWeight: "700", color: "#10B981" }}>
-                ${Number(formPago.monto_orden * formPago.porcentaje / 100).toLocaleString("es-CO")}
+            {/* Checkbox comisión */}
+            <div style={{ marginBottom: "12px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "10px",
+                padding: "10px 14px", borderRadius: "10px", cursor: "pointer",
+                background: formPago.aplica_comision ? "rgba(245,166,35,.08)" : "var(--bg3)",
+                border: `1px solid ${formPago.aplica_comision ? "rgba(245,166,35,.3)" : "var(--border)"}`,
+                transition: "all .15s" }}>
+                <input type="checkbox" checked={formPago.aplica_comision || false}
+                  onChange={e => setFormPago({...formPago, aplica_comision: e.target.checked})}
+                  style={{ width: "auto", accentColor: "#F5A623" }} />
+                <div>
+                  <div style={{ fontSize: "13px", color: "var(--text)", fontWeight: "500" }}>
+                    Aplicar comisión adicional
+                  </div>
+                  <div style={{ fontSize: "11px", color: "var(--text3)" }}>
+                    Se suma al pago de mano de obra
+                  </div>
+                </div>
+              </label>
+            </div>
+
+            {/* Preview pago */}
+            <div style={{ background: "rgba(0,212,160,.06)", border: "1px solid rgba(0,212,160,.2)",
+              borderRadius: "10px", padding: "14px", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "12px", color: "var(--text3)" }}>Mano de obra ({formPago.porcentaje}%)</span>
+                <span style={{ fontSize: "13px", color: "#00D4A0", fontWeight: "600" }}>
+                  ${Number(formPago.monto_orden * formPago.porcentaje / 100).toLocaleString("es-CO")}
+                </span>
+              </div>
+              {formPago.aplica_comision && (() => {
+                const emp = empleados.find(e => e.id == formPago.empleado)
+                const pctComision = emp?.porcentaje_comision || 10
+                const montoComision = formPago.monto_orden * pctComision / 100
+                return (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <span style={{ fontSize: "12px", color: "var(--text3)" }}>Comisión ({pctComision}%)</span>
+                    <span style={{ fontSize: "13px", color: "#F5A623", fontWeight: "600" }}>
+                      +${Number(montoComision).toLocaleString("es-CO")}
+                    </span>
+                  </div>
+                )
+              })()}
+              <div style={{ borderTop: "1px solid rgba(0,212,160,.2)", paddingTop: "8px",
+                display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontSize: "13px", fontWeight: "700", color: "var(--text)" }}>Total a pagar</span>
+                <span style={{ fontSize: "20px", fontWeight: "800", color: "#00D4A0" }}>
+                  {(() => {
+                    const base = formPago.monto_orden * formPago.porcentaje / 100
+                    const emp = empleados.find(e => e.id == formPago.empleado)
+                    const comision = formPago.aplica_comision ? formPago.monto_orden * (emp?.porcentaje_comision || 10) / 100 : 0
+                    return `$${Number(base + comision).toLocaleString("es-CO")}`
+                  })()}
+                </span>
               </div>
             </div>
             <div style={{ display: "flex", gap: "8px" }}>

@@ -23,7 +23,10 @@ class Empleado(models.Model):
     tipo            = models.CharField(max_length=20, choices=TIPO_CHOICES, default='tecnico')
     tipo_pago       = models.CharField(max_length=20, choices=TIPO_PAGO_CHOICES, default='servicio')
     salario_base    = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    porcentaje_mano_obra = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    porcentaje_mano_obra  = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    aplica_comision       = models.BooleanField(default=False)
+    porcentaje_comision   = models.DecimalField(max_digits=5, decimal_places=2, default=10,
+                            help_text="% de comisión adicional sobre el total de la orden")
     activo          = models.BooleanField(default=True)
     fecha_ingreso   = models.DateField(null=True, blank=True)
     observaciones   = models.TextField(blank=True)
@@ -47,18 +50,30 @@ class PagoServicio(models.Model):
     orden       = models.ForeignKey('servicios.OrdenTrabajo', on_delete=models.CASCADE,
                                      related_name='pagos_tecnico', null=True, blank=True)
     descripcion = models.CharField(max_length=200)
-    monto_orden = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    porcentaje  = models.DecimalField(max_digits=5, decimal_places=2, default=50)
-    monto_pago  = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    monto_orden      = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    porcentaje       = models.DecimalField(max_digits=5, decimal_places=2, default=50)
+    monto_pago       = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    aplica_comision  = models.BooleanField(default=False)
+    monto_comision   = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    monto_total      = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     estado      = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente')
     fecha       = models.DateField(auto_now_add=True)
     fecha_pago  = models.DateField(null=True, blank=True)
     notas       = models.TextField(blank=True)
 
     def save(self, *args, **kwargs):
+        from decimal import Decimal
         if not self.monto_pago:
-            from decimal import Decimal
             self.monto_pago = self.monto_orden * (self.porcentaje / Decimal('100'))
+        if self.aplica_comision and self.empleado_id:
+            try:
+                emp = self.empleado
+                self.monto_comision = self.monto_orden * (emp.porcentaje_comision / Decimal('100'))
+            except Exception:
+                self.monto_comision = Decimal('0')
+        else:
+            self.monto_comision = Decimal('0')
+        self.monto_total = self.monto_pago + self.monto_comision
         super().save(*args, **kwargs)
 
     def __str__(self):
